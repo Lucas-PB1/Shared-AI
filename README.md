@@ -12,10 +12,10 @@ npm run bootstrap -- /caminho/do/seu/projeto
 
 | Comando | Escopo | O que faz |
 | --- | --- | --- |
-| `npm run setup:skills` | Máquina | Rules, skills, hooks, motor de sync |
+| `npm run setup:skills` | Máquina | Rules, skills, hooks (merge), motor de sync |
 | `npm run setup:code-review` | Máquina | Commands `/avaliar` + `/finalizar`, ferramentas |
 | `npm run bootstrap -- <repo>` | Projeto | Symlinks + pastas `.cursor/review/` |
-| `npm run sync` | Máquina | Após `git pull` — atualiza symlinks e relink projetos |
+| `npm run sync` | Máquina | Após `git pull` — symlinks, hooks (merge), deps, relink projetos |
 | `npm run sync -- --migrate` | Máquina | Igual ao sync, mas substitui cópias antigas (rsync) por symlinks |
 | `npm run status` | Máquina | Versão, projetos, conflitos, symlinks quebrados |
 | `npm run doctor` | Máquina | Diagnóstico rápido: ferramentas, hooks, instalação |

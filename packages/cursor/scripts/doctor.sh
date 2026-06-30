@@ -211,7 +211,7 @@ else
 fi
 
 if [[ ! -f "$hooks_file" ]]; then
-  fail "hooks.json ausente — rode: npm run setup:skills (com --hooks) ou crie sessionStart manualmente"
+  fail "hooks.json ausente — rode: npm run setup:skills ou npm run sync"
 elif hooks_has_session_start "$hooks_file"; then
   ok "hooks.json com sessionStart → ensure-project-cursor"
 else

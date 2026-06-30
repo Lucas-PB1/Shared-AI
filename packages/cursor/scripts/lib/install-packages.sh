@@ -50,6 +50,10 @@ install_skills_package() {
   hostdime_write_env "$monorepo_root"
 
   echo "  symlinks: $LINK_LINKED ok, $LINK_SKIPPED pulados"
+
+  # shellcheck disable=SC1091
+  source "$lib_dir/merge-hooks-json.sh"
+  merge_hostdime_hooks_json "$cursor_pkg"
 }
 
 install_code_review_package() {
@@ -122,26 +126,6 @@ migrate_managed_real_files() {
   done
   if [[ -f "$cursor_dir/SKILLS-ROUTING.md" && ! -L "$cursor_dir/SKILLS-ROUTING.md" ]]; then
     rm -f "$cursor_dir/SKILLS-ROUTING.md"
-  fi
-}
-
-install_hooks_if_requested() {
-  local install_hooks="$1"
-  local cursor_pkg="$2"
-  local cursor_dir="${CURSOR_USER_DIR:-$HOME/.cursor}"
-
-  [[ "$install_hooks" -eq 1 ]] || return 0
-
-  local hooks_file="$cursor_dir/hooks.json"
-  local example="$cursor_pkg/scripts/hooks/hooks.json.example"
-
-  if [[ -f "$hooks_file" ]]; then
-    echo ""
-    echo "⚠ hooks.json já existe — adicione sessionStart manualmente:"
-    echo '  { "command": "./hooks/ensure-project-cursor.sh" }'
-  else
-    cp "$example" "$hooks_file"
-    echo "→ hooks.json (sessionStart → ensure-project-cursor)"
   fi
 }
 

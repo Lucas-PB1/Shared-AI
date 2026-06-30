@@ -5,7 +5,7 @@
   "description": "Pacotes públicos de configuração de IA da HostDime",
   "type": "module",
   "scripts": {
-    "setup:skills": "bash packages/cursor/scripts/install.sh --hooks",
+    "setup:skills": "bash packages/cursor/scripts/install.sh",
     "setup:code-review": "npm install && composer install && bash packages/code-review/scripts/install.sh",
     "bootstrap": "bash packages/cursor/scripts/bootstrap-project.sh",
     "sync": "bash packages/cursor/scripts/sync-all.sh",
