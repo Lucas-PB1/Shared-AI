@@ -1,0 +1,33 @@
+---
+description: >-
+  Roteia as 7 skills de arquitetura — refina intent quando há código no contexto
+globs: "**/*.{ts,tsx,js,php}"
+alwaysApply: false
+---
+
+# Orquestrador — arquitetura
+
+Sinais estruturais no pedido já estão em `skills-orchestrator-intent.mdc`. Esta rule **refina** quando há `.ts`/`.tsx`/`.js`/`.php` no diff ou abertos.
+
+Ler **1–3** SKILL.md por tarefa (localização em `skills-orchestrator-base.mdc`) — não todas de uma vez.
+
+| Sinal na tarefa | Skills |
+| --- | --- |
+| Novo módulo, feature folder, refactor estrutural, organizar pastas | `vertical-slice`, `solid` |
+| Domínio, aggregate, bounded context, linguagem ubíqua | `domain-driven-design` |
+| Persistência, ORM, abstrair banco, trocar infra de dados | `repository` |
+| Ports/adapters, isolar infra, testar com doubles | `hexagonal-architecture` |
+| Camadas clássicas, N-tier, apresentação/negócio/dados | `layered-architecture` |
+| Use cases, regra de dependência para dentro, núcleo de domínio | `clean-architecture` |
+| Design system, átomos/moléculas/organismos, biblioteca UI | `atomic-design` |
+
+## Prioridade entre patterns
+
+- Organização por feature → `vertical-slice` antes de `layered-architecture`
+- Domínio complexo → `domain-driven-design` + `repository`
+- UI compartilhada → `atomic-design` (também acionada por `react-ui`)
+
+## Anti-padrão
+
+- Aplicar Clean + Hexagonal + DDD + Vertical Slice na mesma mudança pequena
+- Over-engineering em CRUD trivial

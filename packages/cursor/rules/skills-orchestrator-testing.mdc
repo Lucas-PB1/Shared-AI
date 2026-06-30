@@ -1,0 +1,32 @@
+---
+description: >-
+  Roteia skill testing — confirma framework quando há arquivos de teste no contexto
+globs: "**/*.{test,spec}.{ts,tsx,js,php},**/tests/**"
+alwaysApply: false
+---
+
+# Orquestrador — testes
+
+Intent (“teste”, “spec”, “coverage”) já aciona `testing`. Esta rule **confirma** framework e contexto quando há arquivos de teste abertos ou no diff.
+
+## JavaScript / TypeScript
+
+| Detectar | Skills |
+| --- | --- |
+| Vitest, Jest, RTL, `*.test.ts(x)`, `*.spec.ts(x)` | `testing` |
+| Teste de componente UI | `testing` + `accessibility` (axe, roles) |
+
+Refs: `testing/references/vitest.md`, `react-testing-library.md`, `accessibility-testing.md` (dir. da skill resolvida)
+
+## PHP
+
+| Detectar | Skills |
+| --- | --- |
+| PHPUnit, Pest, `tests/` Laravel | `testing` + `laravel/references/testing.md` |
+| Teste unitário PHP sem Laravel | `testing` (adaptar) + `php` |
+
+## Composição
+
+- `skills-orchestrator-react-ui.mdc` se teste em `.tsx`
+- `skills-orchestrator-php-stack.mdc` se teste em `.php`
+- `skills-orchestrator-base.mdc` (sempre)

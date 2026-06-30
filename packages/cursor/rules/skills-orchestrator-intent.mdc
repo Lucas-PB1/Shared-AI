@@ -1,0 +1,58 @@
+---
+description: >-
+  Roteia skills por intenção do pedido — texto, objetivo e diff implícito;
+  complementa stack e globs
+alwaysApply: true
+---
+
+# Orquestrador — intenção
+
+Mapear **palavras ou objetivo** do pedido → ler SKILL.md (localização em `skills-orchestrator-base.mdc`).
+
+## Tooling e fluxo
+
+| Intenção no pedido | Skill |
+| --- | --- |
+| commit, mensagem de commit, PR, pull request, merge, rebase | `git` |
+| lint, eslint, fix lint, unused imports | `eslint` |
+| format, prettier, formatação | `prettier` |
+| deploy, upload, build remoto, CLI do projeto | skill de tooling no projeto ou em `~/.cursor/skills/` (ex.: `hubspot-cli`, `git`) |
+| review, auditoria, qualidade, code review | `eslint`, `prettier`, `testing` + skills da stack detectada |
+
+## Stack front-end / JS
+
+| Intenção no pedido | Skill |
+| --- | --- |
+| componente, hook, JSX, React, UI | `react` |
+| TypeScript, tipos, generics, strict | `typescript` |
+| JavaScript, Node script, ESM, CJS | `javascript` |
+| teste, spec, coverage, Vitest, Jest, RTL | `testing` |
+| HTML, semântica, markup de formulário | `html` |
+| CSS, layout, responsivo, breakpoint | `css`, `mobile-first` |
+| Tailwind, utility classes | `tailwind` |
+| animação, motion, transição, framer | `motion` |
+| a11y, acessibilidade, WCAG, ARIA, screen reader, teclado | `accessibility` |
+| UX, loading, empty state, feedback, hierarquia visual | `ux` |
+| segurança, XSS, sanitizar, CSRF, SQL injection | `security` |
+| Next.js, App Router, RSC, Server Components, `next/navigation`, import `next/` | `next` |
+
+> **Next.js:** não acionar só por “next” isolado (ex.: “próximo passo” em português).
+
+## Arquitetura
+
+| Intenção no pedido | Skill |
+| --- | --- |
+| novo módulo, feature folder, organizar pastas, vertical slice | `vertical-slice`, `solid` |
+| domínio, aggregate, bounded context, linguagem ubíqua | `domain-driven-design` |
+| repository, ORM, persistência, abstrair banco | `repository` |
+| ports/adapters, hexagonal, isolar infra | `hexagonal-architecture` |
+| camadas, N-tier, apresentação/negócio/dados | `layered-architecture` |
+| use case, clean architecture, regra de dependência | `clean-architecture` |
+| design system, átomos, moléculas, organismos | `atomic-design` |
+
+## Como aplicar
+
+- Varredura na mensagem do usuário **e** no diff/tarefa implícita
+- Múltiplas intenções → combinar skills (ex.: “componente acessível com animação” → `react`, `accessibility`, `motion`)
+- Confirmar com `skills-orchestrator-stack.mdc` quando ambíguo
+- Não duplicar conteúdo das skills — só instruir leitura

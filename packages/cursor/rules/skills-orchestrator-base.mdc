@@ -1,0 +1,66 @@
+---
+description: >-
+  Fluxo base do orquestrador — metodologia em tiers, merge das 3 camadas e cap
+  de skills por tarefa
+alwaysApply: true
+---
+
+# Orquestrador — base
+
+## Classificar tarefa
+
+| Tipo | Ação |
+| --- | --- |
+| Escrever, refatorar, revisar **código** | Fluxo abaixo |
+| Review, auditoria | metodologia tier 2 + intent + stack + globs |
+| Docs-only, git-only, deploy-only sem código | Não forçar skills de implementação |
+
+## Metodologia (tiers)
+
+| Tier | Quando | Skills |
+| --- | --- | --- |
+| 1 | Qualquer código | `clean-code` |
+| 2 | Refatorar, feature nova, review de código | + `dry`, `solid`, `no-magic-numbers` |
+| — | Docs-only / git-only | nenhuma de implementação |
+
+## Três camadas de roteamento
+
+1. **Intent** — `skills-orchestrator-intent.mdc` (palavras do pedido)
+2. **Stack** — `skills-orchestrator-stack.mdc` (manifestos do repo)
+3. **Contexto** — rules **glob** (arquivos abertos ou editados)
+
+Mapa genérico: `~/.cursor/SKILLS-ROUTING.md`. Complemento do projeto: `.cursor/SKILLS-ROUTING.md` se existir.
+
+## Protocolo de merge
+
+1. Coletar skills das 3 camadas + tier de metodologia
+2. **Dedupe** por nome
+3. **Cap:** 6–8 skills por tarefa (`SKILL.md`); `references/` à parte
+4. **Prioridade:** específica > genérica (`laravel` > `php`, `typescript` > `javascript`)
+5. Implementar; não carregar as 31 skills de uma vez
+
+## Prioridade geral
+
+- Stack detectada > suposição
+- Skill mais específica > genérica
+- Mínimo necessário > pacote completo
+
+## Localização das skills
+
+Ao ler arquivos, resolver **nesta ordem**:
+
+1. `.cursor/skills/<nome>/SKILL.md` — skill **do projeto** (sobrescreve)
+2. `~/.cursor/skills/<nome>/SKILL.md` — pacote genérico do **usuário**
+
+Referências (`references/*.md`): no mesmo diretório da skill encontrada.
+
+## Localização das rules
+
+| Tipo | Onde vive | No projeto |
+| --- | --- | --- |
+| Orquestrador genérico | `~/.cursor/rules/skills-orchestrator-*.mdc` | **symlink** em `.cursor/rules/` |
+| Rule do projeto | — | arquivo real em `.cursor/rules/` (ex.: `hdbr-hubspot-project.mdc`) |
+
+Instalar links: `~/.cursor/link-project-rules.sh /caminho/do/repo`
+
+Cursor só carrega rules de `.cursor/rules/` do workspace — por isso o symlink, não cópia.

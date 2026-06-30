@@ -1,0 +1,47 @@
+---
+description: >-
+  Detecta stack via package.json, composer.json e hsproject.json (monorepo) e
+  sugere skills antes de implementar — complementa intent e globs
+alwaysApply: true
+---
+
+# Orquestrador — stack
+
+Antes de implementar, varrer manifestos na **raiz** e em **pacotes/workspaces** (monorepo). Ler SKILL.md conforme **Localização** em `skills-orchestrator-base.mdc`.
+
+## Onde procurar
+
+- `package.json` (raiz e subpastas com deps do pacote)
+- `composer.json`
+- `tsconfig.json` (presença indica TypeScript)
+- `hsproject.json` (HubSpot developer project)
+
+## Mapa manifesto → skills
+
+| Detectar | Skills a considerar |
+| --- | --- |
+| `react` / `react-dom` | `react`; `typescript` se houver `tsconfig` ou `.ts`/`.tsx` no escopo |
+| `typescript` em deps ou `tsconfig.json` | `typescript` |
+| Projeto só `.js` sem TS | `javascript` |
+| `tailwindcss` | `tailwind`, `css`, `mobile-first` |
+| `motion` / `framer-motion` | `motion` |
+| `next` | `next` |
+| `vitest` / `jest` / `@testing-library/react` | `testing` |
+| `eslint` | `eslint` |
+| `prettier` | `prettier` |
+| `laravel/framework` | `laravel`, `php` |
+| pacotes `laminas/*` ou `zendframework/*` | `zend-laminas`, `php` |
+| `hsproject.json`, `@hubspot/cms-components` ou `@hubspot/cli` | `hubspot-cli` (se existir no projeto ou em `~/.cursor/skills/`) |
+
+## Como usar
+
+- **Bias** quando o pedido é vago e nenhum arquivo relevante está aberto
+- **Confirma** escolhas de `intent` e rules glob (ex.: `react` + `typescript` no mesmo repo)
+- Não substitui globs — arquivo aberto ainda refinam o conjunto final
+- Específica > genérica: `laravel` > `php`, `typescript` > `javascript`
+
+## Composição
+
+- `skills-orchestrator-intent.mdc` — palavras do pedido
+- Rules **glob** — arquivos no contexto
+- `skills-orchestrator-base.mdc` — merge e cap final
