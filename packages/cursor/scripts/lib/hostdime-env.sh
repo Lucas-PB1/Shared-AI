@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Leitura/escrita de ~/.cursor/hostdime-ia.env e VERSION
 
+hostdime_shell_quote() {
+  printf '%q' "$1"
+}
+
 hostdime_resolve_root() {
   if [[ -n "${HOSTDIME_IA_ROOT:-}" && -d "$HOSTDIME_IA_ROOT" ]]; then
     printf '%s' "$HOSTDIME_IA_ROOT"
@@ -39,10 +43,10 @@ hostdime_write_env() {
   now="$(date -Iseconds)"
   mkdir -p "$cursor_dir"
   cat >"$cursor_dir/hostdime-ia.env" <<EOF
-HOSTDIME_IA_ROOT=$root
-HOSTDIME_IA_VERSION=$version
-HOSTDIME_IA_INSTALLED_AT=$now
-HOSTDIME_IA_LAST_SYNC=$now
+HOSTDIME_IA_ROOT=$(hostdime_shell_quote "$root")
+HOSTDIME_IA_VERSION=$(hostdime_shell_quote "$version")
+HOSTDIME_IA_INSTALLED_AT=$(hostdime_shell_quote "$now")
+HOSTDIME_IA_LAST_SYNC=$(hostdime_shell_quote "$now")
 EOF
 }
 
@@ -58,10 +62,10 @@ hostdime_update_sync_time() {
   now="$(date -Iseconds)"
   installed_at="${HOSTDIME_IA_INSTALLED_AT:-$now}"
   cat >"$env_file" <<EOF
-HOSTDIME_IA_ROOT=$root
-HOSTDIME_IA_VERSION=$version
-HOSTDIME_IA_INSTALLED_AT=$installed_at
-HOSTDIME_IA_LAST_SYNC=$now
+HOSTDIME_IA_ROOT=$(hostdime_shell_quote "$root")
+HOSTDIME_IA_VERSION=$(hostdime_shell_quote "$version")
+HOSTDIME_IA_INSTALLED_AT=$(hostdime_shell_quote "$installed_at")
+HOSTDIME_IA_LAST_SYNC=$(hostdime_shell_quote "$now")
 EOF
 }
 
