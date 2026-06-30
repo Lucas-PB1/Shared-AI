@@ -82,7 +82,7 @@ fi
 echo ""
 echo "Projeto preparado: $PROJECT"
 echo "  .cursor/rules/    → symlinks (orquestrador) + rules do projeto"
-echo "  .cursor/commands/ → /avaliar, /avaliar-diff, /finalizar"
+echo "  .cursor/commands/ → /avaliar, /avaliar-diff, /finalizar, /skills-why"
 echo "  .cursor/review/   → inbox/, reports/, resultados/, memoria.md"
 echo "  .cursor/skills/   → overrides do projeto"
 [[ -n "$PROFILE" ]] && echo "  perfil            → $PROFILE"

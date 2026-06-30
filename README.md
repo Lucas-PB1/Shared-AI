@@ -23,6 +23,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run status` | Máquina | Versão, projetos, conflitos, symlinks quebrados |
 | `npm run doctor` | Máquina | Diagnóstico rápido: ferramentas, hooks, instalação |
 | `npm run review:ci -- [base]` | Projeto | Mesmo review-check do `/avaliar` nos arquivos do diff |
+| `npm run test` | Dev | Testes bats (scripts bash) |
 
 ## Atualização
 

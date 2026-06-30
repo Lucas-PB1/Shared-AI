@@ -26,6 +26,7 @@ fi
 
 RULE_SRC="$HOSTDIME_IA_ROOT/packages/cursor/rules"
 COMMAND_SRC="$HOSTDIME_IA_ROOT/packages/code-review/commands"
+COMMAND_CURSOR_SRC="$HOSTDIME_IA_ROOT/packages/cursor/commands"
 LIB="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/link-from-repo.sh"
 
 # shellcheck disable=SC1091
@@ -51,9 +52,9 @@ link_glob "$RULE_SRC/skills-orchestrator-*.mdc" "$RULES_DIR"
 link_file "$COMMAND_SRC/avaliar.md" "$COMMANDS_DIR"
 link_file "$COMMAND_SRC/finalizar.md" "$COMMANDS_DIR"
 link_file "$COMMAND_SRC/avaliar-diff.md" "$COMMANDS_DIR"
+link_glob "$COMMAND_CURSOR_SRC/*.md" "$COMMANDS_DIR"
 
 ensure_project_gitignore "$TARGET"
-
 if [[ "$QUIET" -eq 0 ]]; then
   echo ""
   echo "Concluído: $LINK_LINKED symlink(s) em $TARGET/.cursor/"

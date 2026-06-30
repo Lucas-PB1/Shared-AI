@@ -2,6 +2,7 @@
 .cursor/commands/avaliar.md
 .cursor/commands/finalizar.md
 .cursor/commands/avaliar-diff.md
+.cursor/commands/skills-why.md
 .cursor/review/inbox/*
 !.cursor/review/inbox/.gitkeep
 .cursor/review/reports/*

@@ -28,6 +28,11 @@ install_skills_package() {
   done
   link_glob "$cursor_pkg/rules/skills-orchestrator-*.mdc" "$cursor_dir/rules"
 
+  if [[ -d "$cursor_pkg/commands" ]]; then
+    echo "→ commands (cursor)"
+    link_glob "$cursor_pkg/commands/*.md" "$cursor_dir/commands"
+  fi
+
   echo "→ skills (cursor)"
   local skill_dir
   for skill_dir in "$cursor_pkg/skills"/*/; do
@@ -80,7 +85,7 @@ install_code_review_package() {
   done
 
   echo "→ commands (/avaliar, /finalizar)"
-  for cmd in avaliar.md finalizar.md avaliar-diff.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md; do
     if [[ -e "$cursor_dir/commands/$cmd" && ! -L "$cursor_dir/commands/$cmd" ]]; then
       rm -f "$cursor_dir/commands/$cmd"
     fi
@@ -117,7 +122,7 @@ migrate_managed_real_files() {
     dest="$cursor_dir/rules/$(basename "$f")"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
-  for cmd in avaliar.md finalizar.md avaliar-diff.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md; do
     dest="$cursor_dir/commands/$cmd"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
@@ -155,6 +160,6 @@ prune_user_symlinks_if_requested() {
   done
   prune_managed_symlinks "$cursor_dir/skills" "${names[@]}"
 
-  names=(avaliar.md finalizar.md avaliar-diff.md)
+  names=(avaliar.md finalizar.md avaliar-diff.md skills-why.md)
   prune_managed_symlinks "$cursor_dir/commands" "${names[@]}"
 }

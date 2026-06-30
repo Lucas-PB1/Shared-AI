@@ -2,7 +2,7 @@
 
 Instalado com `npm run setup:code-review` (inclui `npm install` + `composer install`).
 
-Commands `/avaliar`, `/avaliar-diff`, `/finalizar`, skills de review, ferramentas → `~/.cursor/`.
+Commands: `/avaliar`, `/avaliar-diff`, `/finalizar`, `/skills-why`.
 
 Memória por projeto: `.cursor/review/memoria.md` (gitignored, atualizado no `/finalizar`).
 

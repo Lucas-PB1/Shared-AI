@@ -85,6 +85,7 @@ if [[ -d "$root" ]]; then
   check_user_link "$root/packages/code-review/commands/avaliar.md" "$CURSOR_DIR/commands/avaliar.md"
   check_user_link "$root/packages/code-review/commands/finalizar.md" "$CURSOR_DIR/commands/finalizar.md"
   check_user_link "$root/packages/code-review/commands/avaliar-diff.md" "$CURSOR_DIR/commands/avaliar-diff.md"
+  check_user_link "$root/packages/cursor/commands/skills-why.md" "$CURSOR_DIR/commands/skills-why.md"
 fi
 
 rm -f "$LINK_REPORT_FILE"

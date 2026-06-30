@@ -43,7 +43,7 @@ detach_hostdime_from_project() {
   fi
 
   if [[ -d "$commands_dir" ]]; then
-    for cmd in avaliar.md finalizar.md avaliar-diff.md; do
+    for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md; do
       f="$commands_dir/$cmd"
       [[ -L "$f" ]] || continue
       if is_hostdime_symlink "$f"; then
