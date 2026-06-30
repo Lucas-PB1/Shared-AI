@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Liga rules, commands e pastas de review em .cursor/ do projeto (symlinks).
+# Liga rules, commands e pastas de review em .cursor/ do projeto (symlinks ao clone).
 # Uso: link-project.sh [--quiet] /caminho/do/repo
 set -euo pipefail
 
@@ -9,15 +9,29 @@ if [[ "${1:-}" == "--quiet" ]]; then
   shift
 fi
 
-RULE_SRC="${CURSOR_RULES_DIR:-$HOME/.cursor/rules}"
-COMMAND_SRC="${CURSOR_COMMANDS_DIR:-$HOME/.cursor/commands}"
 TARGET="${1:?Informe o diretório raiz do projeto}"
+CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
+ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
 
-if [ ! -d "$RULE_SRC" ]; then
-  [[ "$QUIET" -eq 0 ]] && echo "Erro: pasta de rules não encontrada: $RULE_SRC" >&2
-  echo "Execute primeiro: npm run setup:skills" >&2
+if [[ -f "$ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+fi
+
+if [[ -z "${HOSTDIME_IA_ROOT:-}" || ! -d "$HOSTDIME_IA_ROOT" ]]; then
+  [[ "$QUIET" -eq 0 ]] && echo "Erro: HOSTDIME_IA_ROOT não configurado" >&2
+  echo "Execute: npm run setup:skills" >&2
   exit 1
 fi
+
+RULE_SRC="$HOSTDIME_IA_ROOT/packages/cursor/rules"
+COMMAND_SRC="$HOSTDIME_IA_ROOT/packages/code-review/commands"
+LIB="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/link-from-repo.sh"
+
+# shellcheck disable=SC1091
+source "$LIB"
+export HOSTDIME_IA_ROOT
+reset_link_counters
 
 RULES_DIR="$TARGET/.cursor/rules"
 COMMANDS_DIR="$TARGET/.cursor/commands"
@@ -26,51 +40,15 @@ mkdir -p "$RULES_DIR" "$COMMANDS_DIR" "$REVIEW_DIR"/{inbox,reports,resultados}
 
 touch "$REVIEW_DIR/inbox/.gitkeep" "$REVIEW_DIR/reports/.gitkeep" 2>/dev/null || true
 
-link_file() {
-  local src="$1"
-  local dest_dir="$2"
-  local name
-  name=$(basename "$src")
-  local dest="$dest_dir/$name"
-
-  [ -f "$src" ] || return 0
-
-  if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-    SKIPPED=$((SKIPPED + 1))
-    [[ "$QUIET" -eq 0 ]] && echo "Pulando $name — arquivo real no projeto."
-    return 0
-  fi
-
-  local current target_path
-  current="$(readlink -f "$dest" 2>/dev/null || true)"
-  target_path="$(readlink -f "$src" 2>/dev/null || echo "$src")"
-  if [[ "$current" == "$target_path" ]]; then
-    return 0
-  fi
-
-  ln -sf "$src" "$dest"
-  LINKED=$((LINKED + 1))
-  [[ "$QUIET" -eq 0 ]] && echo "Link: $dest -> $src"
-}
-
-LINKED=0
-SKIPPED=0
-
-for src in "$RULE_SRC"/skills-orchestrator-*.mdc; do
-  link_file "$src" "$RULES_DIR"
-done
-
-if [ -d "$COMMAND_SRC" ]; then
-  for name in avaliar.md finalizar.md; do
-    link_file "$COMMAND_SRC/$name" "$COMMANDS_DIR"
-  done
-fi
+link_glob "$RULE_SRC/skills-orchestrator-*.mdc" "$RULES_DIR"
+link_file "$COMMAND_SRC/avaliar.md" "$COMMANDS_DIR"
+link_file "$COMMAND_SRC/finalizar.md" "$COMMANDS_DIR"
 
 if [[ "$QUIET" -eq 0 ]]; then
   echo ""
-  echo "Concluído: $LINKED symlink(s) em $TARGET/.cursor/"
+  echo "Concluído: $LINK_LINKED symlink(s) em $TARGET/.cursor/"
   echo "  review/ → inbox/, reports/, resultados/"
-  [[ "$SKIPPED" -gt 0 ]] && echo "Ignorados (arquivo real do projeto): $SKIPPED"
+  [[ "$LINK_SKIPPED" -gt 0 ]] && echo "Ignorados (arquivo real do projeto): $LINK_SKIPPED"
 fi
 
 exit 0

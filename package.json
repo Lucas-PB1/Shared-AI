@@ -1,13 +1,15 @@
 {
   "name": "hostdime-ia",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Pacotes públicos de configuração de IA da HostDime",
   "type": "module",
   "scripts": {
     "setup:skills": "bash packages/cursor/scripts/install.sh --hooks",
     "setup:code-review": "npm install && composer install && bash packages/code-review/scripts/install.sh",
-    "bootstrap": "bash packages/cursor/scripts/bootstrap-project.sh"
+    "bootstrap": "bash packages/cursor/scripts/bootstrap-project.sh",
+    "sync": "bash packages/cursor/scripts/sync-all.sh",
+    "status": "bash packages/cursor/scripts/status.sh"
   },
   "engines": {
     "node": ">=20"

@@ -1,0 +1,15 @@
+# Artefatos gerenciados pelo hostdime-ia (sync só mexe nestes)
+#
+# Rules (~/.cursor/rules/ e projeto/.cursor/rules/)
+skills-orchestrator-*.mdc
+#
+# Commands (~/.cursor/commands/ e projeto/.cursor/commands/)
+avaliar.md
+finalizar.md
+#
+# Skills (~/.cursor/skills/) — uma pasta por nome em:
+#   packages/cursor/skills/
+#   packages/code-review/skills/
+#
+# Arquivo real no mesmo caminho → nunca sobrescrito (exceto --migrate para cópias antigas)
+# Skill do projeto em .cursor/skills/<nome>/ → sobrescreve a global

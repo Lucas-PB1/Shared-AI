@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Garante symlinks do orquestrador, commands e review dirs no workspace.
-# Chamado pelo hook sessionStart (~/.cursor/hooks.json).
+# Garante symlinks e registra projeto no sessionStart.
 set -euo pipefail
 
 INPUT="$(cat)"
 LINK_SCRIPT="${CURSOR_LINK_PROJECT_SCRIPT:-${CURSOR_LINK_RULES_SCRIPT:-$HOME/.cursor/link-project.sh}}"
+REGISTRY_SCRIPT="${HOME}/.cursor/hostdime-projects-registry.sh"
+ENV_SCRIPT="${HOME}/.cursor/hostdime-env.sh"
 
 read_json_field() {
   local field="$1"
@@ -38,9 +39,28 @@ if [[ -z "$ROOT" || ! -d "$ROOT" ]]; then
   exit 0
 fi
 
-if [[ ! -x "$LINK_SCRIPT" ]]; then
-  exit 0
+if [[ -x "$LINK_SCRIPT" ]]; then
+  "$LINK_SCRIPT" --quiet "$ROOT" 2>/dev/null || true
 fi
 
-"$LINK_SCRIPT" --quiet "$ROOT" 2>/dev/null || true
+if [[ -x "$REGISTRY_SCRIPT" ]]; then
+  # shellcheck disable=SC1091
+  source "$REGISTRY_SCRIPT"
+  register_project "$ROOT" 2>/dev/null || true
+fi
+
+if [[ -f "${HOME}/.cursor/hostdime-ia.env" && -x "$ENV_SCRIPT" ]]; then
+  # shellcheck disable=SC1091
+  source "$ENV_SCRIPT"
+  # shellcheck disable=SC1090
+  source "${HOME}/.cursor/hostdime-ia.env"
+  if [[ -n "${HOSTDIME_IA_ROOT:-}" && -d "$HOSTDIME_IA_ROOT" ]]; then
+    current="$(hostdime_read_version "$HOSTDIME_IA_ROOT")"
+    installed="${HOSTDIME_IA_VERSION:-?}"
+    if [[ "$current" != "$installed" && "$current" != "?" ]]; then
+      echo "HostDime IA: versão do clone ($current) difere da instalada ($installed). Rode: npm run sync" >&2
+    fi
+  fi
+fi
+
 exit 0

@@ -2,16 +2,16 @@
 
 | Pacote | Descrição |
 | --- | --- |
-| [cursor](cursor/) | Rules, skills, hooks, bootstrap de projeto |
-| [code-review](code-review/) | Commands `/avaliar` + `/finalizar` (universais) |
+| [cursor](cursor/) | Rules, skills, hooks, bootstrap, sync |
+| [code-review](code-review/) | Commands `/avaliar` + `/finalizar` |
 
-## Ideias futuras
+## Comandos
 
-| Pacote | O que seria |
+| Comando | Pacote |
 | --- | --- |
-| `prompts` | Biblioteca de prompts por tarefa |
-| `ci-gates` | Quality gates para CI |
-| `agents` | Subagentes customizados por time |
-| `onboarding` | Onboarding de dev no stack |
+| `setup:skills` | cursor |
+| `setup:code-review` | code-review |
+| `bootstrap` | ambos |
+| `sync` / `status` | ambos |
 
-Cada um: `packages/<nome>/` + script em `npm run setup` quando fizer sentido.
+Ver [README](../README.md).
