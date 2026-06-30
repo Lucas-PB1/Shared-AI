@@ -1,0 +1,14 @@
+---
+description: Convenções React deste projeto
+globs:
+  - "**/*.{tsx,jsx}"
+  - "**/*.{ts,js}"
+alwaysApply: false
+---
+
+# React — projeto
+
+- Preferir composição e hooks idiomáticos; evitar prop drilling excessivo
+- Componentes de UI alinhados ao design system / padrão já usado no repo
+- Client vs Server (Next.js): seguir convenção do App Router se aplicável
+- Testes com Testing Library orientados ao usuário quando o projeto já usa RTL

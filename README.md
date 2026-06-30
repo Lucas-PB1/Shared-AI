@@ -15,6 +15,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run setup:skills` | Máquina | Rules, skills, hooks (merge), motor de sync |
 | `npm run setup:code-review` | Máquina | Commands `/avaliar`, `/avaliar-diff`, `/finalizar`, ferramentas |
 | `npm run bootstrap -- <repo>` | Projeto | Symlinks + pastas `.cursor/review/` |
+| `npm run bootstrap -- <repo> --profile=laravel\|hubspot\|react` | Projeto | + `SKILLS-ROUTING.md` e rule do stack |
 | `npm run sync` | Máquina | Após `git pull` — symlinks, hooks (merge), deps, relink projetos |
 | `npm run sync -- --migrate` | Máquina | Igual ao sync, mas substitui cópias antigas (rsync) por symlinks |
 | `npm run status` | Máquina | Versão, projetos, conflitos, symlinks quebrados |

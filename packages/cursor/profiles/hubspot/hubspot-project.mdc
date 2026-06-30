@@ -1,0 +1,16 @@
+---
+description: Convenções HubSpot CMS deste projeto
+globs:
+  - "**/*.{tsx,ts,jsx,js}"
+  - "**/hsproject.json"
+  - "**/*.html"
+  - "**/*.css"
+alwaysApply: false
+---
+
+# HubSpot CMS — projeto
+
+- Alinhar versões de `@hubspot/cms-components` e `@hubspot/cli` ao `package.json` do projeto
+- Componentes React do CMS: props tipadas, dados via HubSpot fields
+- Deploy/upload via `hubspot-cli` — não hardcodar portal ID ou tokens
+- Seguir layout de pastas do developer project existente (`src/`, módulos, temas)
