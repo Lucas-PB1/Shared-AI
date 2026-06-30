@@ -1,6 +1,6 @@
 # Avaliar código (`/avaliar`)
 
-Avalie **objetivamente** o arquivo indicado. Se o usuário não indicar caminho, use o mais recente em `.cursor/review/inbox/`.
+Avalie **objetivamente** o arquivo indicado no **repositório** (caminho informado, arquivo aberto ou no diff).
 
 Funciona em **qualquer projeto** — o command é symlink universal (como as rules).
 
@@ -8,21 +8,19 @@ Funciona em **qualquer projeto** — o command é symlink universal (como as rul
 
 | Campo | Origem |
 | --- | --- |
-| Arquivo | Mensagem do usuário, caminho no repo, ou `.cursor/review/inbox/` |
+| Arquivo | Mensagem do usuário, caminho no repo, ou arquivo aberto no editor |
 | Linguagem / framework | Informado pelo usuário; se omitido, inferir pelo código |
 | Contexto extra | Opcional (ex.: "é um controller Laravel") |
 
-## Snippet em `.cursor/review/inbox/`
+## Fluxo de pastas
 
-Trechos isolados — avalie **qualidade e lógica**, assumindo o stack inferido ou informado.
+| Pasta | Papel |
+| --- | --- |
+| `.cursor/review/reports/` | Rascunho do `/avaliar` — **removido** no `/finalizar` |
+| `.cursor/review/resultados/` | Pacote final (relatório + snapshot do código) |
+| `.cursor/review/memoria.md` | Convenções do time (gitignored) |
 
-**Não** incluir achados causados só pelo ambiente:
-
-- PHPStan/ESLint/tsc por dependências ausentes (`vendor/`, `node_modules/`)
-- "Class not found" quando o import é padrão do stack
-- Config do projeto alvo ausente neste workspace
-
-**Incluir** sintaxe, Semgrep, bugs visíveis na leitura.
+O **arquivo avaliado no repo não é alterado nem deletado** — só copiado para `resultados/` no `/finalizar`.
 
 ## Memória do projeto
 
@@ -39,8 +37,16 @@ Se existir `.cursor/review/memoria.md`:
 3. Tier 2: `clean-code`, `solid`, `dry` + skill de stack.
 4. **Não** alterar o arquivo — só diagnosticar. De/Para + GitLab (inglês) + português.
 5. **Salvar** em `.cursor/review/reports/<YYYY-MM-DD>_<slug>.md`
-   - `<slug>` = caminho sem extensão com `/` → `-` (prefixo `review-` se veio do inbox)
+   - `<slug>` = caminho relativo ao repo, sem extensão, `/` → `-` (ex.: `app-Http-Controllers-Foo`)
    - Sufixo `-2`, `-3` se colidir no mesmo dia.
+
+**Não** incluir achados causados só pelo ambiente:
+
+- PHPStan/ESLint/tsc por dependências ausentes (`vendor/`, `node_modules/`)
+- "Class not found" quando o import é padrão do stack
+- Config do projeto alvo ausente neste workspace
+
+**Incluir** sintaxe, Semgrep, bugs visíveis na leitura.
 
 ## Ferramentas
 
@@ -69,7 +75,7 @@ Máximo 3 itens por seção. Seção vazia → omitir.
 Responder **somente** neste formato:
 
 ````markdown
-## `caminho/do/arquivo`
+## `caminho/relativo/no/repo.php`
 
 **Stack:** <linguagem / framework>
 **Veredito:** OK | Ajustes necessários | Não recomendado

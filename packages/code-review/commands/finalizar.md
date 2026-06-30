@@ -9,7 +9,7 @@ Empacota o resultado quando o usuário **finalizou** o review (ex.: `/finalizar`
 
 ## O que fazer
 
-1. Identificar o arquivo (contexto do chat ou mais recente em `.cursor/review/inbox/`).
+1. Identificar o arquivo (contexto do chat, caminho informado, ou cabeçalho `## \`...\`` do relatório mais recente em `reports/`).
 2. **Perguntar ao dev** o que vale da análise (se ainda não estiver claro no chat):
    - por achado: `aceito` | `rejeitado` | `adiado` | `nao-aplicavel`
    - motivo breve quando `rejeitado` ou `nao-aplicavel`
@@ -19,17 +19,25 @@ Empacota o resultado quando o usuário **finalizou** o review (ex.: `/finalizar`
    - criar o arquivo a partir do template em `packages/code-review/templates/memoria.md` se não existir
 4. Rodar `~/.cursor/review-finalizar.sh <caminho>`.
 5. Informar pasta gerada em `.cursor/review/resultados/`.
-6. O script remove arquivo do inbox e relatório após copiar.
+
+## Limpeza (script)
+
+| Origem do arquivo | O que remove |
+| --- | --- |
+| **Arquivo do repo** (fluxo normal) | Só o relatório em `reports/` |
+| **Inbox** (legado, se usado) | Relatório + arquivo do inbox |
+
+O **arquivo avaliado no projeto nunca é deletado** — apenas copiado para `resultados/codigo/`.
 
 ## Saída
 
 ```text
 .cursor/review/resultados/<YYYY-MM-DD>_<slug>/
-├── relatorio.md
-├── codigo/          # cópia do arquivo
-└── meta.txt         # data, veredito, slug
+├── relatorio.md      ← cópia do que estava em reports/
+├── codigo/           ← snapshot do arquivo avaliado
+└── meta.txt
 ```
 
 ## Resposta ao usuário
 
-Informar só: caminho do pacote em `resultados/`, veredito, que `memoria.md` foi atualizado, e que inbox/reports foram limpos. Sem repetir o relatório.
+Informar só: caminho do pacote em `resultados/`, veredito, que `memoria.md` foi atualizado, e que `reports/` foi limpo. Sem repetir o relatório.

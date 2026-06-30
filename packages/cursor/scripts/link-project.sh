@@ -58,7 +58,7 @@ ensure_project_gitignore "$TARGET"
 if [[ "$QUIET" -eq 0 ]]; then
   echo ""
   echo "Concluído: $LINK_LINKED symlink(s) em $TARGET/.cursor/"
-  echo "  review/ → inbox/, reports/, resultados/, memoria.md"
+  echo "  review/ → reports/, resultados/, memoria.md"
   [[ "$LINK_SKIPPED" -gt 0 ]] && echo "Ignorados (arquivo real do projeto): $LINK_SKIPPED"
 fi
 

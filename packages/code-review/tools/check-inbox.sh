@@ -81,26 +81,8 @@ resolve_target() {
     return
   fi
 
-  resolve_review_dirs ""
-  local search_inbox="${INBOX:-}"
-  if [[ -z "$search_inbox" && -n "${CURSOR_PROJECT_DIR:-}" ]]; then
-    search_inbox="${CURSOR_PROJECT_DIR}/.cursor/review/inbox"
-  fi
-
-  if [[ -z "$search_inbox" || ! -d "$search_inbox" ]]; then
-    echo "Erro: informe o arquivo ou coloque um em .cursor/review/inbox/" >&2
-    exit 1
-  fi
-
-  local latest
-  latest="$(find "$search_inbox" -type f ! -name '.gitkeep' -printf '%T@ %p\n' 2>/dev/null \
-    | sort -rn | head -1 | cut -d' ' -f2- || true)"
-
-  if [[ -z "$latest" ]]; then
-    echo "Erro: nenhum arquivo em .cursor/review/inbox/. Informe o caminho." >&2
-    exit 1
-  fi
-  printf '%s\n' "$latest"
+  echo "Erro: informe o caminho do arquivo a revisar." >&2
+  exit 1
 }
 
 run_block() {

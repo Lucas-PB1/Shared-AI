@@ -9,7 +9,7 @@ teardown() {
   hostdime_test_teardown
 }
 
-@test "finalizar empacota relatório e limpa inbox" {
+@test "finalizar inbox remove snippet e relatório" {
   project="$(hostdime_make_project)"
   export CURSOR_PROJECT_DIR="$project"
   inbox="$project/.cursor/review/inbox"
@@ -35,6 +35,30 @@ MD
   [[ ! -f "$inbox/sample.php" ]]
   [[ ! -f "$reports/2026-06-30_review-sample.md" ]]
   [[ -f "$project/.cursor/review/resultados/2026-06-30_review-sample/relatorio.md" ]]
-  [[ -f "$project/.cursor/review/resultados/2026-06-30_review-sample/codigo/sample.php" ]]
-  grep -q "Veredito:" "$project/.cursor/review/resultados/2026-06-30_review-sample/meta.txt"
+}
+
+@test "finalizar arquivo do repo preserva original" {
+  project="$(hostdime_make_project)"
+  export CURSOR_PROJECT_DIR="$project"
+  reports="$project/.cursor/review/reports"
+  src="$project/app/Sample.php"
+  mkdir -p "$(dirname "$src")" "$reports" "$project/.cursor/review/resultados"
+
+  echo '<?php echo 1;' >"$src"
+
+  cat >"$reports/2026-06-30_app-Sample.md" <<'MD'
+## `app/Sample.php`
+
+**Stack:** PHP
+**Veredito:** OK
+MD
+
+  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/finalizar-review.sh" "$src"
+  [ "$status" -eq 0 ]
+
+  [[ -f "$src" ]]
+  [[ ! -f "$reports/2026-06-30_app-Sample.md" ]]
+  [[ -f "$project/.cursor/review/resultados/2026-06-30_app-Sample/relatorio.md" ]]
+  [[ -f "$project/.cursor/review/resultados/2026-06-30_app-Sample/codigo/app/Sample.php" ]]
+  grep -q "origem: projeto" "$project/.cursor/review/resultados/2026-06-30_app-Sample/meta.txt"
 }

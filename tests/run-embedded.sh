@@ -106,7 +106,7 @@ JSON
   assert "idempotente" test "$result2" = "ok"
 }
 
-test_finalizar() {
+test_finalizar_inbox() {
   project="$(hostdime_make_project)"
   export CURSOR_PROJECT_DIR="$project"
   inbox="$project/.cursor/review/inbox"
@@ -114,12 +114,30 @@ test_finalizar() {
   mkdir -p "$inbox" "$reports" "$project/.cursor/review/resultados"
   echo '<?php echo 1;' >"$inbox/sample.php"
   cat >"$reports/2026-06-30_review-sample.md" <<'MD'
+## `.cursor/review/inbox/sample.php`
 **Veredito:** OK
 MD
   bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/finalizar-review.sh" \
     "$inbox/sample.php" >/dev/null
   assert "inbox limpo" test ! -f "$inbox/sample.php"
   assert "relatorio empacotado" test -f "$project/.cursor/review/resultados/2026-06-30_review-sample/relatorio.md"
+}
+
+test_finalizar_repo() {
+  project="$(hostdime_make_project)"
+  export CURSOR_PROJECT_DIR="$project"
+  reports="$project/.cursor/review/reports"
+  src="$project/app/Sample.php"
+  mkdir -p "$(dirname "$src")" "$reports" "$project/.cursor/review/resultados"
+  echo '<?php echo 1;' >"$src"
+  cat >"$reports/2026-06-30_app-Sample.md" <<'MD'
+## `app/Sample.php`
+**Veredito:** OK
+MD
+  bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/finalizar-review.sh" "$src" >/dev/null
+  assert "arquivo repo preservado" test -f "$src"
+  assert "report removido" test ! -f "$reports/2026-06-30_app-Sample.md"
+  assert "resultado criado" test -f "$project/.cursor/review/resultados/2026-06-30_app-Sample/relatorio.md"
 }
 
 echo "HostDime IA — testes (runner embutido)"
@@ -131,7 +149,8 @@ run_test "bootstrap invalid" test_bootstrap_invalid_profile
 run_test "detach" test_detach
 run_test "detach registry" test_detach_registry
 run_test "merge hooks" test_merge_hooks
-run_test "finalizar" test_finalizar
+run_test "finalizar inbox" test_finalizar_inbox
+run_test "finalizar repo" test_finalizar_repo
 
 echo ""
 echo "Resumo: $pass ok, $fail falha(s)"

@@ -1,8 +1,8 @@
 ---
 name: review-inbox
 description: >-
-  Avalia arquivo com /avaliar em qualquer projeto. Inbox em .cursor/review/inbox/.
-  Use para snippet solto ou arquivo do repo indicado pelo usuário.
+  Avalia arquivo com /avaliar em qualquer projeto. Caminho no repo ou diff.
+  Use para review de código antes do merge.
 ---
 
 # Review — `/avaliar`, `/avaliar-diff` e `/finalizar`
@@ -11,30 +11,30 @@ Commands universais (symlink em `.cursor/commands/`, como as rules).
 
 | Command | Uso |
 | --- | --- |
-| `/avaliar` | Deep dive em um arquivo (De/Para + GitLab) |
+| `/avaliar` | Deep dive em um arquivo do repo (De/Para + GitLab) |
 | `/avaliar-diff` | Triagem do diff do branch → fila para `/avaliar` |
-| `/finalizar` | Empacota review + atualiza `memoria.md` |
+| `/finalizar` | Empacota em `resultados/` + atualiza `memoria.md` |
 
 ## Pastas no projeto
 
 | Pasta / arquivo | Uso |
 | --- | --- |
-| `.cursor/review/inbox/` | Snippets para avaliar |
-| `.cursor/review/reports/` | Relatórios do `/avaliar` |
-| `.cursor/review/resultados/` | Pacote após `/finalizar` |
-| `.cursor/review/memoria.md` | Convenções do time + histórico de decisões (gitignored) |
+| `.cursor/review/reports/` | Rascunho do `/avaliar` — removido no `/finalizar` |
+| `.cursor/review/resultados/` | Pacote final após `/finalizar` |
+| `.cursor/review/memoria.md` | Convenções do time + histórico (gitignored) |
 
 Criadas automaticamente pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`).
 
 ## Fluxo
 
-**Arquivo único**
+**Arquivo do repo**
 
-1. Arquivo em `.cursor/review/inbox/` (ou caminho informado)
-2. `/avaliar` lê `memoria.md` (convenções) se existir
+1. `/avaliar` no caminho do arquivo (ou arquivo aberto)
+2. Lê `memoria.md` (convenções) se existir
 3. `~/.cursor/review-check.sh <arquivo>` antes do relatório
-4. `/avaliar` → salvar em `.cursor/review/reports/`
+4. Salva em `.cursor/review/reports/<data>_<slug>.md`
 5. `/finalizar` → decisões do dev em `memoria.md` → `~/.cursor/review-finalizar.sh`
+6. Relatório vai para `resultados/`; **arquivo do repo permanece intacto**
 
 **Diff do branch**
 
@@ -45,6 +45,6 @@ Criadas automaticamente pelo `link-project.sh` (hook sessionStart ou `npm run bo
 
 ## Regras
 
-- Não alterar o arquivo salvo pedido explícito
+- Não alterar o arquivo do repo salvo pedido explícito
 - Tier 2 + skill de stack
-- Detalhes: `.cursor/commands/avaliar.md`, `avaliar-diff.md`
+- Detalhes: `.cursor/commands/avaliar.md`, `avaliar-diff.md`, `finalizar.md`
