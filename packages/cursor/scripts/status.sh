@@ -84,6 +84,7 @@ if [[ -d "$root" ]]; then
   done
   check_user_link "$root/packages/code-review/commands/avaliar.md" "$CURSOR_DIR/commands/avaliar.md"
   check_user_link "$root/packages/code-review/commands/finalizar.md" "$CURSOR_DIR/commands/finalizar.md"
+  check_user_link "$root/packages/code-review/commands/avaliar-diff.md" "$CURSOR_DIR/commands/avaliar-diff.md"
 fi
 
 rm -f "$LINK_REPORT_FILE"

@@ -31,7 +31,8 @@ Se **nenhum** existir: manter só a linha genérica de review acima — **não**
 
 | Intenção no pedido | Skill / command |
 | --- | --- |
-| `/avaliar`, `/finalizar`, snippet em `.cursor/review/inbox/`, arquivo avulso para review | `review-inbox` |
+| `/avaliar`, `/finalizar`, `/avaliar-diff`, snippet em `.cursor/review/inbox/`, arquivo avulso para review | `review-inbox` |
+| diff do branch, arquivos alterados, triagem do MR (antes do deep dive) | `review-inbox` + command `/avaliar-diff` |
 | review de PR, diff, MR, merge request, bugbot | `review` → `review-bugbot` ou `review-security` |
 
 ## Stack front-end / JS

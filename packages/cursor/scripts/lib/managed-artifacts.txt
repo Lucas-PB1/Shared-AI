@@ -6,6 +6,7 @@ skills-orchestrator-*.mdc
 # Commands (~/.cursor/commands/ e projeto/.cursor/commands/)
 avaliar.md
 finalizar.md
+avaliar-diff.md
 #
 # Skills (~/.cursor/skills/) — uma pasta por nome em:
 #   packages/cursor/skills/

@@ -50,6 +50,7 @@ fi
 link_glob "$RULE_SRC/skills-orchestrator-*.mdc" "$RULES_DIR"
 link_file "$COMMAND_SRC/avaliar.md" "$COMMANDS_DIR"
 link_file "$COMMAND_SRC/finalizar.md" "$COMMANDS_DIR"
+link_file "$COMMAND_SRC/avaliar-diff.md" "$COMMANDS_DIR"
 
 ensure_project_gitignore "$TARGET"
 

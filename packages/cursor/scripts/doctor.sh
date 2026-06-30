@@ -108,7 +108,7 @@ count_user_symlink_issues() {
     fi
   done
 
-  for cmd in avaliar.md finalizar.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md; do
     dest="$CURSOR_DIR/commands/$cmd"
     if [[ -e "$dest" && ! -L "$dest" ]]; then
       skipped=$((skipped + 1))
@@ -174,7 +174,7 @@ if [[ -n "$root" && -d "$root" ]]; then
 fi
 
 section "~/.cursor (artefatos)"
-for script in link-project.sh review-check.sh review-finalizar.sh; do
+for script in link-project.sh review-check.sh review-finalizar.sh review-diff.sh; do
   if [[ -x "$CURSOR_DIR/$script" ]]; then
     ok "$script"
   else
@@ -182,7 +182,7 @@ for script in link-project.sh review-check.sh review-finalizar.sh; do
   fi
 done
 
-for cmd in avaliar.md finalizar.md; do
+for cmd in avaliar.md finalizar.md avaliar-diff.md; do
   if [[ -L "$CURSOR_DIR/commands/$cmd" && -e "$CURSOR_DIR/commands/$cmd" ]]; then
     ok "command /${cmd%.md}"
   elif [[ -f "$CURSOR_DIR/commands/$cmd" ]]; then

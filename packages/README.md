@@ -3,7 +3,7 @@
 | Pacote | Descrição |
 | --- | --- |
 | [cursor](cursor/) | Rules, skills, hooks, bootstrap, sync |
-| [code-review](code-review/) | Commands `/avaliar` + `/finalizar` |
+| [code-review](code-review/) | Commands `/avaliar`, `/avaliar-diff`, `/finalizar` |
 
 ## Comandos
 

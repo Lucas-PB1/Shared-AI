@@ -56,7 +56,7 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `prettier` | sim | sim | — |
 | `git` | sim | — | — |
 | `hubspot-cli` | deploy/CLI | hsproject / cms-components / `@hubspot/cli` | — |
-| `review-inbox` | `/avaliar`, inbox (se code-review instalado) | — | — |
+| `review-inbox` | `/avaliar`, `/avaliar-diff`, `/finalizar`, inbox (se code-review instalado) | — | — |
 | `review`, `review-bugbot`, `review-security` | review PR/diff (se code-review instalado) | — | — |
 
 > Skills `review-*` exigem `npm run setup:code-review`. Sem o pacote, review cai em tier 2 + `eslint`, `prettier`, `testing` + stack.

@@ -80,17 +80,19 @@ install_code_review_package() {
   done
 
   echo "→ commands (/avaliar, /finalizar)"
-  for cmd in avaliar.md finalizar.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md; do
     if [[ -e "$cursor_dir/commands/$cmd" && ! -L "$cursor_dir/commands/$cmd" ]]; then
       rm -f "$cursor_dir/commands/$cmd"
     fi
   done
   link_file "$review_pkg/commands/avaliar.md" "$cursor_dir/commands"
   link_file "$review_pkg/commands/finalizar.md" "$cursor_dir/commands"
+  link_file "$review_pkg/commands/avaliar-diff.md" "$cursor_dir/commands"
 
   echo "→ ferramentas review"
   install -m 755 "$review_pkg/tools/check-inbox.sh" "$cursor_dir/review-check.sh"
   install -m 755 "$review_pkg/tools/finalizar-review.sh" "$cursor_dir/review-finalizar.sh"
+  install -m 755 "$review_pkg/tools/review-diff.sh" "$cursor_dir/review-diff.sh"
 
   if [[ -f "$cursor_dir/hostdime-ia.env" ]]; then
     hostdime_update_sync_time
@@ -114,7 +116,7 @@ migrate_managed_real_files() {
     dest="$cursor_dir/rules/$(basename "$f")"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
-  for cmd in avaliar.md finalizar.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md; do
     dest="$cursor_dir/commands/$cmd"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
@@ -152,6 +154,6 @@ prune_user_symlinks_if_requested() {
   done
   prune_managed_symlinks "$cursor_dir/skills" "${names[@]}"
 
-  names=(avaliar.md finalizar.md)
+  names=(avaliar.md finalizar.md avaliar-diff.md)
   prune_managed_symlinks "$cursor_dir/commands" "${names[@]}"
 }
