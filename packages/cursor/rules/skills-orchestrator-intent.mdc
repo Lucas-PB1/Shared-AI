@@ -17,7 +17,22 @@ Mapear **palavras ou objetivo** do pedido → ler SKILL.md (localização em `sk
 | lint, eslint, fix lint, unused imports | `eslint` |
 | format, prettier, formatação | `prettier` |
 | deploy, upload, build remoto, CLI do projeto | skill de tooling no projeto ou em `~/.cursor/skills/` (ex.: `hubspot-cli`, `git`) |
-| review, auditoria, qualidade, code review | `eslint`, `prettier`, `testing` + skills da stack detectada |
+| review, auditoria, qualidade, code review | tier 2 + `eslint`, `prettier`, `testing` + skills da stack detectada |
+
+### Review — pacote code-review (opcional)
+
+Só estender o roteamento abaixo se o pacote **code-review** estiver instalado (`npm run setup:code-review`). Detectar por **qualquer** destes sinais:
+
+- `.cursor/commands/avaliar.md` no workspace (symlink ou arquivo)
+- `~/.cursor/commands/avaliar.md`
+- `~/.cursor/skills/review-inbox/SKILL.md`
+
+Se **nenhum** existir: manter só a linha genérica de review acima — **não** assumir `/avaliar`, `.cursor/review/inbox/` nem skills `review-*`.
+
+| Intenção no pedido | Skill / command |
+| --- | --- |
+| `/avaliar`, `/finalizar`, snippet em `.cursor/review/inbox/`, arquivo avulso para review | `review-inbox` |
+| review de PR, diff, MR, merge request, bugbot | `review` → `review-bugbot` ou `review-security` |
 
 ## Stack front-end / JS
 

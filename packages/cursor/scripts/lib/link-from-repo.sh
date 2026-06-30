@@ -53,7 +53,13 @@ link_file() {
 
   current="$(_link_abs "$dest" 2>/dev/null || true)"
   target_path="$(_link_abs "$src")"
-  if [[ "$current" == "$target_path" ]]; then
+  if [[ -L "$dest" && "$current" == "$target_path" ]]; then
+    local literal_target
+    literal_target="$(readlink "$dest" 2>/dev/null || true)"
+    if [[ "$literal_target" == "$src" || "$literal_target" == "$target_path" ]]; then
+      return 0
+    fi
+  elif [[ "$current" == "$target_path" ]]; then
     return 0
   fi
 
@@ -86,7 +92,13 @@ link_dir() {
 
   current="$(_link_abs "$dest" 2>/dev/null || true)"
   target_path="$(_link_abs "$src")"
-  if [[ "$current" == "$target_path" ]]; then
+  if [[ -L "$dest" && "$current" == "$target_path" ]]; then
+    local literal_target
+    literal_target="$(readlink "$dest" 2>/dev/null || true)"
+    if [[ "$literal_target" == "$src" || "$literal_target" == "$target_path" ]]; then
+      return 0
+    fi
+  elif [[ "$current" == "$target_path" ]]; then
     return 0
   fi
 
