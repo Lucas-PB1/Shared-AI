@@ -1,11 +1,21 @@
+# SO / editor
 .DS_Store
 Thumbs.db
 *.swp
 *.swo
 *~
+
+# Segredos locais
 .env
 .env.*
+
+# Dependências
 node_modules/
 vendor/
+
+# Locks (dev local)
 composer.lock
 package-lock.json
+
+# Cursor local — symlinks do setup; fonte em packages/
+.cursor/

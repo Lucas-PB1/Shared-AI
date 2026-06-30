@@ -38,6 +38,8 @@ O hostdime-ia **nunca sobrescreve** arquivo real em `~/.cursor/` ou no projeto. 
 
 No projeto, `.cursor/skills/<nome>/` real **sobrescreve** a skill global (comportamento do orquestrador Cursor).
 
+O `bootstrap` também atualiza o `.gitignore` do projeto com symlinks e conteúdo operacional de `review/`, **somente** quando `.cursor/` inteiro ainda não está ignorado. Rules e skills próprias do projeto continuam versionáveis.
+
 ## Estrutura
 
 ```

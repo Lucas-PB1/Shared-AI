@@ -30,6 +30,8 @@ LIB="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/link-from-repo.sh"
 
 # shellcheck disable=SC1091
 source "$LIB"
+# shellcheck disable=SC1091
+source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/ensure-project-gitignore.sh"
 export HOSTDIME_IA_ROOT
 reset_link_counters
 
@@ -43,6 +45,8 @@ touch "$REVIEW_DIR/inbox/.gitkeep" "$REVIEW_DIR/reports/.gitkeep" 2>/dev/null ||
 link_glob "$RULE_SRC/skills-orchestrator-*.mdc" "$RULES_DIR"
 link_file "$COMMAND_SRC/avaliar.md" "$COMMANDS_DIR"
 link_file "$COMMAND_SRC/finalizar.md" "$COMMANDS_DIR"
+
+ensure_project_gitignore "$TARGET"
 
 if [[ "$QUIET" -eq 0 ]]; then
   echo ""
