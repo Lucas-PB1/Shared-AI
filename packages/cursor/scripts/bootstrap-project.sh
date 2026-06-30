@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Prepara um repositório de código para usar o pacote HostDime IA.
+# Prepara um repositório: rules, commands /avaliar + /finalizar, pastas review.
 # Uso: npm run cursor:bootstrap -- /caminho/do/repo
 set -euo pipefail
 
 PROJECT="${1:?Informe o diretório raiz do projeto (npm run cursor:bootstrap -- /caminho)}"
-LINK_SCRIPT="${CURSOR_LINK_RULES_SCRIPT:-$HOME/.cursor/link-project-rules.sh}"
+LINK_SCRIPT="${CURSOR_LINK_PROJECT_SCRIPT:-${CURSOR_LINK_RULES_SCRIPT:-$HOME/.cursor/link-project.sh}}"
 
 if [[ ! -x "$LINK_SCRIPT" ]]; then
   echo "Pacote não instalado. Execute primeiro:" >&2
@@ -22,5 +22,7 @@ mkdir -p "$PROJECT/.cursor/skills"
 
 echo ""
 echo "Projeto preparado: $PROJECT"
-echo "  .cursor/rules/  → symlinks das rules orquestradoras"
-echo "  .cursor/skills/ → vazio (adicione skills específicas do projeto aqui)"
+echo "  .cursor/rules/    → symlinks (orquestrador)"
+echo "  .cursor/commands/ → /avaliar, /finalizar"
+echo "  .cursor/review/   → inbox/, reports/, resultados/"
+echo "  .cursor/skills/   → overrides do projeto"

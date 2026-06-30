@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Garante symlinks do orquestrador em .cursor/rules/ do workspace.
+# Garante symlinks do orquestrador, commands e review dirs no workspace.
 # Chamado pelo hook sessionStart (~/.cursor/hooks.json).
 set -euo pipefail
 
 INPUT="$(cat)"
-LINK_SCRIPT="${CURSOR_LINK_RULES_SCRIPT:-$HOME/.cursor/link-project-rules.sh}"
+LINK_SCRIPT="${CURSOR_LINK_PROJECT_SCRIPT:-${CURSOR_LINK_RULES_SCRIPT:-$HOME/.cursor/link-project.sh}}"
 
 read_json_field() {
   local field="$1"
@@ -42,7 +42,5 @@ if [[ ! -x "$LINK_SCRIPT" ]]; then
   exit 0
 fi
 
-# Falha aberta: não bloqueia a sessão se o link falhar
 "$LINK_SCRIPT" --quiet "$ROOT" 2>/dev/null || true
-
 exit 0

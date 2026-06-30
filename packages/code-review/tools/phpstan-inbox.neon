@@ -1,0 +1,10 @@
+parameters:
+    level: 6
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
+
+    ignoreErrors:
+        - '#Call to an undefined method#'
+        - '#Class .+ not found#'
+        - '#Function .+ not found#'
+        - '#Constant .+ not found#'

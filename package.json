@@ -3,14 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "description": "Pacotes públicos de configuração de IA da HostDime",
+  "type": "module",
   "scripts": {
-    "setup": "npm run cursor:install:hooks",
+    "setup": "npm install && composer install && npm run cursor:install:hooks",
     "cursor:install": "bash packages/cursor/scripts/install.sh",
     "cursor:install:hooks": "bash packages/cursor/scripts/install.sh --hooks",
     "cursor:bootstrap": "bash packages/cursor/scripts/bootstrap-project.sh",
-    "cursor:update": "npm run cursor:install"
+    "cursor:update": "npm run cursor:install:hooks",
+    "review:check": "bash packages/code-review/tools/check-inbox.sh",
+    "review:finalizar": "bash packages/code-review/tools/finalizar-review.sh",
+    "review:doctor": "bash packages/code-review/scripts/doctor.sh"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "eslint": "^9.28.0",
+    "globals": "^16.2.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.34.0"
   }
 }
