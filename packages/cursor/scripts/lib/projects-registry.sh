@@ -54,6 +54,33 @@ for p in data.get('projects', []):
 " "$REGISTRY_FILE"
 }
 
+unregister_project() {
+  local path="$1"
+  _registry_ensure
+  python3 -c "
+import json, os, sys
+
+path = os.path.realpath(sys.argv[1])
+registry = sys.argv[2]
+
+with open(registry, 'r', encoding='utf-8') as f:
+    data = json.load(f)
+
+before = len(data.get('projects', []))
+data['projects'] = [
+    p for p in data.get('projects', [])
+    if os.path.realpath(p.get('path', '')) != path
+]
+after = len(data['projects'])
+
+with open(registry, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+
+sys.exit(0 if before > after else 1)
+" "$path" "$REGISTRY_FILE"
+}
+
 prune_missing_projects() {
   _registry_ensure
   python3 -c "
