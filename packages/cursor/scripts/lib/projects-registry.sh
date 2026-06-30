@@ -22,6 +22,20 @@ path = os.path.realpath(sys.argv[1])
 registry = sys.argv[2]
 now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
+def is_ephemeral(p: str) -> bool:
+    if p in ('/tmp', '/var/tmp'):
+        return True
+    for prefix in ('/tmp/', '/var/tmp/'):
+        if p.startswith(prefix):
+            return True
+    return False
+
+default_registry = os.path.realpath(
+    os.path.join(os.path.expanduser('~'), '.cursor', 'hostdime-ia', 'projects.json')
+)
+if is_ephemeral(path) and os.path.realpath(registry) == default_registry:
+    sys.exit(0)
+
 with open(registry, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
@@ -87,13 +101,25 @@ prune_missing_projects() {
 import json, os, sys
 
 registry = sys.argv[1]
+
+def is_ephemeral(path: str) -> bool:
+    if not path:
+        return True
+    real = os.path.realpath(path)
+    if real in ('/tmp', '/var/tmp'):
+        return True
+    for prefix in ('/tmp/', '/var/tmp/'):
+        if real.startswith(prefix):
+            return True
+    return False
+
 with open(registry, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 kept = []
 for p in data.get('projects', []):
     path = p.get('path', '')
-    if path and os.path.isdir(path):
+    if path and os.path.isdir(path) and not is_ephemeral(path):
         kept.append(p)
 
 data['projects'] = kept
