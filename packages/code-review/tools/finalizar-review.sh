@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Empacota relatório + código em .cursor/review/resultados/<data>_<slug>/
 # Uso: finalizar-review.sh [arquivo]
-#      npm run review:finalizar -- .cursor/review/inbox/foo.php
+#      ~/.cursor/review-finalizar.sh .cursor/review/inbox/foo.php
 set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

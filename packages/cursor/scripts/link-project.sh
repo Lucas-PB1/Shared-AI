@@ -15,7 +15,7 @@ TARGET="${1:?Informe o diretório raiz do projeto}"
 
 if [ ! -d "$RULE_SRC" ]; then
   [[ "$QUIET" -eq 0 ]] && echo "Erro: pasta de rules não encontrada: $RULE_SRC" >&2
-  echo "Execute primeiro: npm run setup" >&2
+  echo "Execute primeiro: npm run setup:skills" >&2
   exit 1
 fi
 

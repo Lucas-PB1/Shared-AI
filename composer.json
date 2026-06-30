@@ -1,6 +1,6 @@
 {
   "name": "hostdime/hostdime-ia",
-  "description": "PHPStan para npm run review:check",
+  "description": "PHPStan para review-check (npm run setup)",
   "require-dev": {
     "phpstan/phpstan": "^1.12"
   },

@@ -43,7 +43,7 @@ Trechos isolados — avalie **qualidade e lógica**, assumindo o stack inferido 
 | JS | `node --check` + ESLint 9 |
 | TS | ESLint 9 + `tsc --strict` |
 
-Setup único na máquina: `npm run setup` no clone do [hostdime-ia](https://github.com/hostdime/hostdime-ia).
+Setup: `npm run setup:code-review` no clone do hostdime-ia.
 
 ## Classificação
 

@@ -5,14 +5,9 @@
   "description": "Pacotes públicos de configuração de IA da HostDime",
   "type": "module",
   "scripts": {
-    "setup": "npm install && composer install && npm run cursor:install:hooks",
-    "cursor:install": "bash packages/cursor/scripts/install.sh",
-    "cursor:install:hooks": "bash packages/cursor/scripts/install.sh --hooks",
-    "cursor:bootstrap": "bash packages/cursor/scripts/bootstrap-project.sh",
-    "cursor:update": "npm run cursor:install:hooks",
-    "review:check": "bash packages/code-review/tools/check-inbox.sh",
-    "review:finalizar": "bash packages/code-review/tools/finalizar-review.sh",
-    "review:doctor": "bash packages/code-review/scripts/doctor.sh"
+    "setup:skills": "bash packages/cursor/scripts/install.sh --hooks",
+    "setup:code-review": "npm install && composer install && bash packages/code-review/scripts/install.sh",
+    "bootstrap": "bash packages/cursor/scripts/bootstrap-project.sh"
   },
   "engines": {
     "node": ">=20"

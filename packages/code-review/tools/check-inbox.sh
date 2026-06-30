@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Análise estática — Semgrep + PHP / JS/TS.
 # Uso: check-inbox.sh <arquivo>
-#      npm run review:check -- .cursor/review/inbox/foo.php
+#      ~/.cursor/review-check.sh .cursor/review/inbox/foo.php
 set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -17,7 +17,7 @@ Commands universais (symlink em `.cursor/commands/`, como as rules).
 | `.cursor/review/reports/` | Relatórios do `/avaliar` |
 | `.cursor/review/resultados/` | Pacote após `/finalizar` |
 
-Criadas automaticamente pelo `link-project.sh` (hook sessionStart ou `npm run cursor:bootstrap`).
+Criadas automaticamente pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`).
 
 ## Fluxo
 

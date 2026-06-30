@@ -1,55 +1,32 @@
 # HostDime IA
 
-Monorepo de pacotes de configuração de IA.
-
-| Pacote | Descrição |
-| --- | --- |
-| [`cursor`](packages/cursor/) | Rules, skills, hooks, link de projeto |
-| [`code-review`](packages/code-review/) | Commands `/avaliar`, `/finalizar` + skills de PR |
-
-## Início rápido
+Dois pacotes, três comandos:
 
 ```bash
 git clone https://github.com/hostdime/hostdime-ia.git
 cd hostdime-ia
-npm run setup
-npm run cursor:bootstrap -- /caminho/do/seu/projeto
+npm run setup:skills
+npm run setup:code-review
+npm run bootstrap -- /caminho/do/seu/projeto
 ```
 
-`npm run setup` faz tudo de uma vez:
-- `npm install` + `composer install` (deps únicas na raiz)
-- Instala rules, skills, **commands** e scripts em `~/.cursor/`
-- Cria hook que liga rules **e** commands ao abrir o Agent
+| Comando | Pacote | O que faz |
+| --- | --- | --- |
+| `npm run setup:skills` | cursor | Rules, skills, hooks e `link-project.sh` em `~/.cursor/` |
+| `npm run setup:code-review` | code-review | Commands `/avaliar` + `/finalizar`, skills de review, ferramentas (ESLint, PHPStan…) |
+| `npm run bootstrap -- <repo>` | ambos | Symlinks + pastas `.cursor/review/` no projeto |
 
-Em qualquer projeto preparado:
-- `.cursor/rules/` → orquestrador
-- `.cursor/commands/` → `/avaliar`, `/finalizar`
-- `.cursor/review/inbox/` → snippets para review
+Só quer skills de dev? Rode só `setup:skills`. Só quer review? Rode só `setup:code-review` (precisa das deps Node/PHP).
 
-## Comandos
-
-| Comando | O que faz |
-| --- | --- |
-| `npm run setup` | Instala deps + pacote completo em `~/.cursor/` |
-| `npm run cursor:bootstrap -- <repo>` | Symlinks rules + commands + pastas review |
-| `npm run review:check -- <arquivo>` | Checagem estática (dev) |
-| `npm run review:doctor` | Valida pré-requisitos |
+Com hooks ativos, `bootstrap` é automático ao abrir o Agent.
 
 ## Estrutura
 
 ```
 hostdime-ia/
-├── package.json          # único Node (ESLint, TS, scripts)
-├── composer.json         # PHPStan
-└── packages/
-    ├── cursor/
-    └── code-review/
+├── package.json
+├── packages/cursor/
+└── packages/code-review/
 ```
-
-## Futuros pacotes
-
-Ver [packages/README.md](packages/README.md).
-
-## Licença
 
 MIT — [LICENSE](LICENSE).
