@@ -24,6 +24,14 @@ Trechos isolados — avalie **qualidade e lógica**, assumindo o stack inferido 
 
 **Incluir** sintaxe, Semgrep, bugs visíveis na leitura.
 
+## Memória do projeto
+
+Se existir `.cursor/review/memoria.md`:
+
+1. Ler a seção **Convenções validadas pelo time**.
+2. **Não repetir** recomendações já marcadas como `rejeitado` ou `nao-aplicavel` no escopo correspondente.
+3. Alinhar sugestões com convenções `aceito` quando aplicável.
+
 ## Como avaliar
 
 1. Rodar `~/.cursor/review-check.sh <arquivo>`. Incorporar achados **filtrados** — **não** colar o log inteiro.

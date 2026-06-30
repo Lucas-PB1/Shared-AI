@@ -37,6 +37,10 @@ ensure_project_gitignore() {
   gitignore="$project/.gitignore"
 
   if [[ -f "$gitignore" ]] && grep -qF "$HOSTDIME_GITIGNORE_MARKER" "$gitignore"; then
+    while IFS= read -r line; do
+      [[ -n "$line" ]] || continue
+      grep -qF "$line" "$gitignore" || echo "$line" >>"$gitignore"
+    done <"$fragment"
     return 0
   fi
 

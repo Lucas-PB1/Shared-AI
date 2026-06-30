@@ -10,9 +10,16 @@ Empacota o resultado quando o usuário **finalizou** o review (ex.: `/finalizar`
 ## O que fazer
 
 1. Identificar o arquivo (contexto do chat ou mais recente em `.cursor/review/inbox/`).
-2. Rodar `~/.cursor/review-finalizar.sh <caminho>`.
-3. Informar pasta gerada em `.cursor/review/resultados/`.
-4. O script remove arquivo do inbox e relatório após copiar.
+2. **Perguntar ao dev** o que vale da análise (se ainda não estiver claro no chat):
+   - por achado: `aceito` | `rejeitado` | `adiado` | `nao-aplicavel`
+   - motivo breve quando `rejeitado` ou `nao-aplicavel`
+3. Atualizar `.cursor/review/memoria.md`:
+   - **append** em **Histórico** (data, slug, decisões por linha/achado)
+   - **reescrever** **Convenções validadas pelo time** (consolidar padrões do projeto)
+   - criar o arquivo a partir do template em `packages/code-review/templates/memoria.md` se não existir
+4. Rodar `~/.cursor/review-finalizar.sh <caminho>`.
+5. Informar pasta gerada em `.cursor/review/resultados/`.
+6. O script remove arquivo do inbox e relatório após copiar.
 
 ## Saída
 
@@ -25,4 +32,4 @@ Empacota o resultado quando o usuário **finalizou** o review (ex.: `/finalizar`
 
 ## Resposta ao usuário
 
-Informar só: caminho, conteúdo, veredito, que inbox/reports foram limpos. Sem repetir o relatório.
+Informar só: caminho do pacote em `resultados/`, veredito, que `memoria.md` foi atualizado, e que inbox/reports foram limpos. Sem repetir o relatório.

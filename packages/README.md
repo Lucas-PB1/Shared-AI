@@ -12,6 +12,6 @@
 | `setup:skills` | cursor |
 | `setup:code-review` | code-review |
 | `bootstrap` | ambos |
-| `sync` / `status` | ambos |
+| `sync` / `status` / `doctor` | ambos |
 
 Ver [README](../README.md).

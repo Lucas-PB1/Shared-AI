@@ -42,6 +42,11 @@ mkdir -p "$RULES_DIR" "$COMMANDS_DIR" "$REVIEW_DIR"/{inbox,reports,resultados}
 
 touch "$REVIEW_DIR/inbox/.gitkeep" "$REVIEW_DIR/reports/.gitkeep" 2>/dev/null || true
 
+MEMORIA_TEMPLATE="$HOSTDIME_IA_ROOT/packages/code-review/templates/memoria.md"
+if [[ ! -f "$REVIEW_DIR/memoria.md" && -f "$MEMORIA_TEMPLATE" ]]; then
+  cp "$MEMORIA_TEMPLATE" "$REVIEW_DIR/memoria.md"
+fi
+
 link_glob "$RULE_SRC/skills-orchestrator-*.mdc" "$RULES_DIR"
 link_file "$COMMAND_SRC/avaliar.md" "$COMMANDS_DIR"
 link_file "$COMMAND_SRC/finalizar.md" "$COMMANDS_DIR"
@@ -51,7 +56,7 @@ ensure_project_gitignore "$TARGET"
 if [[ "$QUIET" -eq 0 ]]; then
   echo ""
   echo "Concluído: $LINK_LINKED symlink(s) em $TARGET/.cursor/"
-  echo "  review/ → inbox/, reports/, resultados/"
+  echo "  review/ → inbox/, reports/, resultados/, memoria.md"
   [[ "$LINK_SKIPPED" -gt 0 ]] && echo "Ignorados (arquivo real do projeto): $LINK_SKIPPED"
 fi
 

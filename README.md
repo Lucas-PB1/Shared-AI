@@ -1,6 +1,6 @@
 # HostDime IA
 
-Dois pacotes, cinco comandos:
+Dois pacotes, seis comandos:
 
 ```bash
 git clone https://github.com/hostdime/hostdime-ia.git
@@ -18,6 +18,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run sync` | Máquina | Após `git pull` — atualiza symlinks e relink projetos |
 | `npm run sync -- --migrate` | Máquina | Igual ao sync, mas substitui cópias antigas (rsync) por symlinks |
 | `npm run status` | Máquina | Versão, projetos, conflitos, symlinks quebrados |
+| `npm run doctor` | Máquina | Diagnóstico rápido: ferramentas, hooks, instalação |
 
 ## Atualização
 
@@ -44,6 +45,7 @@ O `bootstrap` também atualiza o `.gitignore` do projeto com symlinks e conteúd
 
 ```
 hostdime-ia/
+├── CHECKLIST.md      # backlog de melhorias
 ├── VERSION
 ├── package.json
 └── packages/

@@ -6,3 +6,4 @@
 .cursor/review/reports/*
 !.cursor/review/reports/.gitkeep
 .cursor/review/resultados/
+.cursor/review/memoria.md
