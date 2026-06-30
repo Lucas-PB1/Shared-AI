@@ -8,4 +8,6 @@ Memória por projeto: `.cursor/review/memoria.md` (gitignored, atualizado no `/f
 
 Diagnóstico: `npm run doctor`.
 
+CI GitLab: [ci/README.md](ci/README.md) — job `hostdime-review` com paridade ao `review-check.sh`.
+
 Bootstrap do projeto: `npm run bootstrap -- <repo>`.

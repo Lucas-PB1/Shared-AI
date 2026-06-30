@@ -17,6 +17,11 @@ is_reviewable() {
 }
 
 resolve_project() {
+  if [[ -n "${CI_PROJECT_DIR:-}" && -d "${CI_PROJECT_DIR}/.git" ]]; then
+    PROJECT="$CI_PROJECT_DIR"
+    export CURSOR_PROJECT_DIR="$CI_PROJECT_DIR"
+    return 0
+  fi
   if [[ -n "${CURSOR_PROJECT_DIR:-}" && -d "${CURSOR_PROJECT_DIR}/.git" ]]; then
     PROJECT="$CURSOR_PROJECT_DIR"
     return 0
@@ -31,6 +36,12 @@ resolve_project() {
 
 resolve_base() {
   local candidate="$1"
+
+  if [[ -n "${REVIEW_DIFF_BASE:-}" ]]; then
+    candidate="$REVIEW_DIFF_BASE"
+  elif [[ -z "$candidate" && -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ]]; then
+    candidate="$CI_MERGE_REQUEST_DIFF_BASE_SHA"
+  fi
 
   if [[ -n "$candidate" ]]; then
     if git -C "$PROJECT" rev-parse --verify "$candidate" >/dev/null 2>&1; then
@@ -58,14 +69,15 @@ resolve_base() {
 
 list_changed_files() {
   local base="$1"
+  local head="${CI_COMMIT_SHA:-HEAD}"
   local files=""
 
-  if files="$(git -C "$PROJECT" diff --name-only --diff-filter=ACMR "$base...HEAD" 2>/dev/null)"; then
+  if files="$(git -C "$PROJECT" diff --name-only --diff-filter=ACMR "$base...$head" 2>/dev/null)"; then
     printf '%s' "$files"
     return 0
   fi
 
-  git -C "$PROJECT" diff --name-only --diff-filter=ACMR "$base" HEAD
+  git -C "$PROJECT" diff --name-only --diff-filter=ACMR "$base" "$head"
 }
 
 main() {

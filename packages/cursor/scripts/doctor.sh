@@ -174,7 +174,7 @@ if [[ -n "$root" && -d "$root" ]]; then
 fi
 
 section "~/.cursor (artefatos)"
-for script in link-project.sh review-check.sh review-finalizar.sh review-diff.sh; do
+for script in link-project.sh review-check.sh review-finalizar.sh review-diff.sh review-ci.sh; do
   if [[ -x "$CURSOR_DIR/$script" ]]; then
     ok "$script"
   else

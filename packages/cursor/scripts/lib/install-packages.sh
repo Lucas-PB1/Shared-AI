@@ -93,6 +93,7 @@ install_code_review_package() {
   install -m 755 "$review_pkg/tools/check-inbox.sh" "$cursor_dir/review-check.sh"
   install -m 755 "$review_pkg/tools/finalizar-review.sh" "$cursor_dir/review-finalizar.sh"
   install -m 755 "$review_pkg/tools/review-diff.sh" "$cursor_dir/review-diff.sh"
+  install -m 755 "$review_pkg/tools/review-ci.sh" "$cursor_dir/review-ci.sh"
 
   if [[ -f "$cursor_dir/hostdime-ia.env" ]]; then
     hostdime_update_sync_time

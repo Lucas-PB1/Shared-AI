@@ -10,7 +10,8 @@
     "bootstrap": "bash packages/cursor/scripts/bootstrap-project.sh",
     "sync": "bash packages/cursor/scripts/sync-all.sh",
     "status": "bash packages/cursor/scripts/status.sh",
-    "doctor": "bash packages/cursor/scripts/doctor.sh"
+    "doctor": "bash packages/cursor/scripts/doctor.sh",
+    "review:ci": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/review-ci.sh"
   },
   "engines": {
     "node": ">=20"

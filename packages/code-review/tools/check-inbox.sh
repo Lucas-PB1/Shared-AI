@@ -24,6 +24,8 @@ resolve_hostdime_ia_root() {
 
 HOSTDIME_IA_ROOT="$(resolve_hostdime_ia_root)"
 TARGET="${1:-}"
+FAILED=0
+CI_MODE="${REVIEW_CHECK_CI:-0}"
 
 load_node() {
   export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
@@ -116,6 +118,9 @@ run_block() {
   else
     echo "(execução retornou código $status, sem saída)"
   fi
+  if [[ $status -ne 0 && "$CI_MODE" == "1" ]]; then
+    FAILED=$((FAILED + 1))
+  fi
 }
 
 TARGET="$(resolve_target)"
@@ -203,6 +208,12 @@ case "$EXT_LOWER" in
     fi
     ;;
 esac
+
+if [[ "$CI_MODE" == "1" && "$FAILED" -gt 0 ]]; then
+  echo ""
+  echo "=== CI: $FAILED ferramenta(s) com achados ===" >&2
+  exit 1
+fi
 
 echo ""
 echo "=== Fim ==="
