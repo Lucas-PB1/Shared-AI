@@ -57,6 +57,7 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `prettier` | sim | sim | — |
 | `git` | sim | — | — |
 | `hubspot-cli` | deploy/CLI, HubSpot, `hs project` | hsproject / cms-components / `@hubspot/cli` | hubspot |
+| `okf` | OKF, knowledge bundle, concept document | — | okf |
 | `review-inbox` | `/avaliar`, `/avaliar-diff`, `/finalizar`, arquivo no repo (se code-review instalado) | — | — |
 | `review`, `review-bugbot`, `review-security` | review PR/diff (se code-review instalado) | — | — |
 
@@ -74,6 +75,7 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `arquitetura.mdc` | `*.{ts,tsx,js,php,py}` |
 | `testing.mdc` | `*.{test,spec}.*`, `tests/**` |
 | `hubspot.mdc` | `hsproject.json`, `*.fields.json`, `hubspot.config.yml` |
+| `okf.mdc` | `okf/**/*.md`, `.okf/**/*.md`, `okf-bundle/**/*.md` |
 
 ## Always-on (orquestrador)
 

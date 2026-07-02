@@ -38,6 +38,7 @@ test_link_symlinks() {
   assert "command avaliar" test -L "$project/.cursor/commands/avaliar.md"
   assert "command hubspot-mcp" test -L "$project/.cursor/commands/hubspot-mcp.md"
   assert "rule hubspot" test -L "$project/.cursor/rules/skills-orchestrator-hubspot.mdc"
+  assert "rule okf" test -L "$project/.cursor/rules/skills-orchestrator-okf.mdc"
   assert "review inbox" test -d "$project/.cursor/review/inbox"
   assert "memoria template" test -f "$project/.cursor/review/memoria.md"
 }
