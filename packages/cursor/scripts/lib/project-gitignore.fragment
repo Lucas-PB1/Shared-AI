@@ -4,6 +4,9 @@
 .cursor/commands/avaliar-diff.md
 .cursor/commands/skills-why.md
 .cursor/commands/hubspot-mcp.md
+.cursor/commands/cursor-cli.md
+.cursor/commands/historico.md
+.cursor/commands/sync-inbox.md
 .cursor/review/inbox/*
 !.cursor/review/inbox/.gitkeep
 .cursor/review/reports/*
