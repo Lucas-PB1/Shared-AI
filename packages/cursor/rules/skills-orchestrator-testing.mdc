@@ -1,7 +1,7 @@
 ---
 description: >-
   Roteia skill testing — confirma framework quando há arquivos de teste no contexto
-globs: "**/*.{test,spec}.{ts,tsx,js,php},**/tests/**"
+globs: "**/*.{test,spec}.{ts,tsx,js,php},**/test_*.py,**/*_test.py,**/tests/**"
 alwaysApply: false
 ---
 
@@ -25,8 +25,16 @@ Refs: `testing/references/vitest.md`, `react-testing-library.md`, `accessibility
 | PHPUnit, Pest, `tests/` Laravel | `testing` + `laravel/references/testing.md` |
 | Teste unitário PHP sem Laravel | `testing` (adaptar) + `php` |
 
+## Python
+
+| Detectar | Skills |
+| --- | --- |
+| pytest, `test_*.py`, `*_test.py` | `testing` + `python` |
+| unittest stdlib | `testing` (adaptar) + `python` |
+
 ## Composição
 
 - `skills-orchestrator-react-ui.mdc` se teste em `.tsx`
 - `skills-orchestrator-php-stack.mdc` se teste em `.php`
+- `skills-orchestrator-python-stack.mdc` se teste em `.py`
 - `skills-orchestrator-base.mdc` (sempre)

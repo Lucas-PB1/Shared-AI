@@ -47,6 +47,7 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `php` | — | sim | php-stack |
 | `laravel` | — | sim | php-stack |
 | `zend-laminas` | — | sim | php-stack |
+| `python` | sim | sim | python-stack |
 | `next` | sim (restrito) | sim | react-ui |
 | `react` | sim | sim | react-ui |
 | `tailwind` | sim | sim | react-ui; web-markup-styles |
@@ -69,7 +70,8 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `react-ui.mdc` | `*.{tsx,jsx}` |
 | `web-markup-styles.mdc` | `*.{html,css,scss,blade.php}` |
 | `php-stack.mdc` | `*.{php,blade.php}` |
-| `arquitetura.mdc` | `*.{ts,tsx,js,php}` |
+| `python-stack.mdc` | `*.{py,pyi}` |
+| `arquitetura.mdc` | `*.{ts,tsx,js,php,py}` |
 | `testing.mdc` | `*.{test,spec}.*`, `tests/**` |
 
 ## Always-on (orquestrador)

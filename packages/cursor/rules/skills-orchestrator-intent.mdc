@@ -55,6 +55,16 @@ Se **nenhum** existir: manter só a linha genérica de review acima — **não**
 
 > **Next.js:** não acionar só por “next” isolado (ex.: “próximo passo” em português).
 
+## Python
+
+| Intenção no pedido | Skill |
+| --- | --- |
+| Python, script, pip, venv, poetry, uv | `python` |
+| pyproject, requirements, pacote instalável | `python` |
+| pytest, unittest, teste Python | `testing`, `python` |
+| asyncio, coroutine, concorrência Python | `python` |
+| Django, FastAPI, Flask (sem skill dedicada) | `python` |
+
 ## Arquitetura
 
 | Intenção no pedido | Skill |

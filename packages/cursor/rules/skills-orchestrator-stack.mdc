@@ -13,6 +13,7 @@ Antes de implementar, varrer manifestos na **raiz** e em **pacotes/workspaces** 
 
 - `package.json` (raiz e subpastas com deps do pacote)
 - `composer.json`
+- `pyproject.toml`, `requirements.txt`, `setup.py`
 - `tsconfig.json` (presença indica TypeScript)
 - `hsproject.json` (HubSpot developer project)
 
@@ -31,6 +32,8 @@ Antes de implementar, varrer manifestos na **raiz** e em **pacotes/workspaces** 
 | `prettier` | `prettier` |
 | `laravel/framework` | `laravel`, `php` |
 | pacotes `laminas/*` ou `zendframework/*` | `zend-laminas`, `php` |
+| `pyproject.toml`, `requirements.txt` ou `.py` no escopo | `python` |
+| `pytest` em deps ou `[tool.pytest]` | `testing`, `python` |
 | `hsproject.json`, `@hubspot/cms-components` ou `@hubspot/cli` | `hubspot-cli` (se existir no projeto ou em `~/.cursor/skills/`) |
 
 ## Como usar

@@ -1,13 +1,13 @@
 ---
 description: >-
   Roteia as 7 skills de arquitetura — refina intent quando há código no contexto
-globs: "**/*.{ts,tsx,js,php}"
+globs: "**/*.{ts,tsx,js,php,py}"
 alwaysApply: false
 ---
 
 # Orquestrador — arquitetura
 
-Sinais estruturais no pedido já estão em `skills-orchestrator-intent.mdc`. Esta rule **refina** quando há `.ts`/`.tsx`/`.js`/`.php` no diff ou abertos.
+Sinais estruturais no pedido já estão em `skills-orchestrator-intent.mdc`. Esta rule **refina** quando há `.ts`/`.tsx`/`.js`/`.php`/`.py` no diff ou abertos.
 
 Ler **1–3** SKILL.md por tarefa (localização em `skills-orchestrator-base.mdc`) — não todas de uma vez.
 
