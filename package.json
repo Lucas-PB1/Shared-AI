@@ -12,6 +12,7 @@
     "sync": "node packages/cursor/scripts/run.mjs sync",
     "status": "node packages/cursor/scripts/run.mjs status",
     "doctor": "node packages/cursor/scripts/run.mjs doctor",
+    "boot-sync": "node packages/cursor/scripts/run.mjs boot-sync",
     "review:ci": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/review-ci.sh",
     "test": "bash tests/run-all.sh"
   },

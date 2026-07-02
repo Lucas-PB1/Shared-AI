@@ -22,6 +22,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run sync -- --migrate` | Máquina | Igual ao sync, mas substitui cópias antigas (rsync) por symlinks |
 | `npm run status` | Máquina | Versão, projetos, conflitos, symlinks quebrados |
 | `npm run doctor` | Máquina | Diagnóstico rápido: ferramentas, hooks, instalação |
+| `npm run boot-sync -- on\|off\|status` | Máquina | Sync automático ao iniciar o computador (git pull + sync) |
 | `npm run review:ci -- [base]` | Projeto | Mesmo review-check do `/avaliar` nos arquivos do diff |
 | `npm run test` | Dev | Testes bats (scripts bash) |
 
@@ -35,6 +36,19 @@ npm run bootstrap -- C:\caminho\do\seu\projeto
 ```
 
 Linux e macOS usam os mesmos comandos npm; o dispatcher (`run.mjs`) roteia para bash ou PowerShell conforme o OS.
+
+### Sync ao iniciar o computador
+
+Na **primeira** `npm run sync` interativa, pergunta se deseja `git pull` + sync automático ao logar. Controle manual:
+
+```bash
+npm run boot-sync -- on      # liga
+npm run boot-sync -- off     # desliga
+npm run boot-sync -- status  # estado + log
+npm run boot-sync -- run     # testar agora
+```
+
+Log: `~/.cursor/hostdime-ia/boot-sync.log` — agendamento via systemd (Linux), LaunchAgent (macOS) ou Task Scheduler (Windows).
 
 ## Atualização
 

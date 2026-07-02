@@ -22,6 +22,7 @@ const BASH_MAP = {
   status: join(scriptsDir, 'status.sh'),
   doctor: join(scriptsDir, 'doctor.sh'),
   'review-ci': join(scriptsDir, '../../code-review/tools/review-ci.sh'),
+  'boot-sync': join(scriptsDir, 'boot-sync.sh'),
 };
 
 const PS1_MAP = {
@@ -32,6 +33,7 @@ const PS1_MAP = {
   'sync-all': join(ps1Dir, 'Sync-All.ps1'),
   status: join(ps1Dir, 'Status.ps1'),
   doctor: join(ps1Dir, 'Doctor.ps1'),
+  'boot-sync': join(ps1Dir, 'Boot-Sync.ps1'),
 };
 
 const ALIASES = {
@@ -81,7 +83,7 @@ const [command, ...args] = process.argv.slice(2);
 if (!command || command === '--help' || command === '-h') {
   console.log(`Uso: node run.mjs <comando> [args...]
 
-Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor`);
+Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync`);
   process.exit(0);
 }
 

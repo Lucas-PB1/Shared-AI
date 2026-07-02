@@ -103,3 +103,17 @@ Não é necessário. Se preferir ambiente Linux, use WSL e siga o [README](../RE
 ## `review:ci` no Windows
 
 Ainda depende de **Git Bash** (`bash` no PATH). Use WSL ou CI Linux para review automatizado, se Git Bash não estiver disponível.
+
+## Sync ao iniciar o computador
+
+Mesmos comandos do Linux:
+
+```powershell
+npm run boot-sync -- on
+npm run boot-sync -- off
+npm run boot-sync -- status
+```
+
+Agendamento via **Task Scheduler** (logon). Log: `%USERPROFILE%\.cursor\hostdime-ia\boot-sync.log`
+
+Na primeira `npm run sync` interativa, pergunta se deseja ativar.

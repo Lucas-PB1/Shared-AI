@@ -162,6 +162,39 @@ MD
   assert "resultado criado" test -f "$project/.cursor/review/resultados/2026-06-30_app-Sample/relatorio.md"
 }
 
+test_boot_sync_toggle() {
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/boot-sync.sh"
+  boot_sync_disable
+  assert "off após disable" test "$(boot_sync_read_mode)" = "off"
+  boot_sync_write_state "on" "1"
+  assert "on após enable" test "$(boot_sync_read_mode)" = "on"
+  boot_sync_write_state "off" "1"
+  assert "off após write" test "$(boot_sync_read_mode)" = "off"
+}
+
+test_boot_sync_unset() {
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/boot-sync.sh"
+  rm -f "$(boot_sync_state_file)"
+  assert "unset sem state" test "$(boot_sync_read_mode)" = "unset"
+  if boot_sync_was_asked; then
+    assert "não perguntou ainda" false
+  else
+    assert "não perguntou ainda" true
+  fi
+}
+
+test_boot_sync_prompt_skip() {
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/boot-sync.sh"
+  export HOSTDIME_BOOT_SYNC_PROMPT=skip
+  rm -f "$(boot_sync_state_file)"
+  boot_sync_prompt_if_needed
+  assert "skip mantém unset" test "$(boot_sync_read_mode)" = "unset"
+  unset HOSTDIME_BOOT_SYNC_PROMPT
+}
+
 echo "HostDime IA — testes (runner embutido)"
 
 run_test "link symlinks" test_link_symlinks
@@ -175,6 +208,9 @@ run_test "hubspot mcp install" test_hubspot_mcp_install
 run_test "hubspot mcp detect" test_hubspot_mcp_detect
 run_test "finalizar inbox" test_finalizar_inbox
 run_test "finalizar repo" test_finalizar_repo
+run_test "boot sync toggle" test_boot_sync_toggle
+run_test "boot sync unset" test_boot_sync_unset
+run_test "boot sync prompt skip" test_boot_sync_prompt_skip
 
 echo ""
 echo "Resumo: $pass ok, $fail falha(s)"

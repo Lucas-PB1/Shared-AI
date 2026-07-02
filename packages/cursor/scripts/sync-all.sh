@@ -96,3 +96,7 @@ fi
 
 echo ""
 echo "Sync concluído."
+
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/lib/boot-sync.sh"
+boot_sync_prompt_if_needed

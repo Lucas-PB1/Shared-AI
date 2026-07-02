@@ -109,3 +109,6 @@ if (Test-Path $linkScript) {
 
 Write-Host ''
 Write-Host 'Sync concluído.'
+
+. (Join-Path $LibRoot 'Boot-Sync.ps1')
+Prompt-BootSyncIfNeeded
