@@ -55,6 +55,8 @@ install_skills_package() {
   install -m 755 "$cursor_pkg/scripts/install-cursor-cli.sh" "$cursor_dir/"
   install -m 755 "$cursor_pkg/scripts/agent-cli.sh" "$cursor_dir/run-agent.sh"
   install -m 755 "$lib_dir/cursor-cli.sh" "$cursor_dir/hostdime-cursor-cli.sh"
+  install -m 755 "$lib_dir/sync-inbox.sh" "$cursor_dir/hostdime-sync-inbox.sh"
+  install -m 755 "$cursor_pkg/scripts/sync-inbox.sh" "$cursor_dir/"
 
   hostdime_write_env "$monorepo_root"
 

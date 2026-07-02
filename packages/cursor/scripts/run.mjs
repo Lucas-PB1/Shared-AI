@@ -26,6 +26,7 @@ const BASH_MAP = {
   historico: join(scriptsDir, 'historico-cli.sh'),
   'cursor-cli': join(scriptsDir, 'install-cursor-cli.sh'),
   agent: join(scriptsDir, 'agent-cli.sh'),
+  'sync-inbox': join(scriptsDir, 'sync-inbox.sh'),
 };
 
 const PS1_MAP = {
@@ -89,7 +90,7 @@ const [command, ...args] = process.argv.slice(2);
 if (!command || command === '--help' || command === '-h') {
   console.log(`Uso: node run.mjs <comando> [args...]
 
-Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico, cursor-cli, agent`);
+Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico, cursor-cli, agent, sync-inbox`);
   process.exit(0);
 }
 

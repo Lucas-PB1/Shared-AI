@@ -39,6 +39,7 @@ test_link_symlinks() {
   assert "command hubspot-mcp" test -L "$project/.cursor/commands/hubspot-mcp.md"
   assert "command historico" test -L "$project/.cursor/commands/historico.md"
   assert "command cursor-cli" test -L "$project/.cursor/commands/cursor-cli.md"
+  assert "command sync-inbox" test -L "$project/.cursor/commands/sync-inbox.md"
   assert "rule hubspot" test -L "$project/.cursor/rules/skills-orchestrator-hubspot.mdc"
   assert "rule okf" test -L "$project/.cursor/rules/skills-orchestrator-okf.mdc"
   assert "review inbox" test -d "$project/.cursor/review/inbox"
@@ -302,6 +303,23 @@ test_agent_wrapper_dry_run() {
   assert "agent dry-run approve mcps" grep -q 'approve-mcps' <<<"$out"
 }
 
+test_sync_inbox_scan() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$CURSOR_USER_DIR/hostdime-ia"
+  git -C "$project" init -q
+  git -C "$project" config user.email "test@test.com"
+  git -C "$project" config user.name "test"
+  echo "base" >"$project/README.md"
+  git -C "$project" add README.md
+  git -C "$project" commit -q -m "initial"
+  echo "wip" >>"$project/README.md"
+  printf '{"projects":[{"path":"%s"}]}' "$project" >"$CURSOR_USER_DIR/hostdime-ia/projects.json"
+  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/scan-sync-inbox.py"
+  out="$(python3 "$py")"
+  assert "sync-inbox scan hit" grep -q '"changedCount"' <<<"$out"
+  assert "sync-inbox scan project" grep -qF "$project" <<<"$out"
+}
+
 echo "HostDime IA — testes (runner embutido)"
 
 run_test "link symlinks" test_link_symlinks
@@ -326,6 +344,7 @@ run_test "historico templates" test_historico_templates
 run_test "cursor cli merge config" test_cursor_cli_merge_config
 run_test "cursor cli dry run" test_cursor_cli_dry_run
 run_test "agent wrapper dry run" test_agent_wrapper_dry_run
+run_test "sync-inbox scan" test_sync_inbox_scan
 
 echo ""
 echo "Resumo: $pass ok, $fail falha(s)"

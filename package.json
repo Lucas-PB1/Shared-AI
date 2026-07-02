@@ -16,6 +16,7 @@
     "historico": "node packages/cursor/scripts/run.mjs historico",
     "cursor-cli": "node packages/cursor/scripts/run.mjs cursor-cli",
     "agent": "node packages/cursor/scripts/run.mjs agent",
+    "sync-inbox": "node packages/cursor/scripts/run.mjs sync-inbox",
     "review:ci": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/review-ci.sh",
     "test": "bash tests/run-all.sh"
   },
