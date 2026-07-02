@@ -1,6 +1,6 @@
 # HostDime IA
 
-Dois pacotes, sete comandos:
+Dois pacotes, oito comandos npm:
 
 ```bash
 git clone https://github.com/hostdime/hostdime-ia.git
@@ -24,6 +24,8 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run doctor` | Máquina | Diagnóstico rápido: ferramentas, hooks, instalação |
 | `npm run boot-sync -- on\|off\|status` | Máquina | Sync automático ao iniciar o computador (git pull + sync) |
 | `npm run historico -- status\|validate\|merge-hooks` | Projeto | CLI do command `/historico` (watches, hook stop) |
+| `npm run cursor-cli -- install\|status\|login` | Máquina | Instala `agent` + config modo auto (`approvalMode=unrestricted`) |
+| `npm run agent -- [args]` | Projeto | Roda `agent` com rules/commands alinhados à IDE |
 | `npm run review:ci -- [base]` | Projeto | Mesmo review-check do `/avaliar` nos arquivos do diff |
 | `npm run test` | Dev | Testes bats (scripts bash) |
 

@@ -52,6 +52,9 @@ install_skills_package() {
   install -m 755 "$lib_dir/hostdime-env.sh" "$cursor_dir/hostdime-env.sh"
   install -m 755 "$lib_dir/link-from-repo.sh" "$cursor_dir/hostdime-link-from-repo.sh"
   install -m 755 "$cursor_pkg/scripts/install-hubspot-mcp.sh" "$cursor_dir/"
+  install -m 755 "$cursor_pkg/scripts/install-cursor-cli.sh" "$cursor_dir/"
+  install -m 755 "$cursor_pkg/scripts/agent-cli.sh" "$cursor_dir/run-agent.sh"
+  install -m 755 "$lib_dir/cursor-cli.sh" "$cursor_dir/hostdime-cursor-cli.sh"
 
   hostdime_write_env "$monorepo_root"
 

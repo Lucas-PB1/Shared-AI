@@ -38,6 +38,7 @@ test_link_symlinks() {
   assert "command avaliar" test -L "$project/.cursor/commands/avaliar.md"
   assert "command hubspot-mcp" test -L "$project/.cursor/commands/hubspot-mcp.md"
   assert "command historico" test -L "$project/.cursor/commands/historico.md"
+  assert "command cursor-cli" test -L "$project/.cursor/commands/cursor-cli.md"
   assert "rule hubspot" test -L "$project/.cursor/rules/skills-orchestrator-hubspot.mdc"
   assert "rule okf" test -L "$project/.cursor/rules/skills-orchestrator-okf.mdc"
   assert "review inbox" test -d "$project/.cursor/review/inbox"
@@ -263,6 +264,44 @@ test_historico_templates() {
   assert "md template o quê" grep -q "O quê" "$tpl/history-log.md"
 }
 
+test_cursor_cli_merge_config() {
+  project="$(hostdime_make_project)"
+  config="$project/cli-config.json"
+  tpl="$HOSTDIME_IA_ROOT/packages/cursor/templates/cli-config.auto.json"
+  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-cursor-cli-config.py"
+  result="$(python3 "$py" "$config" "$tpl")"
+  assert "cli config created" test "$result" = "created"
+  assert "approval unrestricted" grep -q '"approvalMode": "unrestricted"' "$config"
+  assert "deny rm" grep -q 'Shell(rm)' "$config"
+  echo '{"version":1,"editor":{"vimMode":true},"permissions":{"allow":["Shell(ls)"],"deny":[]}}' >"$config"
+  result2="$(python3 "$py" "$config" "$tpl")"
+  assert "cli config merged" test "$result2" = "merged"
+  assert "vim preserved" grep -q '"vimMode": true' "$config"
+  assert "allow ls preserved" grep -q 'Shell(ls)' "$config"
+  result3="$(python3 "$py" "$config" "$tpl")"
+  assert "cli config idempotent" test "$result3" = "ok"
+}
+
+test_cursor_cli_dry_run() {
+  export HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT"
+  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-cursor-cli.sh" install --dry-run 2>&1)"
+  assert "dry-run install" grep -q 'dry-run' <<<"$out"
+  if grep -q 'cursor.com/install' <<<"$out" || grep -q 'já instalado' <<<"$out"; then
+    assert "dry-run install step" true
+  else
+    assert "dry-run install step" false
+  fi
+}
+
+test_agent_wrapper_dry_run() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/rules"
+  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/agent-cli.sh" --dry-run --project="$project" "fix lint" 2>&1)"
+  assert "agent dry-run project" grep -qF "$project" <<<"$out"
+  assert "agent dry-run args" grep -q 'fix lint' <<<"$out"
+  assert "agent dry-run approve mcps" grep -q 'approve-mcps' <<<"$out"
+}
+
 echo "HostDime IA — testes (runner embutido)"
 
 run_test "link symlinks" test_link_symlinks
@@ -284,6 +323,9 @@ run_test "historico validate invalid" test_historico_validate_invalid
 run_test "historico scope match" test_historico_scope_match
 run_test "historico merge hooks" test_historico_merge_hooks
 run_test "historico templates" test_historico_templates
+run_test "cursor cli merge config" test_cursor_cli_merge_config
+run_test "cursor cli dry run" test_cursor_cli_dry_run
+run_test "agent wrapper dry run" test_agent_wrapper_dry_run
 
 echo ""
 echo "Resumo: $pass ok, $fail falha(s)"

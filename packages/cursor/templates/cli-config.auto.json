@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "editor": { "vimMode": false },
+  "approvalMode": "unrestricted",
+  "permissions": {
+    "allow": [],
+    "deny": [
+      "Shell(rm)",
+      "Shell(sudo rm)",
+      "Shell(shred)",
+      "Write(**/.env*)",
+      "Write(**/*.pem)",
+      "Write(**/*.key)"
+    ]
+  },
+  "hints": true,
+  "notifications": true,
+  "attribution": {
+    "attributeCommitsToAgent": true,
+    "attributePRsToAgent": true
+  }
+}

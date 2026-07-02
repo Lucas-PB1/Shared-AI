@@ -24,6 +24,8 @@ const BASH_MAP = {
   'review-ci': join(scriptsDir, '../../code-review/tools/review-ci.sh'),
   'boot-sync': join(scriptsDir, 'boot-sync.sh'),
   historico: join(scriptsDir, 'historico-cli.sh'),
+  'cursor-cli': join(scriptsDir, 'install-cursor-cli.sh'),
+  agent: join(scriptsDir, 'agent-cli.sh'),
 };
 
 const PS1_MAP = {
@@ -36,6 +38,8 @@ const PS1_MAP = {
   doctor: join(ps1Dir, 'Doctor.ps1'),
   'boot-sync': join(ps1Dir, 'Boot-Sync.ps1'),
   historico: join(ps1Dir, 'Historico.ps1'),
+  'cursor-cli': join(ps1Dir, 'Install-CursorCli.ps1'),
+  agent: join(ps1Dir, 'Agent.ps1'),
 };
 
 const ALIASES = {
@@ -85,7 +89,7 @@ const [command, ...args] = process.argv.slice(2);
 if (!command || command === '--help' || command === '-h') {
   console.log(`Uso: node run.mjs <comando> [args...]
 
-Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico`);
+Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico, cursor-cli, agent`);
   process.exit(0);
 }
 

@@ -92,6 +92,8 @@ Ao abrir um workspace, o hook:
 | `npm run setup:code-review` | Instala commands `/avaliar`, ferramentas review |
 | `npm run bootstrap -- <repo>` | Symlinks no projeto + registry |
 | `npm run historico -- status` | Watches de histórico por escopo (`/historico`) |
+| `npm run cursor-cli -- install` | Instala `agent` + modo auto (`approvalMode=unrestricted`) |
+| `npm run agent -- [args]` | Roda `agent` com rules/commands alinhados à IDE |
 | `npm run sync` | Reinstala pacotes, deps, relink projetos |
 | `npm run detach -- <repo>` | Remove symlinks gerenciados |
 | `npm run doctor` | Diagnóstico |
@@ -142,3 +144,31 @@ O merge registra:
 ```
 
 Verifique no canal **Hooks** do Cursor após editar arquivos no escopo observado — o hook deve emitir `followup_message` pedindo append no arquivo de histórico.
+
+## Command `/cursor-cli`
+
+Instala o binário `agent` e configura **modo auto** (`approvalMode: unrestricted` em `%USERPROFILE%\.cursor\cli-config.json`):
+
+```powershell
+npm run cursor-cli -- install
+npm run cursor-cli -- status
+npm run cursor-cli -- login
+```
+
+Instalação nativa (alternativa):
+
+```powershell
+irm 'https://cursor.com/install?win32=true' | iex
+```
+
+Headless (CI/scripts): `agent -p --force "prompt"` com `CURSOR_API_KEY`. Ver [Cursor CLI headless](https://cursor.com/docs/cli/headless).
+
+Wrapper alinhado à IDE:
+
+```powershell
+cd C:\dev\meu-repo
+npm run agent -- "refatorar módulo auth"
+npm run agent -- -p --force "fix lint"
+```
+
+Antes de executar, relinka rules/commands (como o hook `sessionStart`).
