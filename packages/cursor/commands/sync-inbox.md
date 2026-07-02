@@ -15,11 +15,21 @@ Inbox de **projetos do sync** com alterações git não commitadas. Resumo objet
 
 1. Lê `~/.cursor/hostdime-ia/projects.json` (projetos do sync/bootstrap)
 2. Em cada repo: `git status --porcelain` — só entra se **dirty**
-3. Monta resumo heurístico:
-   - branch, qtd de arquivos, último commit
-   - última mensagem do usuário em `~/.cursor/projects/*/agent-transcripts/*.jsonl` (se existir)
+3. Monta resumo heurístico (`summary` + `detail`):
+   - **Pedido:** última mensagem sua no chat do Cursor (transcripts)
+   - **Área:** módulo/pasta dos arquivos alterados ou abertos recentemente
+   - **Branch** de feature quando não há chat
+   - Projetos só com `.gitignore`/sync aparecem por último como "Setup Cursor"
 4. Grava `~/.cursor/hostdime-ia/sync-inbox.json`
-5. Menu no terminal: escolhe número → `cursor /path/do/projeto`
+5. Menu no terminal ou zenity: escolhe projeto → `cursor /path/do/projeto`
+
+Exemplo:
+
+```
+1. hostdime
+   → Pedido: tem alguma melhoria que vc me sugere?
+   (Section-Trust-Indicators · 4 arquivos · SectionHeroGlobalNetworkMap)
+```
 
 ## CLI
 
@@ -35,15 +45,11 @@ npm run sync-inbox -- scan
 
 - Estado: `~/.cursor/hostdime-ia/sync-inbox.env`
 - Log: `~/.cursor/hostdime-ia/sync-inbox.log`
-- Requer terminal gráfico (`DISPLAY`) para menu — `.desktop` com `Terminal=true`
+- **Linux:** autostart `.desktop` + janela de progresso (scan) + **menu em cards** GTK (~12s após login)
+- Fallback sem GTK: zenity com resumo em coluna única
+- Se zenity ausente: notificação + log; rode `npm run sync-inbox -- run`
 
-Independente do `boot-sync` (git pull). Pode usar os dois.
-
-## Fase 2 (futuro)
-
-- Resumo enriquecido com `agent -p` só nos dirty
-- Notificação desktop (`notify-send`) + zenity
-- Continuar sessão CLI (`agent resume`) além de abrir IDE
+Independente do `boot-sync` (git pull só no clone hostdime-ia). Pode usar os dois.
 
 ## Resposta ao usuário
 

@@ -318,6 +318,8 @@ test_sync_inbox_scan() {
   out="$(python3 "$py")"
   assert "sync-inbox scan hit" grep -q '"changedCount"' <<<"$out"
   assert "sync-inbox scan project" grep -qF "$project" <<<"$out"
+  assert "sync-inbox summary field" grep -q '"summary"' <<<"$out"
+  assert "sync-inbox cards script" test -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox-cards.py"
 }
 
 echo "HostDime IA — testes (runner embutido)"
