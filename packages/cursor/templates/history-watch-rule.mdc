@@ -1,0 +1,30 @@
+---
+description: >-
+  Histórico automático — escopo {{SCOPE}}; append em {{HISTORY_FILE}} após
+  edições do Agent
+globs:
+  - "{{GLOB_PATTERN}}"
+alwaysApply: false
+---
+
+# History watch — {{WATCH_ID}}
+
+Watch ativo (`format`: **{{FORMAT}}**). Ler skill `history-watch`.
+
+## Ao editar arquivos neste escopo
+
+1. **Não encerre o turno** sem preparar entrada no histórico.
+2. Campos obrigatórios por alteração relevante:
+   - **timestamp** (ISO 8601)
+   - **o quê** mudou (objetivo, 1–2 frases)
+   - **refs** (paths ou links para arquivos tocados)
+   - **por quê** (motivo/decisão)
+3. Append em [`{{HISTORY_FILE}}`]({{HISTORY_FILE}}) — **recentes primeiro**.
+
+## Formato
+
+{{FORMAT_INSTRUCTIONS}}
+
+## Hook
+
+O hook `stop` em `.cursor/hooks.json` dispara follow-up se o escopo foi alterado neste turno.

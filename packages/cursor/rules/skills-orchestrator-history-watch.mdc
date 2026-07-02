@@ -1,0 +1,25 @@
+---
+description: >-
+  Roteia skill history-watch para /historico, history watch, log.md de escopo e
+  append de histórico versionado
+alwaysApply: true
+---
+
+# Orquestrador — history watch
+
+## Intent
+
+| Palavras no pedido | Skill / command |
+| --- | --- |
+| `/historico`, historico, history watch, watch de histórico | `history-watch` + command `/historico` |
+| log.md escopo, history.md escopo, memory.md escopo | `history-watch` |
+| append histórico, registrar alteração escopo | `history-watch` |
+
+## Composição
+
+- `format=okf-log` no watch → também `okf` + `skills-orchestrator-okf.mdc`
+- Setup inicial → command `/historico` (Agent gera artefatos no projeto)
+
+## Localização
+
+Skill: `history-watch/SKILL.md` (pacote cursor, symlink em `~/.cursor/skills/`).

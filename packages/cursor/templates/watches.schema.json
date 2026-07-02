@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hostdime-ia/history-watches/v1",
+  "type": "object",
+  "required": ["version", "watches"],
+  "properties": {
+    "version": { "const": 1 },
+    "watches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "scope", "scopeKind", "historyFile", "format", "enabled"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "scope": { "type": "string", "minLength": 1 },
+          "scopeKind": { "enum": ["glob", "file", "dir"] },
+          "historyFile": { "type": "string", "minLength": 1 },
+          "format": { "enum": ["okf-log", "markdown"] },
+          "enabled": { "type": "boolean" },
+          "ruleFile": { "type": "string" }
+        }
+      }
+    }
+  }
+}

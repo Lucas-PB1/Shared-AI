@@ -91,6 +91,7 @@ Ao abrir um workspace, o hook:
 | `npm run setup:skills` | Instala rules, skills, scripts `.ps1` e hook em `%USERPROFILE%\.cursor` |
 | `npm run setup:code-review` | Instala commands `/avaliar`, ferramentas review |
 | `npm run bootstrap -- <repo>` | Symlinks no projeto + registry |
+| `npm run historico -- status` | Watches de histórico por escopo (`/historico`) |
 | `npm run sync` | Reinstala pacotes, deps, relink projetos |
 | `npm run detach -- <repo>` | Remove symlinks gerenciados |
 | `npm run doctor` | Diagnóstico |
@@ -117,3 +118,27 @@ npm run boot-sync -- status
 Agendamento via **Task Scheduler** (logon). Log: `%USERPROFILE%\.cursor\hostdime-ia\boot-sync.log`
 
 Na primeira `npm run sync` interativa, pergunta se deseja ativar.
+
+## Command `/historico` (hook `stop` no projeto)
+
+O watch de histórico é **por projeto**, não global. Após `/historico setup`, o Agent copia para `.cursor/hooks/`:
+
+- `historico-stop.ps1` — hook `stop` no Windows
+- `historico-stop.sh` — Unix
+- `history-watch-match.py` — matcher de escopo
+
+Merge em `.cursor/hooks.json` do projeto:
+
+```powershell
+npm run historico -- merge-hooks
+```
+
+O merge registra:
+
+```json
+{
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/historico-stop.ps1"
+}
+```
+
+Verifique no canal **Hooks** do Cursor após editar arquivos no escopo observado — o hook deve emitir `followup_message` pedindo append no arquivo de histórico.

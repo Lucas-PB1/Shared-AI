@@ -37,6 +37,7 @@ test_link_symlinks() {
   assert "orquestrador base" test -L "$project/.cursor/rules/skills-orchestrator-base.mdc"
   assert "command avaliar" test -L "$project/.cursor/commands/avaliar.md"
   assert "command hubspot-mcp" test -L "$project/.cursor/commands/hubspot-mcp.md"
+  assert "command historico" test -L "$project/.cursor/commands/historico.md"
   assert "rule hubspot" test -L "$project/.cursor/rules/skills-orchestrator-hubspot.mdc"
   assert "rule okf" test -L "$project/.cursor/rules/skills-orchestrator-okf.mdc"
   assert "review inbox" test -d "$project/.cursor/review/inbox"
@@ -195,6 +196,73 @@ test_boot_sync_prompt_skip() {
   unset HOSTDIME_BOOT_SYNC_PROMPT
 }
 
+test_historico_validate() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/history"
+  cat >"$project/.cursor/history/watches.json" <<'JSON'
+{"version":1,"watches":[{"id":"domain","scope":"src/domain/**","scopeKind":"glob","historyFile":"docs/log.md","format":"okf-log","enabled":true}]}
+JSON
+  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.py"
+  result="$(python3 "$py" validate "$project")"
+  assert "watches valid" test "$result" = "ok"
+}
+
+test_historico_validate_invalid() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/history"
+  echo '{"version":1,"watches":[{"id":"Bad Id","scope":"x"}]}' >"$project/.cursor/history/watches.json"
+  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.py"
+  if python3 "$py" validate "$project" >/dev/null 2>&1; then
+    assert "watches invalid fails" false
+  else
+    assert "watches invalid fails" true
+  fi
+}
+
+test_historico_scope_match() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/history"
+  cat >"$project/.cursor/history/watches.json" <<'JSON'
+{"version":1,"watches":[{"id":"domain","scope":"src/domain/**","scopeKind":"glob","historyFile":"docs/log.md","format":"okf-log","enabled":true}]}
+JSON
+  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.py"
+  if python3 "$py" scope-match "$project" "src/domain/order.ts" >/dev/null 2>&1; then
+    assert "scope match hit" true
+  else
+    assert "scope match hit" false
+  fi
+  if python3 "$py" scope-match "$project" "src/other/x.ts" >/dev/null 2>&1; then
+    assert "scope match miss" false
+  else
+    assert "scope match miss" true
+  fi
+}
+
+test_historico_merge_hooks() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/history" "$project/.cursor/hooks"
+  cat >"$project/.cursor/history/watches.json" <<'JSON'
+{"version":1,"watches":[{"id":"api","scope":"src/**","scopeKind":"glob","historyFile":"history.md","format":"markdown","enabled":true}]}
+JSON
+  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-historico-hooks.py"
+  hooks="$project/.cursor/hooks.json"
+  result="$(python3 "$py" "$hooks" "$project")"
+  assert "historico merge created" test "$result" = "created"
+  assert "stop hook" grep -q historico-stop "$hooks"
+  result2="$(python3 "$py" "$hooks" "$project")"
+  assert "historico merge idempotent" test "$result2" = "ok"
+}
+
+test_historico_templates() {
+  tpl="$HOSTDIME_IA_ROOT/packages/cursor/templates"
+  assert "template okf log" test -f "$tpl/history-log.okf.md"
+  assert "template md" test -f "$tpl/history-log.md"
+  assert "template rule" test -f "$tpl/history-watch-rule.mdc"
+  assert "template schema" test -f "$tpl/watches.schema.json"
+  assert "okf template heading" grep -q "Directory Update Log" "$tpl/history-log.okf.md"
+  assert "md template o quê" grep -q "O quê" "$tpl/history-log.md"
+}
+
 echo "HostDime IA — testes (runner embutido)"
 
 run_test "link symlinks" test_link_symlinks
@@ -211,6 +279,11 @@ run_test "finalizar repo" test_finalizar_repo
 run_test "boot sync toggle" test_boot_sync_toggle
 run_test "boot sync unset" test_boot_sync_unset
 run_test "boot sync prompt skip" test_boot_sync_prompt_skip
+run_test "historico validate" test_historico_validate
+run_test "historico validate invalid" test_historico_validate_invalid
+run_test "historico scope match" test_historico_scope_match
+run_test "historico merge hooks" test_historico_merge_hooks
+run_test "historico templates" test_historico_templates
 
 echo ""
 echo "Resumo: $pass ok, $fail falha(s)"

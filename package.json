@@ -13,6 +13,7 @@
     "status": "node packages/cursor/scripts/run.mjs status",
     "doctor": "node packages/cursor/scripts/run.mjs doctor",
     "boot-sync": "node packages/cursor/scripts/run.mjs boot-sync",
+    "historico": "node packages/cursor/scripts/run.mjs historico",
     "review:ci": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/review-ci.sh",
     "test": "bash tests/run-all.sh"
   },

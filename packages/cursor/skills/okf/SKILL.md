@@ -52,3 +52,4 @@ Recomendado: `okf/` ou `.okf/` na raiz ou em `docs/okf/`. A rule `skills-orchest
 
 - Rule `skills-orchestrator-okf.mdc` — gatilho por glob e intent
 - `git` — bundles OKF versionam bem em repositório
+- Histórico de escopo (fora de bundle OKF puro) → skill `history-watch` + command `/historico`

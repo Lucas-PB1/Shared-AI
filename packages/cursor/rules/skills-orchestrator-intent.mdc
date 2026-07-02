@@ -19,6 +19,7 @@ Mapear **palavras ou objetivo** do pedido → ler SKILL.md (localização em `sk
 | deploy, upload, build remoto, CLI do projeto | skill de tooling no projeto ou em `~/.cursor/skills/` (ex.: `hubspot-cli`, `git`) |
 | HubSpot, `hs project`, CMS dev, portal HubSpot, MCP HubSpot | `hubspot-cli` + rule `skills-orchestrator-hubspot.mdc`; `/hubspot-mcp` para instalar MCP |
 | OKF, Open Knowledge Format, knowledge bundle, concept OKF, LLM wiki | `okf` + rule `skills-orchestrator-okf.mdc` |
+| `/historico`, historico, history watch, log.md escopo, history.md escopo | `history-watch` + command `/historico` |
 | review, auditoria, qualidade, code review | tier 2 + `eslint`, `prettier`, `testing` + skills da stack detectada |
 
 ### Review — pacote code-review (opcional)
