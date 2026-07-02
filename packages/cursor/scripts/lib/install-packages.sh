@@ -51,6 +51,7 @@ install_skills_package() {
   install -m 755 "$lib_dir/projects-registry.sh" "$cursor_dir/hostdime-projects-registry.sh"
   install -m 755 "$lib_dir/hostdime-env.sh" "$cursor_dir/hostdime-env.sh"
   install -m 755 "$lib_dir/link-from-repo.sh" "$cursor_dir/hostdime-link-from-repo.sh"
+  install -m 755 "$cursor_pkg/scripts/install-hubspot-mcp.sh" "$cursor_dir/"
 
   hostdime_write_env "$monorepo_root"
 
@@ -85,7 +86,7 @@ install_code_review_package() {
   done
 
   echo "→ commands (/avaliar, /finalizar)"
-  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md; do
     if [[ -e "$cursor_dir/commands/$cmd" && ! -L "$cursor_dir/commands/$cmd" ]]; then
       rm -f "$cursor_dir/commands/$cmd"
     fi
@@ -122,7 +123,7 @@ migrate_managed_real_files() {
     dest="$cursor_dir/rules/$(basename "$f")"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
-  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md; do
     dest="$cursor_dir/commands/$cmd"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
@@ -160,6 +161,6 @@ prune_user_symlinks_if_requested() {
   done
   prune_managed_symlinks "$cursor_dir/skills" "${names[@]}"
 
-  names=(avaliar.md finalizar.md avaliar-diff.md skills-why.md)
+  names=(avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md)
   prune_managed_symlinks "$cursor_dir/commands" "${names[@]}"
 }

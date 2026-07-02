@@ -108,7 +108,7 @@ count_user_symlink_issues() {
     fi
   done
 
-  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md; do
     dest="$CURSOR_DIR/commands/$cmd"
     if [[ -e "$dest" && ! -L "$dest" ]]; then
       skipped=$((skipped + 1))
@@ -182,7 +182,7 @@ for script in link-project.sh review-check.sh review-finalizar.sh review-diff.sh
   fi
 done
 
-for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md; do
+for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md; do
   if [[ -L "$CURSOR_DIR/commands/$cmd" && -e "$CURSOR_DIR/commands/$cmd" ]]; then
     ok "command /${cmd%.md}"
   elif [[ -f "$CURSOR_DIR/commands/$cmd" ]]; then
@@ -198,6 +198,22 @@ elif [[ -f "$CURSOR_DIR/SKILLS-ROUTING.md" ]]; then
   warn "SKILLS-ROUTING.md — cópia local; prefira symlink (npm run sync -- --migrate)"
 else
   fail "SKILLS-ROUTING.md — rode: npm run setup:skills"
+fi
+
+if [[ -x "$CURSOR_DIR/install-hubspot-mcp.sh" ]]; then
+  ok "install-hubspot-mcp.sh"
+else
+  warn "install-hubspot-mcp.sh — rode: npm run setup:skills"
+fi
+
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/lib/hubspot-mcp.sh"
+if hubspot_mcp_installed; then
+  ok "MCP HubSpotDev em mcp.json"
+elif [[ "$(hubspot_mcp_read_status)" == "declined" ]]; then
+  ok "MCP HubSpot — usuário optou por não instalar (/hubspot-mcp disponível)"
+else
+  warn "MCP HubSpotDev ausente — use /hubspot-mcp ou aguarde sugestão na primeira tarefa HubSpot"
 fi
 
 section "Hooks"

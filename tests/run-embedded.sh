@@ -36,6 +36,8 @@ test_link_symlinks() {
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
   assert "orquestrador base" test -L "$project/.cursor/rules/skills-orchestrator-base.mdc"
   assert "command avaliar" test -L "$project/.cursor/commands/avaliar.md"
+  assert "command hubspot-mcp" test -L "$project/.cursor/commands/hubspot-mcp.md"
+  assert "rule hubspot" test -L "$project/.cursor/rules/skills-orchestrator-hubspot.mdc"
   assert "review inbox" test -d "$project/.cursor/review/inbox"
   assert "memoria template" test -f "$project/.cursor/review/memoria.md"
 }
@@ -106,6 +108,25 @@ JSON
   assert "idempotente" test "$result2" = "ok"
 }
 
+test_hubspot_mcp_install() {
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot-mcp.sh"
+  mcp_file="$CURSOR_USER_DIR/mcp.json"
+  printf '{"mcpServers":{"other":{"command":"echo"}}}\n' >"$mcp_file"
+  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-hubspot-mcp.sh" >/dev/null
+  assert "HubSpotDev no mcp.json" grep -q HubSpotDev "$mcp_file"
+  assert "status installed" test "$(hubspot_mcp_read_status)" = "installed"
+  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-hubspot-mcp.sh" --decline >/dev/null
+  assert "status declined" test "$(hubspot_mcp_read_status)" = "declined"
+}
+
+test_hubspot_mcp_detect() {
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot-mcp.sh"
+  printf '{"mcpServers":{"HubSpotDev":{"command":"npx"}}}\n' >"$CURSOR_USER_DIR/mcp.json"
+  assert "mcp instalado" hubspot_mcp_installed
+}
+
 test_finalizar_inbox() {
   project="$(hostdime_make_project)"
   export CURSOR_PROJECT_DIR="$project"
@@ -149,6 +170,8 @@ run_test "bootstrap invalid" test_bootstrap_invalid_profile
 run_test "detach" test_detach
 run_test "detach registry" test_detach_registry
 run_test "merge hooks" test_merge_hooks
+run_test "hubspot mcp install" test_hubspot_mcp_install
+run_test "hubspot mcp detect" test_hubspot_mcp_detect
 run_test "finalizar inbox" test_finalizar_inbox
 run_test "finalizar repo" test_finalizar_repo
 

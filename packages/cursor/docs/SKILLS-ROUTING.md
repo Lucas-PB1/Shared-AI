@@ -56,7 +56,7 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `eslint` | sim | sim | — |
 | `prettier` | sim | sim | — |
 | `git` | sim | — | — |
-| `hubspot-cli` | deploy/CLI | hsproject / cms-components / `@hubspot/cli` | — |
+| `hubspot-cli` | deploy/CLI, HubSpot, `hs project` | hsproject / cms-components / `@hubspot/cli` | hubspot |
 | `review-inbox` | `/avaliar`, `/avaliar-diff`, `/finalizar`, arquivo no repo (se code-review instalado) | — | — |
 | `review`, `review-bugbot`, `review-security` | review PR/diff (se code-review instalado) | — | — |
 
@@ -73,6 +73,7 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `python-stack.mdc` | `*.{py,pyi}` |
 | `arquitetura.mdc` | `*.{ts,tsx,js,php,py}` |
 | `testing.mdc` | `*.{test,spec}.*`, `tests/**` |
+| `hubspot.mdc` | `hsproject.json`, `*.fields.json`, `hubspot.config.yml` |
 
 ## Always-on (orquestrador)
 

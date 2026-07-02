@@ -38,7 +38,7 @@ hostdime_count_command_symlinks() {
   local project="$1"
   local count=0
   local cmd
-  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md; do
     [[ -L "$project/.cursor/commands/$cmd" ]] && count=$((count + 1))
   done
   printf '%s' "$count"

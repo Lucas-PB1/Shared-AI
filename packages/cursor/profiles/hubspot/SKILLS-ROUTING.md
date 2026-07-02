@@ -20,3 +20,8 @@ Complementa `~/.cursor/SKILLS-ROUTING.md`.
 ## Rule do projeto
 
 - `.cursor/rules/hubspot-project.mdc` — editável e versionável neste repo
+
+## MCP HubSpot
+
+- Rule `skills-orchestrator-hubspot.mdc` — verifica MCP na primeira tarefa HubSpot
+- Command `/hubspot-mcp` — instalação explícita do servidor HubSpotDev

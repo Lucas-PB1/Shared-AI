@@ -1,5 +1,15 @@
 # Documentação e MCP HubSpot
 
+## Instalação do MCP
+
+| Caminho | Uso |
+| --- | --- |
+| Rule `skills-orchestrator-hubspot.mdc` | Na primeira tarefa HubSpot, verifica MCP e pergunta uma vez |
+| `/hubspot-mcp` | Instalação explícita (`~/.cursor/install-hubspot-mcp.sh`) |
+| `hs mcp setup` | Alternativa oficial com CLI global |
+
+Estado do usuário: `~/.cursor/hostdime-hubspot-mcp.state` (`STATUS=declined` suprime novas perguntas).
+
 ## Preferência
 
 - **Não** responder flags, limites ou APIs só de memória
