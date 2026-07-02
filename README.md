@@ -25,6 +25,17 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run review:ci -- [base]` | Projeto | Mesmo review-check do `/avaliar` nos arquivos do diff |
 | `npm run test` | Dev | Testes bats (scripts bash) |
 
+## Windows
+
+Suporte nativo via PowerShell — sem WSL ou Git Bash para install, sync, bootstrap e hooks. Veja [docs/WINDOWS.md](docs/WINDOWS.md).
+
+```powershell
+npm run setup:skills
+npm run bootstrap -- C:\caminho\do\seu\projeto
+```
+
+Linux e macOS usam os mesmos comandos npm; o dispatcher (`run.mjs`) roteia para bash ou PowerShell conforme o OS.
+
 ## Atualização
 
 Rules, skills e commands são **symlinks** para o clone local. Depois de editar o repo:

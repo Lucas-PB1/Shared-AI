@@ -129,7 +129,18 @@ main() {
   from_inbox=0
   is_inbox_file "$target" && from_inbox=1
 
+  report="$(find_report "$reports" "$slug")"
+  if [[ -z "$report" || ! -f "$report" ]]; then
+    echo "Erro: relatório não encontrado em .cursor/review/reports/ para slug: ${slug}" >&2
+    echo "Rode /avaliar antes de finalizar." >&2
+    exit 1
+  fi
+
   date_prefix="$(date +%Y-%m-%d)"
+  if [[ "$(basename "$report")" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2})_ ]]; then
+    date_prefix="${BASH_REMATCH[1]}"
+  fi
+
   base="${output}/${date_prefix}_${slug}"
   dest="$base"
   dest_name="$(basename "$dest")"
@@ -141,13 +152,6 @@ main() {
     done
     dest="${base}-${n}"
     dest_name="$(basename "$dest")"
-  fi
-
-  report="$(find_report "$reports" "$slug")"
-  if [[ -z "$report" || ! -f "$report" ]]; then
-    echo "Erro: relatório não encontrado em .cursor/review/reports/ para slug: ${slug}" >&2
-    echo "Rode /avaliar antes de finalizar." >&2
-    exit 1
   fi
 
   mkdir -p "$dest/codigo"

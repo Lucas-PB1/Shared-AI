@@ -6,8 +6,46 @@ import json
 import sys
 from pathlib import Path
 
-HOSTDIME_COMMAND = "./hooks/ensure-project-cursor.sh"
+HOSTDIME_COMMAND_UNIX = "./hooks/ensure-project-cursor.sh"
+HOSTDIME_COMMAND_WIN = (
+    "powershell -NoProfile -ExecutionPolicy Bypass -File ./hooks/ensure-project-cursor.ps1"
+)
 HOSTDIME_MARKERS = ("ensure-project-cursor", "ensure-project-rules")
+
+
+def hostdime_command() -> str:
+    return HOSTDIME_COMMAND_WIN if sys.platform == "win32" else HOSTDIME_COMMAND_UNIX
+
+
+def is_hostdime_command(cmd: str) -> bool:
+    return isinstance(cmd, str) and any(marker in cmd for marker in HOSTDIME_MARKERS)
+
+
+def is_wrong_os_command(cmd: str) -> bool:
+    if not is_hostdime_command(cmd):
+        return False
+    if sys.platform == "win32":
+        return cmd.strip() == HOSTDIME_COMMAND_UNIX or (
+            cmd.endswith(".sh") and "ensure-project-cursor" in cmd
+        )
+    return ".ps1" in cmd or "powershell" in cmd.lower()
+
+
+def normalize_hostdime_session(session: list) -> bool:
+    """Remove entrada hostdime do OS errado. Retorna True se mutou."""
+    mutated = False
+    kept: list = []
+    for entry in session:
+        if not isinstance(entry, dict):
+            kept.append(entry)
+            continue
+        cmd = entry.get("command", "")
+        if is_wrong_os_command(cmd):
+            mutated = True
+            continue
+        kept.append(entry)
+    session[:] = kept
+    return mutated
 
 
 def has_hostdime_session(session: list) -> bool:
@@ -15,7 +53,7 @@ def has_hostdime_session(session: list) -> bool:
         if not isinstance(entry, dict):
             continue
         cmd = entry.get("command", "")
-        if isinstance(cmd, str) and any(marker in cmd for marker in HOSTDIME_MARKERS):
+        if is_hostdime_command(cmd) and not is_wrong_os_command(cmd):
             return True
     return False
 
@@ -51,8 +89,11 @@ def merge_hooks(hooks_path: Path, example_path: Path | None) -> str:
     if not isinstance(session, list):
         raise ValueError('hooks.json: "sessionStart" deve ser uma lista')
 
+    if normalize_hostdime_session(session) and action == "ok":
+        action = "merged"
+
     if not has_hostdime_session(session):
-        session.append({"command": HOSTDIME_COMMAND})
+        session.append({"command": hostdime_command()})
         if action == "ok":
             action = "merged"
 
