@@ -2,11 +2,13 @@
 """Match paths against .cursor/history/watches.json scopes."""
 from __future__ import annotations
 
+import argparse
 import fnmatch
 import json
 import re
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 
@@ -125,33 +127,36 @@ def extract_paths_from_json(obj: object, out: set[str]) -> None:
                 out.add(obj)
 
 
-def git_changed_files(cwd: Path) -> list[str]:
-    try:
-        proc = subprocess.run(
-            ["git", "diff", "--name-only", "HEAD"],
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if proc.returncode != 0:
+def git_changed_files(cwd: Path, base: str = "HEAD") -> list[str]:
+    paths: set[str] = set()
+
+    def run(args: list[str]) -> None:
+        try:
             proc = subprocess.run(
-                ["git", "status", "--porcelain"],
+                args,
                 cwd=cwd,
                 capture_output=True,
                 text=True,
                 check=False,
             )
             if proc.returncode != 0:
-                return []
-            lines = []
+                return
             for line in proc.stdout.splitlines():
-                if len(line) >= 4:
-                    lines.append(line[3:].strip())
-            return lines
-        return [ln.strip() for ln in proc.stdout.splitlines() if ln.strip()]
-    except OSError:
-        return []
+                line = line.strip()
+                if not line:
+                    continue
+                if len(line) >= 4 and line[:2] in ("??", " M", "M ", "A ", " D", "D "):
+                    paths.add(line[3:].strip())
+                else:
+                    paths.add(line)
+        except OSError:
+            return
+
+    run(["git", "diff", "--name-only", base])
+    run(["git", "diff", "--cached", "--name-only", base])
+    if base == "HEAD":
+        run(["git", "ls-files", "--others", "--exclude-standard"])
+    return sorted(normalize_path(p) for p in paths if p)
 
 
 def collect_edited_files(hook_input: dict | None, project_root: Path) -> list[str]:
@@ -174,7 +179,7 @@ def build_followup(matches: list[dict]) -> str:
         "Append no histórico **antes** de encerrar:",
     ]
     for m in matches:
-        refs = ", ".join(f"`{f}`" for f in m.get("matchedFiles", [])[:8])
+        refs = ", ".join(f"`{f}`" for f in m.get("matchedFiles", m.get("pendingFiles", []))[:8])
         fmt = m.get("format", "markdown")
         lines.append(
             f"- Watch `{m['id']}` → [`{m['historyFile']}`]({m['historyFile']}) "
@@ -184,6 +189,286 @@ def build_followup(matches: list[dict]) -> str:
         "Campos: timestamp, o quê, refs, por quê. Ler skill `history-watch`."
     )
     return "\n".join(lines)
+
+
+def split_history_sections(text: str, max_sections: int = 5) -> list[str]:
+    sections: list[str] = []
+    current: list[str] = []
+    for line in text.splitlines():
+        if line.startswith("## ") and current:
+            sections.append("\n".join(current))
+            if len(sections) >= max_sections:
+                break
+            current = [line]
+        elif line.startswith("## "):
+            current = [line]
+        elif current:
+            current.append(line)
+    if current and len(sections) < max_sections:
+        sections.append("\n".join(current))
+    return sections
+
+
+def extract_refs_from_history(history_path: Path, fmt: str, max_sections: int = 3) -> set[str]:
+    if not history_path.is_file():
+        return set()
+
+    text = history_path.read_text(encoding="utf-8")
+    refs: set[str] = set()
+    sections = split_history_sections(text, max_sections=max_sections)
+
+    for section in sections:
+        if fmt == "okf-log":
+            for match in re.finditer(r"refs:\s*\[([^\]]+)\]", section, re.IGNORECASE):
+                chunk = match.group(1)
+                for link in re.finditer(r"\[[^\]]*\]\(([^)]+)\)", chunk):
+                    refs.add(normalize_path(link.group(1)))
+                for tick in re.finditer(r"`([^`]+)`", chunk):
+                    refs.add(normalize_path(tick.group(1)))
+            for match in re.finditer(r"refs:\s*`([^`]+)`", section, re.IGNORECASE):
+                refs.add(normalize_path(match.group(1)))
+        else:
+            for line in section.splitlines():
+                stripped = line.strip()
+                if stripped.lower().startswith("- **refs:**"):
+                    for tick in re.finditer(r"`([^`]+)`", line):
+                        refs.add(normalize_path(tick.group(1)))
+
+    return refs
+
+
+def file_mtime(project_root: Path, rel_path: str) -> float:
+    path = project_root / rel_path
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return 0.0
+
+
+def pending_files_for_watch(
+    project_root: Path,
+    watch: dict,
+    changed_files: list[str],
+) -> list[str]:
+    scope = watch.get("scope", "")
+    kind = watch.get("scopeKind", "glob")
+    matched = sorted(
+        {
+            normalize_path(f)
+            for f in changed_files
+            if path_matches(f, scope, kind)
+        }
+    )
+    if not matched:
+        return []
+
+    history_path = project_root / watch.get("historyFile", "")
+    recent_refs = extract_refs_from_history(history_path, watch.get("format", "markdown"))
+    history_mtime = history_path.stat().st_mtime if history_path.is_file() else 0.0
+
+    pending: list[str] = []
+    for rel in matched:
+        newer_than_log = file_mtime(project_root, rel) > history_mtime + 1
+        missing_ref = rel not in recent_refs
+        if newer_than_log or missing_ref:
+            pending.append(rel)
+    return pending
+
+
+def collect_pending_watches(
+    project_root: Path,
+    watches_path: Path,
+    base: str = "HEAD",
+) -> list[dict]:
+    if not watches_path.is_file():
+        return []
+
+    data = load_watches(watches_path)
+    changed = git_changed_files(project_root, base=base)
+    if not changed:
+        return []
+
+    pending_watches: list[dict] = []
+    for watch in data.get("watches", []):
+        if not watch.get("enabled", True):
+            continue
+        pending = pending_files_for_watch(project_root, watch, changed)
+        if not pending:
+            continue
+        entry = dict(watch)
+        entry["pendingFiles"] = pending
+        entry["changedInScope"] = sorted(
+            {
+                normalize_path(f)
+                for f in changed
+                if path_matches(f, watch.get("scope", ""), watch.get("scopeKind", "glob"))
+            }
+        )
+        pending_watches.append(entry)
+    return pending_watches
+
+
+def build_draft_entry(watch: dict, pending_files: list[str]) -> str:
+    now = datetime.now(timezone.utc)
+    fmt = watch.get("format", "markdown")
+    files = pending_files[:12]
+
+    if fmt == "okf-log":
+        date = now.strftime("%Y-%m-%d")
+        clock = now.strftime("%H:%M")
+        refs = ", ".join(f"[{PurePosixPath(f).name}]({f})" for f in files)
+        return (
+            f"## {date}\n"
+            f"* **Update** ({clock} UTC): <descreva o que mudou> "
+            f"— refs: [{refs}] — motivo: <por quê>"
+        )
+
+    iso = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    refs = ", ".join(f"`{f}`" for f in files)
+    return (
+        f"## {iso}\n\n"
+        f"- **O quê:** <descreva o que mudou>\n"
+        f"- **Refs:** {refs}\n"
+        f"- **Por quê:** <motivo ou decisão>"
+    )
+
+
+def build_catchup_followup(pending_watches: list[dict]) -> str:
+    lines = [
+        "History watch — catch-up manual: há alterações no escopo ainda não refletidas no log.",
+        "Append no histórico (recentes primeiro) para cada watch abaixo:",
+    ]
+    for watch in pending_watches:
+        refs = ", ".join(f"`{f}`" for f in watch.get("pendingFiles", [])[:8])
+        lines.append(
+            f"- Watch `{watch['id']}` → [`{watch['historyFile']}`]({watch['historyFile']}) "
+            f"(format: {watch.get('format', 'markdown')}). Pendente: {refs}"
+        )
+    lines.append(
+        "Use os rascunhos de `npm run historico -- catch-up` ou complete o quê/por quê. "
+        "Ler skill `history-watch`."
+    )
+    return "\n".join(lines)
+
+
+def cmd_pending(
+    project_root: Path,
+    watches_path: Path,
+    *,
+    base: str = "HEAD",
+    as_json: bool = False,
+    check_only: bool = False,
+) -> int:
+    pending = collect_pending_watches(project_root, watches_path, base=base)
+    if as_json:
+        payload = {
+            "project": str(project_root),
+            "base": base,
+            "hasPending": bool(pending),
+            "watches": [
+                {
+                    "id": w["id"],
+                    "scope": w["scope"],
+                    "historyFile": w["historyFile"],
+                    "format": w["format"],
+                    "pendingFiles": w["pendingFiles"],
+                    "changedInScope": w.get("changedInScope", []),
+                }
+                for w in pending
+            ],
+        }
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return 1 if check_only and pending else 0
+
+    if not pending:
+        print("Nenhuma pendência de log — escopos limpos ou sem alterações git.")
+        return 0
+
+    print(f"Pendências de log ({len(pending)} watch(es), base={base}):\n")
+    for watch in pending:
+        print(f"• {watch['id']} → {watch['historyFile']} ({watch['format']})")
+        for rel in watch["pendingFiles"]:
+            print(f"    - {rel}")
+        print("")
+    return 1 if check_only else 0
+
+
+def cmd_catch_up(
+    project_root: Path,
+    watches_path: Path,
+    *,
+    base: str = "HEAD",
+    as_json: bool = False,
+) -> int:
+    pending = collect_pending_watches(project_root, watches_path, base=base)
+    drafts = [
+        {
+            "watchId": w["id"],
+            "historyFile": w["historyFile"],
+            "format": w["format"],
+            "pendingFiles": w["pendingFiles"],
+            "draft": build_draft_entry(w, w["pendingFiles"]),
+        }
+        for w in pending
+    ]
+
+    if as_json:
+        payload = {
+            "project": str(project_root),
+            "base": base,
+            "hasPending": bool(pending),
+            "followup_message": build_catchup_followup(pending) if pending else "",
+            "drafts": drafts,
+        }
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return 0
+
+    if not pending:
+        print("Nenhuma pendência — log em dia para os escopos observados.")
+        return 0
+
+    print("=== Histórico — catch-up manual ===\n")
+    print(build_catchup_followup(pending))
+    print("\n--- Rascunhos (append no topo do arquivo, após cabeçalho) ---\n")
+    for item in drafts:
+        print(f"### {item['historyFile']} (watch `{item['watchId']}`)\n")
+        print(item["draft"])
+        print("")
+    return 0
+
+
+def cmd_draft(
+    project_root: Path,
+    watches_path: Path,
+    watch_id: str,
+    *,
+    base: str = "HEAD",
+    as_json: bool = False,
+) -> int:
+    pending = collect_pending_watches(project_root, watches_path, base=base)
+    watch = next((w for w in pending if w["id"] == watch_id), None)
+    if not watch:
+        print(f"Nenhuma pendência para watch '{watch_id}'.", file=sys.stderr)
+        return 1
+
+    draft = build_draft_entry(watch, watch["pendingFiles"])
+    if as_json:
+        print(
+            json.dumps(
+                {
+                    "watchId": watch_id,
+                    "historyFile": watch["historyFile"],
+                    "pendingFiles": watch["pendingFiles"],
+                    "draft": draft,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    print(draft)
+    return 0
 
 
 def cmd_validate(watches_path: Path) -> int:
@@ -243,27 +528,27 @@ def cmd_stop(project_root: Path, watches_path: Path, hook_input: dict | None) ->
     return 0
 
 
+def parse_project_command(argv: list[str]) -> tuple[Path, argparse.Namespace, list[str]]:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--base", default="HEAD")
+    args, rest = parser.parse_known_args(argv)
+    project = Path(rest[0]).resolve() if rest else Path.cwd().resolve()
+    return project, args, rest
+
+
 def main() -> int:
     if len(sys.argv) < 2:
         print(
-            "Uso: history-watch-match.py <validate|status|scope-match|stop> ...",
+            "Uso: history-watch-match.py "
+            "<validate|status|scope-match|pending|catch-up|draft|stop> ...",
             file=sys.stderr,
         )
         return 1
 
     cmd = sys.argv[1]
-    project_root = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 and cmd != "stop" else Path.cwd()
-    watches_path = project_root / ".cursor" / "history" / "watches.json"
 
-    if cmd == "validate":
-        return cmd_validate(watches_path)
-    if cmd == "status":
-        return cmd_status(watches_path)
-    if cmd == "scope-match":
-        if len(sys.argv) < 4:
-            print("Uso: scope-match <projeto> <arquivo>", file=sys.stderr)
-            return 1
-        return cmd_scope_match(watches_path, sys.argv[3])
     if cmd == "stop":
         hook_input = None
         if not sys.stdin.isatty():
@@ -276,6 +561,56 @@ def main() -> int:
         root = Path.cwd()
         wp = root / ".cursor" / "history" / "watches.json"
         return cmd_stop(root, wp, hook_input)
+
+    if cmd in ("pending", "catch-up"):
+        project, args, _ = parse_project_command(sys.argv[2:])
+        watches_path = project / ".cursor" / "history" / "watches.json"
+        if cmd == "pending":
+            return cmd_pending(
+                project,
+                watches_path,
+                base=args.base,
+                as_json=args.json,
+                check_only=args.check,
+            )
+        return cmd_catch_up(
+            project,
+            watches_path,
+            base=args.base,
+            as_json=args.json,
+        )
+
+    if cmd == "draft":
+        if len(sys.argv) < 3:
+            print("Uso: draft <watch-id> [--json] [--base=HEAD] [projeto]", file=sys.stderr)
+            return 1
+        watch_id = sys.argv[2]
+        project, args, _ = parse_project_command(sys.argv[3:])
+        watches_path = project / ".cursor" / "history" / "watches.json"
+        return cmd_draft(
+            project,
+            watches_path,
+            watch_id,
+            base=args.base,
+            as_json=args.json,
+        )
+
+    project_root = (
+        Path(sys.argv[2]).resolve()
+        if len(sys.argv) > 2 and cmd != "stop"
+        else Path.cwd()
+    )
+    watches_path = project_root / ".cursor" / "history" / "watches.json"
+
+    if cmd == "validate":
+        return cmd_validate(watches_path)
+    if cmd == "status":
+        return cmd_status(watches_path)
+    if cmd == "scope-match":
+        if len(sys.argv) < 4:
+            print("Uso: scope-match <projeto> <arquivo>", file=sys.stderr)
+            return 1
+        return cmd_scope_match(watches_path, sys.argv[3])
 
     print(f"Comando desconhecido: {cmd}", file=sys.stderr)
     return 1

@@ -266,6 +266,34 @@ test_historico_templates() {
   assert "md template o quê" grep -q "O quê" "$tpl/history-log.md"
 }
 
+test_historico_pending_catchup() {
+  project="$(hostdime_make_project)"
+  git -C "$project" init -q
+  git -C "$project" config user.email "test@test.com"
+  git -C "$project" config user.name "test"
+  mkdir -p "$project/src/domain" "$project/docs" "$project/.cursor/history"
+  cat >"$project/.cursor/history/watches.json" <<'JSON'
+{"version":1,"watches":[{"id":"domain","scope":"src/domain/**","scopeKind":"glob","historyFile":"docs/log.md","format":"okf-log","enabled":true}]}
+JSON
+  cp "$HOSTDIME_IA_ROOT/packages/cursor/templates/history-log.okf.md" "$project/docs/log.md"
+  echo "base" >"$project/README.md"
+  git -C "$project" add .
+  git -C "$project" commit -q -m "initial"
+  echo "change" >"$project/src/domain/order.ts"
+  git -C "$project" add src/domain/order.ts
+
+  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.py"
+  pending="$(python3 "$py" pending "$project")"
+  assert "pending lists domain file" grep -q "src/domain/order.ts" <<<"$pending"
+
+  catchup="$(python3 "$py" catch-up "$project")"
+  assert "catch-up has draft" grep -q "docs/log.md" <<<"$catchup"
+  assert "catch-up has placeholder" grep -q "<descreva" <<<"$catchup"
+
+  json="$(python3 "$py" catch-up --json "$project")"
+  assert "catch-up json pending" grep -q '"hasPending": true' <<<"$json"
+}
+
 test_cursor_cli_merge_config() {
   project="$(hostdime_make_project)"
   config="$project/cli-config.json"
@@ -397,6 +425,7 @@ run_test "historico validate invalid" test_historico_validate_invalid
 run_test "historico scope match" test_historico_scope_match
 run_test "historico merge hooks" test_historico_merge_hooks
 run_test "historico templates" test_historico_templates
+run_test "historico pending catchup" test_historico_pending_catchup
 run_test "cursor cli merge config" test_cursor_cli_merge_config
 run_test "cursor cli dry run" test_cursor_cli_dry_run
 run_test "agent wrapper dry run" test_agent_wrapper_dry_run

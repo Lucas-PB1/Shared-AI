@@ -10,6 +10,8 @@ Ler skill **`history-watch`** antes de setup ou append.
 | --- | --- |
 | `/historico setup` ou `/historico` (primeira vez) | Setup interativo |
 | `/historico status` | Lista watches em `.cursor/history/watches.json` |
+| `/historico pending` | Detecta alterações no escopo **sem log recente** (git + heurística) |
+| `/historico catch-up` | Pendências + rascunhos — dispara append manual no Agent |
 | `/historico off <id>` | Desabilita watch e remove rule/hook associados |
 | `/historico` (watch já existe) | Mostra status |
 
@@ -157,6 +159,50 @@ Rodar `npm run historico -- status` ou ler `.cursor/history/watches.json` e list
 
 ---
 
+## `/historico pending` — detectar log desatualizado
+
+Compara **alterações git** (working tree + staged + untracked) com o escopo de cada watch e heurística no arquivo de histórico:
+
+- arquivo alterado **mais recente** que o `historyFile`, ou
+- path **ausente** nas refs das últimas entradas do log
+
+```bash
+npm run historico -- pending
+npm run historico -- pending --json
+npm run historico -- pending --check    # exit 1 se houver pendência (scripts/CI)
+npm run historico -- pending --base=main
+```
+
+Saída lista watches com arquivos pendentes de registro.
+
+---
+
+## `/historico catch-up` — disparar atualização manual
+
+Para edições **manuais** (fora do Agent) ou quando o hook `stop` não rodou:
+
+1. Rodar `npm run historico -- catch-up` (ou `--json`).
+2. Para cada watch pendente, **append** no `historyFile` usando o rascunho gerado.
+3. Completar **o quê** e **por quê**; manter refs dos arquivos listados.
+
+### Protocolo do Agent (`/historico catch-up`)
+
+1. Executar `npm run historico -- catch-up --json` no root do projeto.
+2. Se `hasPending` for false → informar que o log está em dia.
+3. Se true → para cada item em `drafts`:
+   - Ler o `historyFile` atual.
+   - Substituir placeholders `<descreva…>` / `<motivo…>` com resumo objetivo do diff ou do pedido do usuário.
+   - **Append** a entrada no topo (após cabeçalho fixo), sem sobrescrever histórico.
+4. Confirmar watches atualizados e refs registradas.
+
+Rascunho de um watch específico:
+
+```bash
+npm run historico -- draft domain-layer
+```
+
+---
+
 ## `/historico off <id>`
 
 1. Em `watches.json`, setar `enabled: false` ou remover o watch.
@@ -179,6 +225,9 @@ npm run historico -- status [projeto]
 npm run historico -- validate [projeto]
 npm run historico -- merge-hooks [projeto]
 npm run historico -- scope-match <arquivo> [projeto]
+npm run historico -- pending [--json] [--check] [--base=HEAD] [projeto]
+npm run historico -- catch-up [--json] [--base=HEAD] [projeto]
+npm run historico -- draft <watch-id> [--json] [projeto]
 ```
 
 ## Resposta ao usuário
