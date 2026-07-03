@@ -1,6 +1,6 @@
 {
   "name": "hostdime-ia",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "description": "Pacotes públicos de configuração de IA da HostDime",
   "type": "module",
@@ -17,6 +17,8 @@
     "cursor-cli": "node packages/cursor/scripts/run.mjs cursor-cli",
     "agent": "node packages/cursor/scripts/run.mjs agent",
     "sync-inbox": "node packages/cursor/scripts/run.mjs sync-inbox",
+    "onboard": "node packages/cursor/scripts/run.mjs onboard",
+    "health": "node packages/cursor/scripts/run.mjs health",
     "review:ci": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/review-ci.sh",
     "test": "bash tests/run-all.sh"
   },

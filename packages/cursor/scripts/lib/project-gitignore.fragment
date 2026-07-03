@@ -7,6 +7,7 @@
 .cursor/commands/cursor-cli.md
 .cursor/commands/historico.md
 .cursor/commands/sync-inbox.md
+.cursor/commands/onboard.md
 .cursor/review/inbox/*
 !.cursor/review/inbox/.gitkeep
 .cursor/review/reports/*

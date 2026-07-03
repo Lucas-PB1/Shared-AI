@@ -1,0 +1,17 @@
+---
+description: Convenções Next.js deste projeto
+globs:
+  - "**/*.{tsx,jsx,ts,js}"
+  - "app/**"
+  - "pages/**"
+  - "src/**"
+  - "next.config.*"
+alwaysApply: false
+---
+
+# Next.js — projeto
+
+- Server Components por padrão; `'use client'` só onde há interatividade ou APIs do browser
+- Data fetching no servidor quando possível; evitar waterfall entre RSC e client
+- Metadata, cache e revalidação explícitos quando o comportamento estático/dinâmico importa
+- Seguir convenção App Router vs Pages Router já usada no repo antes de introduzir padrões novos

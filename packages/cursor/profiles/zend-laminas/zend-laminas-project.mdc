@@ -1,0 +1,15 @@
+---
+description: Convenções Laminas/ZF deste projeto
+globs:
+  - "**/*.php"
+  - "module/**"
+  - "config/**"
+alwaysApply: false
+---
+
+# Laminas / Zend — projeto
+
+- Módulos coesos com config em `module.config.php`; factories para serviços com dependências
+- Controllers finos; lógica de negócio em services/models conforme estrutura já usada no repo
+- Respeitar namespaces, módulos e bootstrap existentes antes de introduzir padrões novos
+- Forms e input filters para validação de entrada em endpoints expostos

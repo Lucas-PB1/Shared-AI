@@ -14,12 +14,13 @@ function Apply-BootstrapProfile {
         return
     }
 
-    $profileDir = Join-Path $root "packages/cursor/profiles/$Profile"
-    if (-not (Test-Path $profileDir)) {
+    if (-not (Test-ProfileName $Profile)) {
         Write-Error "Erro: perfil desconhecido: $Profile"
-        Write-Error 'Perfis disponíveis: laravel, hubspot, react'
+        Write-ProfilesUsage
         exit 1
     }
+
+    $profileDir = Join-Path $root "packages/cursor/profiles/$Profile"
 
     Write-Host "→ perfil: $Profile"
 

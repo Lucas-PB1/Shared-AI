@@ -40,6 +40,7 @@ test_link_symlinks() {
   assert "command historico" test -L "$project/.cursor/commands/historico.md"
   assert "command cursor-cli" test -L "$project/.cursor/commands/cursor-cli.md"
   assert "command sync-inbox" test -L "$project/.cursor/commands/sync-inbox.md"
+  assert "command onboard" test -L "$project/.cursor/commands/onboard.md"
   assert "rule hubspot" test -L "$project/.cursor/rules/skills-orchestrator-hubspot.mdc"
   assert "rule okf" test -L "$project/.cursor/rules/skills-orchestrator-okf.mdc"
   assert "review inbox" test -d "$project/.cursor/review/inbox"
@@ -322,6 +323,59 @@ test_sync_inbox_scan() {
   assert "sync-inbox cards script" test -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox-cards.py"
 }
 
+test_profiles_detect_and_bootstrap() {
+  project="$(hostdime_make_project)"
+  echo '{"dependencies":{"next":"14.0.0"}}' >"$project/package.json"
+  out="$(python3 "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.py" "$project")"
+  assert "detect next" test "$out" = "next"
+
+  project2="$(hostdime_make_project)-py"
+  mkdir -p "$project2/.git"
+  touch "$project2/pyproject.toml"
+  out2="$(python3 "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.py" "$project2")"
+  assert "detect python" test "$out2" = "python"
+
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+    --profile=next "$project" >/dev/null
+  assert "next SKILLS-ROUTING" test -f "$project/.cursor/SKILLS-ROUTING.md"
+  assert "next-project.mdc" test -f "$project/.cursor/rules/next-project.mdc"
+
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles.sh"
+  list="$(profiles_list)"
+  assert "profiles_list next" grep -q next <<<"$list"
+  assert "profiles_list python" grep -q python <<<"$list"
+  assert "profiles_list zend-laminas" grep -q zend-laminas <<<"$list"
+}
+
+test_onboard_noninteractive() {
+  project="$(hostdime_make_project)"
+  echo '{"dependencies":{"next":"14.0.0"}}' >"$project/package.json"
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/onboard.sh" \
+    --project="$project" \
+    --profile=next \
+    --yes \
+    --no-code-review \
+    --skip-extras >/dev/null
+  assert "onboard next rule" test -f "$project/.cursor/rules/next-project.mdc"
+  assert "onboard registry" grep -qF "$project" "$CURSOR_USER_DIR/hostdime-ia/projects.json"
+}
+
+test_health_multi_project() {
+  project="$(hostdime_make_project)"
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+    --profile=python "$project" >/dev/null
+
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/health-check.sh"
+  out="$(health_check_project "$project" 2>&1 || true)"
+  assert "health python label" grep -q 'perfil: python' <<<"$out"
+  assert "health symlinks ok" grep -q 'symlinks .cursor/rules/' <<<"$out"
+
+  label="$(health_detect_profile_label "$project")"
+  assert "health_detect_profile_label" test "$label" = "python"
+}
+
 echo "HostDime IA — testes (runner embutido)"
 
 run_test "link symlinks" test_link_symlinks
@@ -347,6 +401,9 @@ run_test "cursor cli merge config" test_cursor_cli_merge_config
 run_test "cursor cli dry run" test_cursor_cli_dry_run
 run_test "agent wrapper dry run" test_agent_wrapper_dry_run
 run_test "sync-inbox scan" test_sync_inbox_scan
+run_test "profiles detect bootstrap" test_profiles_detect_and_bootstrap
+run_test "onboard noninteractive" test_onboard_noninteractive
+run_test "health multi-project" test_health_multi_project
 
 echo ""
 echo "Resumo: $pass ok, $fail falha(s)"

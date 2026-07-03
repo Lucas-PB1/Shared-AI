@@ -27,6 +27,8 @@ const BASH_MAP = {
   'cursor-cli': join(scriptsDir, 'install-cursor-cli.sh'),
   agent: join(scriptsDir, 'agent-cli.sh'),
   'sync-inbox': join(scriptsDir, 'sync-inbox.sh'),
+  onboard: join(scriptsDir, 'onboard.sh'),
+  health: join(scriptsDir, 'health.sh'),
 };
 
 const PS1_MAP = {
@@ -41,6 +43,8 @@ const PS1_MAP = {
   historico: join(ps1Dir, 'Historico.ps1'),
   'cursor-cli': join(ps1Dir, 'Install-CursorCli.ps1'),
   agent: join(ps1Dir, 'Agent.ps1'),
+  onboard: join(ps1Dir, 'Onboard.ps1'),
+  health: join(ps1Dir, 'Health.ps1'),
 };
 
 const ALIASES = {
@@ -90,7 +94,7 @@ const [command, ...args] = process.argv.slice(2);
 if (!command || command === '--help' || command === '-h') {
   console.log(`Uso: node run.mjs <comando> [args...]
 
-Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico, cursor-cli, agent, sync-inbox`);
+Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico, cursor-cli, agent, sync-inbox, onboard, health`);
   process.exit(0);
 }
 

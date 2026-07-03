@@ -16,12 +16,14 @@ apply_bootstrap_profile() {
     return 1
   }
 
-  profile_dir="$root/packages/cursor/profiles/$profile"
-  if [[ ! -d "$profile_dir" ]]; then
+  # shellcheck disable=SC1091
+  source "${BASH_SOURCE[0]%/*}/profiles.sh"
+  if ! profiles_is_valid "$profile"; then
     echo "Erro: perfil desconhecido: $profile" >&2
-    echo "Perfis disponíveis: laravel, hubspot, react" >&2
+    profiles_usage_line >&2
     return 1
   fi
+  profile_dir="$root/packages/cursor/profiles/$profile"
 
   echo "→ perfil: $profile"
 

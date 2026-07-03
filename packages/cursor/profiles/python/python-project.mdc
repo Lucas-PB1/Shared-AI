@@ -1,0 +1,17 @@
+---
+description: Convenções Python deste projeto
+globs:
+  - "**/*.py"
+  - "pyproject.toml"
+  - "requirements*.txt"
+  - "setup.py"
+  - "setup.cfg"
+alwaysApply: false
+---
+
+# Python — projeto
+
+- Tipagem com `typing` / PEP 695 onde ajuda manutenção; seguir strictness já adotada no repo
+- `pathlib` em vez de strings de caminho; context managers para recursos
+- Exceções específicas; evitar bare `except`
+- Respeitar layout de pacotes e tooling existente (`pyproject.toml`, venv, pytest) antes de introduzir padrões novos

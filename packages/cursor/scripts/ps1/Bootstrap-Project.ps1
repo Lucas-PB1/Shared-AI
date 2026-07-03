@@ -6,6 +6,7 @@ $LibRoot = Join-Path $PSScriptRoot 'lib'
 . (Join-Path $LibRoot 'Link-FromRepo.ps1')
 . (Join-Path $LibRoot 'Projects-Registry.ps1')
 . (Join-Path $LibRoot 'Apply-BootstrapProfile.ps1')
+. (Join-Path $LibRoot 'Profiles.ps1')
 
 $MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $cursorDir = Get-CursorUserDir
@@ -29,7 +30,8 @@ for ($i = 0; $i -lt $argList.Count; $i++) {
         $profileName = $argList[$i + 1]
         $i++
     } elseif ($arg -eq '-h' -or $arg -eq '--help') {
-        Write-Host 'Uso: npm run bootstrap -- <repo> [--profile=laravel|hubspot|react]'
+        Write-Host 'Uso: npm run bootstrap -- <repo> [--profile=nome]'
+        Write-ProfilesUsage
         exit 0
     } elseif (-not $projectPath) {
         $projectPath = $arg
@@ -64,10 +66,9 @@ $projectPath = (Resolve-Path -LiteralPath $projectPath).Path
 $env:HOSTDIME_IA_ROOT = if ($env:HOSTDIME_IA_ROOT) { $env:HOSTDIME_IA_ROOT } else { $MonorepoRoot }
 
 if ($profileName) {
-    $profileDir = Join-Path $MonorepoRoot "packages/cursor/profiles/$profileName"
-    if (-not (Test-Path $profileDir)) {
+    if (-not (Test-ProfileName $profileName)) {
         Write-Error "Erro: perfil desconhecido: $profileName"
-        Write-Error 'Perfis disponíveis: laravel, hubspot, react'
+        Write-ProfilesUsage
         exit 1
     }
 }

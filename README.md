@@ -5,6 +5,14 @@ Dois pacotes, oito comandos npm:
 ```bash
 git clone https://github.com/hostdime/hostdime-ia.git
 cd hostdime-ia
+npm run onboard
+```
+
+Ou passo a passo manual:
+
+```bash
+git clone https://github.com/hostdime/hostdime-ia.git
+cd hostdime-ia
 npm run setup:skills
 npm run setup:code-review
 npm run bootstrap -- /caminho/do/seu/projeto
@@ -15,7 +23,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run setup:skills` | Máquina | Rules, skills, hooks (merge), motor de sync |
 | `npm run setup:code-review` | Máquina | Commands `/avaliar`, `/avaliar-diff`, `/finalizar`, ferramentas |
 | `npm run bootstrap -- <repo>` | Projeto | Symlinks + pastas `.cursor/review/` |
-| `npm run bootstrap -- <repo> --profile=laravel\|hubspot\|react` | Projeto | + `SKILLS-ROUTING.md` e rule do stack |
+| `npm run bootstrap -- <repo> --profile=laravel\|hubspot\|react\|next\|python\|zend-laminas` | Projeto | + `SKILLS-ROUTING.md` e rule do stack |
 | `npm run detach -- <repo>` | Projeto | Remove symlinks gerenciados; desregistra do sync |
 | `npm run detach -- <repo> --keep-registry` | Projeto | Só remove symlinks; mantém no registry |
 | `npm run sync` | Máquina | Após `git pull` — symlinks, hooks (merge), deps, relink projetos |
@@ -27,6 +35,8 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run cursor-cli -- install\|status\|login` | Máquina | Instala `agent` + config modo auto (`approvalMode=unrestricted`) |
 | `npm run agent -- [args]` | Projeto | Roda `agent` com rules/commands alinhados à IDE |
 | `npm run sync-inbox -- on\|run\|status` | Máquina | Inbox de projetos sync com git dirty ao iniciar sessão |
+| `npm run onboard` | Máquina + projeto | Wizard: setup, perfil, bootstrap, extras |
+| `npm run health` | Máquina | Saúde dos projetos registrados (symlinks, git, review) |
 | `npm run review:ci -- [base]` | Projeto | Mesmo review-check do `/avaliar` nos arquivos do diff |
 | `npm run test` | Dev | Testes bats (scripts bash) |
 

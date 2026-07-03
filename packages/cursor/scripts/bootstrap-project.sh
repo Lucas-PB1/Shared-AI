@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prepara um repositório: rules, commands, pastas review, perfil opcional.
-# Uso: npm run bootstrap -- /caminho/do/repo [--profile=laravel|hubspot|react]
+# Uso: npm run bootstrap -- /caminho/do/repo [--profile=nome]
 #      npm run bootstrap -- --profile=react /caminho/do/repo
 set -euo pipefail
 
@@ -18,11 +18,14 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --profile)
-      PROFILE="${2:?Informe o perfil: laravel, hubspot ou react}"
+      PROFILE="${2:?Informe o perfil (npm run bootstrap -- --help)}"
       shift 2
       ;;
     -h | --help)
-      echo "Uso: npm run bootstrap -- <repo> [--profile=laravel|hubspot|react]"
+      # shellcheck disable=SC1091
+      source "$SCRIPT_DIR/lib/profiles.sh"
+      echo "Uso: npm run bootstrap -- <repo> [--profile=nome]"
+      profiles_usage_line
       exit 0
       ;;
     *)
@@ -47,6 +50,8 @@ done
 source "$SCRIPT_DIR/lib/projects-registry.sh"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/lib/apply-bootstrap-profile.sh"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/lib/profiles.sh"
 
 if [[ ! -x "$LINK_SCRIPT" ]]; then
   echo "Pacote não instalado. Execute primeiro:" >&2
@@ -63,10 +68,9 @@ PROJECT="$(cd "$PROJECT" && pwd)"
 HOSTDIME_IA_ROOT="${HOSTDIME_IA_ROOT:-$MONOREPO_ROOT}"
 
 if [[ -n "$PROFILE" ]]; then
-  profile_dir="$HOSTDIME_IA_ROOT/packages/cursor/profiles/$PROFILE"
-  if [[ ! -d "$profile_dir" ]]; then
+  if ! profiles_is_valid "$PROFILE"; then
     echo "Erro: perfil desconhecido: $PROFILE" >&2
-    echo "Perfis disponíveis: laravel, hubspot, react" >&2
+    profiles_usage_line >&2
     exit 1
   fi
 fi
