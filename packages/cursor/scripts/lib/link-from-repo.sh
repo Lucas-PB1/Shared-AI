@@ -111,9 +111,13 @@ link_dir() {
 link_glob() {
   local pattern="$1"
   local dest_dir="$2"
-  local f
+  local dir glob f
+  # Separa o diretório (mantido entre aspas p/ suportar espaços) do padrão de
+  # nome de arquivo, que é o único trecho que deve sofrer expansão de glob.
+  dir="${pattern%/*}"
+  glob="${pattern##*/}"
   shopt -s nullglob
-  for f in $pattern; do
+  for f in "$dir"/$glob; do
     if [[ -d "$f" ]]; then
       link_dir "$f" "$dest_dir"
     elif [[ -f "$f" ]]; then
