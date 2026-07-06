@@ -2,9 +2,9 @@
 
 Instalado com `npm run setup:code-review` (inclui `npm install` + `composer install`).
 
-Commands: `/avaliar`, `/avaliar-diff`, `/finalizar`, `/skills-why`.
+Commands: `/avaliar`, `/avaliar-diff`, `/finalizar`, `/memoria`, `/skills-why`.
 
-Memória por projeto: `.cursor/review/memoria.md` (gitignored, atualizado no `/finalizar`).
+Memória por projeto: `.cursor/review/` (gitignored). v1: `memoria.md`; v2 opt-in via `/memoria migrar`.
 
 Diagnóstico: `npm run doctor`.
 

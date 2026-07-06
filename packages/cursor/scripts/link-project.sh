@@ -52,13 +52,14 @@ link_glob "$RULE_SRC/skills-orchestrator-*.mdc" "$RULES_DIR"
 link_file "$COMMAND_SRC/avaliar.md" "$COMMANDS_DIR"
 link_file "$COMMAND_SRC/finalizar.md" "$COMMANDS_DIR"
 link_file "$COMMAND_SRC/avaliar-diff.md" "$COMMANDS_DIR"
+link_file "$COMMAND_SRC/memoria.md" "$COMMANDS_DIR"
 link_glob "$COMMAND_CURSOR_SRC/*.md" "$COMMANDS_DIR"
 
 ensure_project_gitignore "$TARGET"
 if [[ "$QUIET" -eq 0 ]]; then
   echo ""
   echo "Concluído: $LINK_LINKED symlink(s) em $TARGET/.cursor/"
-  echo "  review/ → reports/, resultados/, memoria.md"
+  echo "  review/ → reports/, resultados/, memoria.md (v1) + /memoria para v2"
   [[ "$LINK_SKIPPED" -gt 0 ]] && echo "Ignorados (arquivo real do projeto): $LINK_SKIPPED"
 fi
 

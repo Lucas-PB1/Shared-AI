@@ -2,6 +2,7 @@
 .cursor/commands/avaliar.md
 .cursor/commands/finalizar.md
 .cursor/commands/avaliar-diff.md
+.cursor/commands/memoria.md
 .cursor/commands/skills-why.md
 .cursor/commands/hubspot-mcp.md
 .cursor/commands/cursor-cli.md
@@ -14,3 +15,9 @@
 !.cursor/review/reports/.gitkeep
 .cursor/review/resultados/
 .cursor/review/memoria.md
+.cursor/review/memoria.legacy.md
+.cursor/review/.memoria-version
+.cursor/review/decisions.jsonl
+.cursor/review/context.yaml
+.cursor/review/convencoes.md
+.cursor/review/backups/

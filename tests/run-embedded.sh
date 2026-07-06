@@ -36,6 +36,7 @@ test_link_symlinks() {
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
   assert "orquestrador base" test -L "$project/.cursor/rules/skills-orchestrator-base.mdc"
   assert "command avaliar" test -L "$project/.cursor/commands/avaliar.md"
+  assert "command memoria" test -L "$project/.cursor/commands/memoria.md"
   assert "command hubspot-mcp" test -L "$project/.cursor/commands/hubspot-mcp.md"
   assert "command historico" test -L "$project/.cursor/commands/historico.md"
   assert "command cursor-cli" test -L "$project/.cursor/commands/cursor-cli.md"
@@ -389,6 +390,29 @@ test_onboard_noninteractive() {
   assert "onboard registry" grep -qF "$project" "$CURSOR_USER_DIR/hostdime-ia/projects.json"
 }
 
+test_memoria_migrar_restore() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/review"
+  cp "$ROOT/packages/code-review/templates/memoria.md" "$project/.cursor/review/memoria.md"
+  cat >>"$project/.cursor/review/memoria.md" <<'EOF'
+
+## Histórico
+
+### 2026-07-02 — review-app-Foo
+
+- [rejeitado] L10 — Não usar Repository — padrão legado
+- [aceito] L20 — Validar com FormRequest
+EOF
+  python3 "$ROOT/packages/code-review/tools/review-memoria.py" backup "$project" >/dev/null
+  python3 "$ROOT/packages/code-review/tools/review-memoria.py" migrar --write "$project" >/dev/null
+  assert "memoria v2 marker" test -f "$project/.cursor/review/.memoria-version"
+  assert "context yaml" test -f "$project/.cursor/review/context.yaml"
+  assert "decisions jsonl" test -f "$project/.cursor/review/decisions.jsonl"
+  python3 "$ROOT/packages/code-review/tools/review-memoria.py" restore --write "$project" >/dev/null
+  assert "restored v1" test ! -f "$project/.cursor/review/.memoria-version"
+  assert "backup kept" test -f "$project/.cursor/review/backups/memoria-original.md"
+}
+
 test_health_multi_project() {
   project="$(hostdime_make_project)"
   bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
@@ -433,6 +457,7 @@ run_test "sync-inbox scan" test_sync_inbox_scan
 run_test "profiles detect bootstrap" test_profiles_detect_and_bootstrap
 run_test "onboard noninteractive" test_onboard_noninteractive
 run_test "health multi-project" test_health_multi_project
+run_test "memoria migrar restore" test_memoria_migrar_restore
 
 echo ""
 echo "Resumo: $pass ok, $fail falha(s)"

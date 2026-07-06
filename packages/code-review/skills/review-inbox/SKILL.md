@@ -13,7 +13,8 @@ Commands universais (symlink em `.cursor/commands/`, como as rules).
 | --- | --- |
 | `/avaliar` | Deep dive em um arquivo do repo (De/Para + GitLab) |
 | `/avaliar-diff` | Triagem do diff do branch → fila para `/avaliar` |
-| `/finalizar` | Empacota em `resultados/` + atualiza `memoria.md` |
+| `/finalizar` | Empacota em `resultados/` + persiste decisões |
+| `/memoria` | Migra, compacta e promove memória v2 (opt-in) |
 
 ## Pastas no projeto
 
@@ -21,7 +22,10 @@ Commands universais (symlink em `.cursor/commands/`, como as rules).
 | --- | --- |
 | `.cursor/review/reports/` | Rascunho do `/avaliar` — removido no `/finalizar` |
 | `.cursor/review/resultados/` | Pacote final após `/finalizar` |
-| `.cursor/review/memoria.md` | Convenções do time + histórico (gitignored) |
+| `.cursor/review/memoria.md` | v1: convenções + histórico (gitignored) |
+| `.cursor/review/decisions.jsonl` | v2: staging de decisões (gitignored) |
+| `.cursor/review/context.yaml` | v2: exclusões e candidates compactos (gitignored) |
+| `.cursor/review/convencoes.md` | v2: padrão promovido para geração (gitignored) |
 
 Criadas automaticamente pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`).
 
@@ -30,10 +34,11 @@ Criadas automaticamente pelo `link-project.sh` (hook sessionStart ou `npm run bo
 **Arquivo do repo**
 
 1. `/avaliar` no caminho do arquivo (ou arquivo aberto)
-2. Lê `memoria.md` (convenções) se existir
+2. Lê memória conforme modo (v1: `memoria.md`; v2: `context.yaml` + `convencoes.md`)
 3. `~/.cursor/review-check.sh <arquivo>` antes do relatório
 4. Salva em `.cursor/review/reports/<data>_<slug>.md`
-5. `/finalizar` → decisões do dev em `memoria.md` → `~/.cursor/review-finalizar.sh`
+5. `/finalizar` → decisões do dev → `~/.cursor/review-finalizar.sh`
+6. `/memoria compactar` / `promover` quando o dev quiser contexto explícito v2
 6. Relatório vai para `resultados/`; **arquivo do repo permanece intacto**
 
 **Diff do branch**

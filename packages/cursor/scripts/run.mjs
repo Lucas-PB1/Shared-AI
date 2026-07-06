@@ -24,6 +24,7 @@ const BASH_MAP = {
   'review-ci': join(scriptsDir, '../../code-review/tools/review-ci.sh'),
   'boot-sync': join(scriptsDir, 'boot-sync.sh'),
   historico: join(scriptsDir, 'historico-cli.sh'),
+  memoria: join(scriptsDir, '../../code-review/tools/review-memoria.sh'),
   'cursor-cli': join(scriptsDir, 'install-cursor-cli.sh'),
   agent: join(scriptsDir, 'agent-cli.sh'),
   'sync-inbox': join(scriptsDir, 'sync-inbox.sh'),
@@ -94,7 +95,7 @@ const [command, ...args] = process.argv.slice(2);
 if (!command || command === '--help' || command === '-h') {
   console.log(`Uso: node run.mjs <comando> [args...]
 
-Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico, cursor-cli, agent, sync-inbox, onboard, health`);
+Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico, memoria, cursor-cli, agent, sync-inbox, onboard, health`);
   process.exit(0);
 }
 
