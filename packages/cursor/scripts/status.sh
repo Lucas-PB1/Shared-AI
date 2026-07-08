@@ -53,6 +53,7 @@ export HOSTDIME_IA_ROOT="$root"
 reset_link_counters
 LINK_REPORT_FILE="$(mktemp)"
 export LINK_REPORT_FILE
+trap 'rm -f "$LINK_REPORT_FILE"' EXIT
 
 check_user_link() {
   local src="$1"
@@ -88,8 +89,6 @@ if [[ -d "$root" ]]; then
   check_user_link "$root/packages/cursor/commands/skills-why.md" "$CURSOR_DIR/commands/skills-why.md"
   check_user_link "$root/packages/cursor/commands/hubspot-mcp.md" "$CURSOR_DIR/commands/hubspot-mcp.md"
 fi
-
-rm -f "$LINK_REPORT_FILE"
 
 echo ""
 echo "=== Projetos registrados ==="

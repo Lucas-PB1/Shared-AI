@@ -66,8 +66,14 @@ boot_sync_mark_asked() {
 
 boot_sync_log() {
   local msg="$1"
+  local file
   boot_sync_ensure_state_dir
-  printf '[%s] %s\n' "$(date -Iseconds 2>/dev/null || date)" "$msg" >>"$(boot_sync_log_file)"
+  file="$(boot_sync_log_file)"
+  # Rotaciona se passar de ~1 MB (mantém 1 backup) — evita crescimento sem limite.
+  if [[ -f "$file" ]] && (($(wc -c <"$file" 2>/dev/null || echo 0) > 1048576)); then
+    mv -f "$file" "$file.1"
+  fi
+  printf '[%s] %s\n' "$(date -Iseconds 2>/dev/null || date)" "$msg" >>"$file"
 }
 
 boot_sync_install_startup_script() {

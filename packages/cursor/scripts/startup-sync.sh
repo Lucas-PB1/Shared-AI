@@ -12,6 +12,12 @@ log() {
   printf '[%s] %s\n' "$(date -Iseconds 2>/dev/null || date)" "$1" >>"$LOG_FILE"
 }
 
+# Rotaciona o log se passar de ~1 MB (mantém 1 backup) — evita crescimento sem limite.
+mkdir -p "$(dirname "$LOG_FILE")"
+if [[ -f "$LOG_FILE" ]] && (($(wc -c <"$LOG_FILE" 2>/dev/null || echo 0) > 1048576)); then
+  mv -f "$LOG_FILE" "$LOG_FILE.1"
+fi
+
 if [[ -f "$STATE_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$STATE_FILE"
