@@ -1,0 +1,60 @@
+---
+description: >-
+  Roteia skills de DevOps/infra conforme arquivos no contexto (Dockerfile,
+  compose, workflows CI, .tf, .sh, nginx, systemd) — complementa intent e stack
+globs:
+  - "**/Dockerfile*"
+  - "**/*.dockerfile"
+  - "**/.dockerignore"
+  - "**/docker-compose*.yml"
+  - "**/docker-compose*.yaml"
+  - "**/compose*.yml"
+  - "**/compose*.yaml"
+  - "**/.github/workflows/*.yml"
+  - "**/.github/workflows/*.yaml"
+  - "**/.gitlab-ci.yml"
+  - "**/*.tf"
+  - "**/*.tfvars"
+  - "**/*.sh"
+  - "**/*.bash"
+  - "**/nginx*.conf"
+  - "**/*.nginx"
+  - "**/sites-available/**"
+  - "**/*.service"
+  - "**/*.timer"
+alwaysApply: false
+---
+
+# Orquestrador — DevOps / Infra
+
+Complementa `intent` (palavras do pedido) e `stack` (manifestos) quando um arquivo de infra está no contexto. Ler SKILL.md conforme **Localização** em `skills-orchestrator-base.mdc`.
+
+## Arquivo detectado → skill
+
+| Arquivo no contexto | Skill |
+| --- | --- |
+| `Dockerfile*`, `*.dockerfile`, `.dockerignore` | `docker` |
+| `docker-compose*.yml`, `compose*.yml` | `docker-compose` (+ `docker`) |
+| `.github/workflows/*.yml`, `.gitlab-ci.yml` | `ci-cd` (ref da plataforma correspondente) |
+| `*.sh`, `*.bash` | `shell-scripting` |
+| `.env*`, config por ambiente | `env-secrets` |
+| `*.service`, `*.timer`, cron, tarefa de servidor | `linux-server` |
+| `nginx*.conf`, `*.nginx`, `sites-available/**` | `nginx` |
+| `*.tf`, `*.tfvars` | `infrastructure-as-code` |
+
+## Casos específicos
+
+| Sinal na tarefa | Ação |
+| --- | --- |
+| Logs, métricas, health check, readiness | `observability` |
+| Zero-downtime, blue-green, canary, rollback | `deployment-strategies` |
+| CI para GitHub | `ci-cd` + ref `github-actions.md` |
+| CI para GitLab | `ci-cd` + ref `gitlab-ci.md` |
+| Segredo em log/imagem/repo | `env-secrets` (+ `security`) |
+
+## Composição
+
+- `skills-orchestrator-intent.mdc` — palavras do pedido (docker, deploy, pipeline, nginx, terraform…)
+- `skills-orchestrator-stack.mdc` — `docker-compose`, `Dockerfile`, `*.tf`, workflows na varredura de manifestos
+- `skills-orchestrator-base.mdc` — merge, dedupe e cap 6–8
+- Específica > genérica: `docker-compose` > `docker` quando ambos aplicam

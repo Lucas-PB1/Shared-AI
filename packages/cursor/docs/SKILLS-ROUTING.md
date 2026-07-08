@@ -56,6 +56,16 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `eslint` | sim | sim | — |
 | `prettier` | sim | sim | — |
 | `git` | sim | — | — |
+| `docker` | docker, container, Dockerfile, imagem | `Dockerfile`, `.dockerignore` | devops |
+| `docker-compose` | compose, serviços locais | `docker-compose*.yml`, `compose*.yml` | devops |
+| `ci-cd` | pipeline, CI/CD, GitHub Actions, GitLab CI | workflows, `.gitlab-ci.yml` | devops |
+| `shell-scripting` | bash, shell script, `.sh` | `*.sh`, `*.bash` | devops |
+| `env-secrets` | env, `.env`, segredo, 12-factor | — | devops |
+| `linux-server` | systemd, cron, servidor Linux, permissões | `*.service`, `*.timer` | devops |
+| `nginx` | nginx, reverse proxy, TLS | `nginx*.conf`, `sites-available/**` | devops |
+| `observability` | log, métrica, health check, readiness | — | devops |
+| `deployment-strategies` | zero-downtime, blue-green, canary, rollback | — | devops |
+| `infrastructure-as-code` | Terraform, IaC, state, provisionar | `*.tf`, `*.tfvars` | devops |
 | `hubspot-cli` | deploy/CLI, HubSpot, `hs project` | hsproject / cms-components / `@hubspot/cli` | hubspot |
 | `okf` | OKF, knowledge bundle, concept document | — | okf |
 | `review-inbox` | `/avaliar`, `/avaliar-diff`, `/finalizar`, arquivo no repo (se code-review instalado) | — | — |
@@ -75,6 +85,7 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `arquitetura.mdc` | `*.{ts,tsx,js,php,py}` |
 | `testing.mdc` | `*.{test,spec}.*`, `tests/**` |
 | `hubspot.mdc` | `hsproject.json`, `*.fields.json`, `hubspot.config.yml` |
+| `devops.mdc` | `Dockerfile*`, `docker-compose*.yml`, `.github/workflows/*.yml`, `.gitlab-ci.yml`, `*.tf`, `*.sh`, `nginx*.conf`, `*.service` |
 | `okf.mdc` | `okf/**/*.md`, `.okf/**/*.md`, `okf-bundle/**/*.md` |
 
 ## Always-on (orquestrador)

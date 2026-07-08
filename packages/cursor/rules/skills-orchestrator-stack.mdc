@@ -16,6 +16,9 @@ Antes de implementar, varrer manifestos na **raiz** e em **pacotes/workspaces** 
 - `pyproject.toml`, `requirements.txt`, `setup.py`
 - `tsconfig.json` (presença indica TypeScript)
 - `hsproject.json` (HubSpot developer project)
+- `Dockerfile`, `docker-compose*.yml` / `compose*.yml` (containers)
+- `.github/workflows/*.yml`, `.gitlab-ci.yml` (CI/CD)
+- `*.tf`, `*.tfvars` (Terraform / IaC)
 
 ## Mapa manifesto → skills
 
@@ -35,6 +38,12 @@ Antes de implementar, varrer manifestos na **raiz** e em **pacotes/workspaces** 
 | `pyproject.toml`, `requirements.txt` ou `.py` no escopo | `python` |
 | `pytest` em deps ou `[tool.pytest]` | `testing`, `python` |
 | `hsproject.json`, `@hubspot/cms-components` ou `@hubspot/cli` | `hubspot-cli` (se existir no projeto ou em `~/.cursor/skills/`) |
+| `Dockerfile`, `.dockerignore` | `docker` |
+| `docker-compose*.yml`, `compose*.yml` | `docker-compose`, `docker` |
+| `.github/workflows/*.yml`, `.gitlab-ci.yml` | `ci-cd` |
+| `*.tf`, `*.tfvars` | `infrastructure-as-code` |
+| `*.sh`, `*.bash` no escopo | `shell-scripting` |
+| `nginx*.conf`, `*.service`, `*.timer` | `nginx`, `linux-server` |
 
 ## Como usar
 

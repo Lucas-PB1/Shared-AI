@@ -82,6 +82,25 @@ Se **nenhum** existir: manter só a linha genérica de review acima — **não**
 | use case, clean architecture, regra de dependência | `clean-architecture` |
 | design system, átomos, moléculas, organismos | `atomic-design` |
 
+## DevOps / Infra
+
+| Intenção no pedido | Skill |
+| --- | --- |
+| Docker, container, Dockerfile, imagem, containerizar | `docker` |
+| docker compose, compose, subir serviços locais, ambiente com vários containers | `docker-compose` |
+| pipeline, CI, CD, CI/CD, build automático, automatizar testes/deploy | `ci-cd` |
+| GitHub Actions, workflow, `.github/workflows` | `ci-cd` (ref `github-actions`) |
+| GitLab CI, `.gitlab-ci.yml`, runner | `ci-cd` (ref `gitlab-ci`) |
+| bash, shell script, script `.sh`, automação de terminal | `shell-scripting` |
+| env, `.env`, variável de ambiente, segredo, credencial, 12-factor | `env-secrets` |
+| systemd, serviço, cron, agendamento, servidor Linux, permissões | `linux-server` |
+| nginx, reverse proxy, TLS, certificado, server block | `nginx` |
+| log estruturado, métrica, observabilidade, health check, readiness | `observability` |
+| zero-downtime, blue-green, canary, rollback, estratégia de deploy | `deployment-strategies` |
+| Terraform, IaC, infraestrutura como código, `.tf`, state, provisionar | `infrastructure-as-code` |
+
+> **Deploy:** se houver tooling específico do projeto (ex.: `hubspot-cli`), priorizá-lo; senão, `ci-cd` + `deployment-strategies`.
+
 ## Como aplicar
 
 - Varredura na mensagem do usuário **e** no diff/tarefa implícita
