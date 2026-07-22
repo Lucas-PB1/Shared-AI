@@ -14,7 +14,7 @@ Ler skill **`review-inbox`** para o fluxo `/avaliar` + `/finalizar`.
 | `/memoria migrar` | v1→v2 ou scaffold/purge legacy — **dry-run** |
 | `/memoria migrar --write` | Gravar v2 e **remover** `memoria.md` / `memoria.legacy.md` |
 | `/memoria compactar` | `decisions.jsonl` → `context.yaml` — dry-run |
-| `/memoria compactar --write` | Gravar `context.yaml` (+ `context.json`) |
+| `/memoria compactar --write` | Gravar `context.yaml` |
 | `/memoria promover` | `candidates` → `convencoes.md` — dry-run |
 | `/memoria promover --write` | Gravar `convencoes.md` |
 | `/memoria promover --all --write` | Promover todos os candidates (mesmo com 1 ocorrência) |
@@ -48,7 +48,7 @@ npm run memoria -- restore [--write] [projeto]
 | `backups/memoria-original.md` | backup / migrar | restore / diff |
 | `.memoria-version` | migrar | detectar modo |
 | `decisions.jsonl` | `/finalizar` ou migrar | compactar |
-| `context.yaml` / `context.json` | migrar / compactar | `/avaliar`, promover |
+| `context.yaml` | migrar / compactar | `/avaliar`, promover |
 | `convencoes.md` | promover | `/avaliar`, geração |
 
 **Não** manter `memoria.md` nem `memoria.legacy.md` no projeto após migrar.

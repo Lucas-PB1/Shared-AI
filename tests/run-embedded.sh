@@ -103,7 +103,13 @@ EOF
   else
     assert "ignore avaliar scrub" true
   fi
-  assert "ignore review mantido" grep -qxF '.cursor/review/memoria.md' "$project/.gitignore"
+  if grep -qxF '.cursor/review/memoria.md' "$project/.gitignore"; then
+    assert "ignore memoria.md scrub" false
+  else
+    assert "ignore memoria.md scrub" true
+  fi
+  assert "ignore context.yaml mantido" grep -qxF '.cursor/review/context.yaml' "$project/.gitignore"
+  assert "ignore decisions mantido" grep -qxF '.cursor/review/decisions.jsonl' "$project/.gitignore"
 }
 
 test_migrar_cursor_command_installed() {
@@ -479,7 +485,7 @@ EOF
   python3 "$ROOT/packages/code-review/tools/review-memoria.py" migrar --write "$project" >/dev/null
   assert "memoria v2 marker" test -f "$project/.cursor/review/.memoria-version"
   assert "context yaml" test -f "$project/.cursor/review/context.yaml"
-  assert "context json" test -f "$project/.cursor/review/context.json"
+  assert "sem context.json" test ! -f "$project/.cursor/review/context.json"
   assert "decisions jsonl" test -f "$project/.cursor/review/decisions.jsonl"
   assert "sem memoria.md" test ! -f "$project/.cursor/review/memoria.md"
   assert "sem legacy" test ! -f "$project/.cursor/review/memoria.legacy.md"

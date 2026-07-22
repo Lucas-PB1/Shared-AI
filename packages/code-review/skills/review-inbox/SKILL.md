@@ -23,7 +23,7 @@ Commands universais em `~/.cursor/commands/` (global; setup/sync).
 | `.cursor/review/reports/` | Rascunho do `/avaliar` — removido no `/finalizar` |
 | `.cursor/review/resultados/` | Pacote final após `/finalizar` |
 | `.cursor/review/decisions.jsonl` | staging de decisões (gitignored) |
-| `.cursor/review/context.yaml` / `context.json` | exclusões e pending (gitignored) |
+| `.cursor/review/context.yaml` | exclusões, pending, rules e candidates (gitignored) |
 | `.cursor/review/convencoes.md` | padrão promovido para geração (gitignored) |
 
 Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`). Commands hostdime **não** são espelhados no projeto. Memória **só v2** — sem `memoria.md` / legacy.

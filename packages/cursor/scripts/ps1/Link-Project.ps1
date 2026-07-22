@@ -81,7 +81,7 @@ if (Test-Path $memoriaPy) {
         Copy-Item $convTpl $convDest
     }
 }
-foreach ($legacy in @('memoria.md', 'memoria.legacy.md')) {
+foreach ($legacy in @('memoria.md', 'memoria.legacy.md', 'context.json')) {
     $p = Join-Path $reviewDir $legacy
     if (Test-Path $p) { Remove-Item -LiteralPath $p -Force }
 }

@@ -15,6 +15,9 @@ $script:HostdimeGitignoreOrphans = @(
     '.cursor/commands/sync-inbox.md'
     '.cursor/commands/onboard.md'
     '.cursor/commands/migrar-cursor.md'
+    '.cursor/review/memoria.md'
+    '.cursor/review/memoria.legacy.md'
+    '.cursor/review/context.json'
 )
 
 $script:LinkGitignoreScrubbed = 0

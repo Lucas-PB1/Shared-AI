@@ -3,11 +3,8 @@
 .cursor/review/reports/*
 !.cursor/review/reports/.gitkeep
 .cursor/review/resultados/
-.cursor/review/memoria.md
-.cursor/review/memoria.legacy.md
 .cursor/review/.memoria-version
 .cursor/review/decisions.jsonl
 .cursor/review/context.yaml
-.cursor/review/context.json
 .cursor/review/convencoes.md
 .cursor/review/backups/

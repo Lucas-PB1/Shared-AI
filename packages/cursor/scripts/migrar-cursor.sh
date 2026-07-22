@@ -147,7 +147,7 @@ else
       python3 "$MEMORIA_PY" promover --all --write "$project" >/dev/null 2>&1 || true
     fi
     leftover=""
-    for f in memoria.md memoria.legacy.md; do
+    for f in memoria.md memoria.legacy.md context.json; do
       [[ -f "$project/.cursor/review/$f" ]] && leftover="$leftover $f"
     done
     if [[ -n "$leftover" ]]; then
@@ -195,7 +195,7 @@ while IFS= read -r project; do
   total="$(printf '%s\n' "$porcelain" | grep -cve '^$' || true)"
   gi_lines="$(printf '%s\n' "$porcelain" | grep -ce '\.gitignore$' || true)"
   if [[ "$total" -gt 0 && "$gi_lines" -eq "$total" ]]; then
-    echo "  · $name — só .gitignore (scrub dual-link) — $project"
+    echo "  · $name — só .gitignore (scrub dual-link + review legacy) — $project"
   elif [[ "$project" == "$HOSTDIME_IA_ROOT" ]]; then
     echo "  · $name — pacote hostdime-ia (feature global) — $project"
   else
@@ -210,7 +210,7 @@ fi
 
 echo ""
 if [[ "$issues" -eq 0 ]]; then
-  echo "Migração concluída. Espelhos por projeto, ignores órfãos, pastas rules/commands vazias e memória v1 são lixo — se reaparecerem, rode de novo /migrar-cursor ou npm run sync. Não reintroduzir dual-link nem memoria.md. Confira os projetos com .gitignore alterado antes de commitar."
+  echo "Migração concluída. Espelhos por projeto, ignores órfãos (orquestrador/commands e review legacy), pastas rules/commands vazias e memória v1 são lixo — se reaparecerem, rode de novo /migrar-cursor ou npm run sync. Não reintroduzir dual-link nem memoria.md/context.json. Confira os projetos com .gitignore alterado antes de commitar."
   exit 0
 fi
 

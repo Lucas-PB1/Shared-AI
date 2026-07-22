@@ -279,6 +279,39 @@ def dump_yaml(data: dict[str, Any]) -> str:
             return json.dumps(s, ensure_ascii=False)
         return s
 
+    def dump_list(key: str, items: list[dict[str, Any]], fields: list[str]) -> list[str]:
+        out = ["", f"{key}:"]
+        if not items:
+            out.append("  []")
+            return out
+        for item in items:
+            first = True
+            for field in fields:
+                if field not in item or item[field] in (None, "", []):
+                    continue
+                val = item[field]
+                if isinstance(val, list):
+                    if first:
+                        out.append(f"  - {field}:")
+                        first = False
+                    else:
+                        out.append(f"    {field}:")
+                    for entry in val[:5]:
+                        out.append(f"      - {esc(str(entry)[:120])}")
+                elif isinstance(val, bool):
+                    line = f"{field}: {'true' if val else 'false'}"
+                    out.append(f"  - {line}" if first else f"    {line}")
+                    first = False
+                elif isinstance(val, (int, float)):
+                    line = f"{field}: {val}"
+                    out.append(f"  - {line}" if first else f"    {line}")
+                    first = False
+                else:
+                    line = f"{field}: {esc(str(val))}"
+                    out.append(f"  - {line}" if first else f"    {line}")
+                    first = False
+        return out
+
     lines = [
         f"schema: {data.get('schema', SCHEMA_VERSION)}",
         f"updated_at: {esc(data.get('updated_at', ''))}",
@@ -286,23 +319,27 @@ def dump_yaml(data: dict[str, Any]) -> str:
         "",
         "exclusions:",
     ]
-    for ex in data.get("exclusions", []):
-        lines.append(f"  - id: {esc(ex['id'])}")
-        lines.append(f"    scope: {esc(ex['scope'])}")
-        if ex.get("skip_categories"):
-            lines.append(f"    skip_categories: {json.dumps(ex['skip_categories'])}")
-        if ex.get("skip_summaries") and ex["skip_summaries"] != [ex.get("reason", "")[:80]]:
-            lines.append("    skip_summaries:")
-            for s in ex["skip_summaries"][:2]:
-                lines.append(f"      - {esc(s[:80])}")
-        lines.append(f"    decision: {ex.get('decision', 'rejeitado')}")
-        if ex.get("reason"):
-            lines.append(f"    reason: {esc(ex['reason'][:120])}")
-        if ex.get("since"):
-            lines.append(f"    since: {esc(ex['since'])}")
-        lines.append(f"    occurrences: {ex.get('occurrences', 1)}")
-        if ex.get("inferred_from"):
-            lines.append(f"    inferred_from: {esc(ex['inferred_from'])}")
+    exclusions = data.get("exclusions", [])
+    if not exclusions:
+        lines.append("  []")
+    else:
+        for ex in exclusions:
+            lines.append(f"  - id: {esc(ex['id'])}")
+            lines.append(f"    scope: {esc(ex['scope'])}")
+            if ex.get("skip_categories"):
+                lines.append(f"    skip_categories: {json.dumps(ex['skip_categories'])}")
+            if ex.get("skip_summaries") and ex["skip_summaries"] != [ex.get("reason", "")[:80]]:
+                lines.append("    skip_summaries:")
+                for s in ex["skip_summaries"][:2]:
+                    lines.append(f"      - {esc(s[:80])}")
+            lines.append(f"    decision: {ex.get('decision', 'rejeitado')}")
+            if ex.get("reason"):
+                lines.append(f"    reason: {esc(ex['reason'][:120])}")
+            if ex.get("since"):
+                lines.append(f"    since: {esc(ex['since'])}")
+            lines.append(f"    occurrences: {ex.get('occurrences', 1)}")
+            if ex.get("inferred_from"):
+                lines.append(f"    inferred_from: {esc(ex['inferred_from'])}")
 
     lines.append("")
     lines.append("pending:")
@@ -317,7 +354,156 @@ def dump_yaml(data: dict[str, Any]) -> str:
             lines.append(f"    since: {esc(p.get('since', ''))}")
             lines.append(f"    revisit: {esc(p.get('revisit', 'next-touch'))}")
 
+    lines.extend(
+        dump_list(
+            "convention_rules",
+            data.get("convention_rules", []),
+            ["id", "scope", "rule", "summary", "section"],
+        )
+    )
+    lines.extend(
+        dump_list(
+            "candidates",
+            data.get("candidates", []),
+            ["id", "scope", "rule", "decision", "occurrences", "promoted", "inferred_from"],
+        )
+    )
+
     return "\n".join(lines) + "\n"
+
+
+def _unesc_yaml_scalar(raw: str) -> Any:
+    raw = raw.strip()
+    if raw in ("true", "false"):
+        return raw == "true"
+    if raw.isdigit() or (raw.startswith("-") and raw[1:].isdigit()):
+        return int(raw)
+    if (raw.startswith('"') and raw.endswith('"')) or (raw.startswith("'") and raw.endswith("'")):
+        try:
+            return json.loads(raw.replace("'", '"') if raw.startswith("'") else raw)
+        except json.JSONDecodeError:
+            return raw[1:-1]
+    if raw.startswith("[") and raw.endswith("]"):
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return raw
+    return raw
+
+
+def parse_context_yaml(text: str) -> dict[str, Any]:
+    """Parser mínimo do YAML que dump_yaml emite (sem PyYAML)."""
+    data: dict[str, Any] = {
+        "schema": SCHEMA_VERSION,
+        "updated_at": "",
+        "source": "",
+        "exclusions": [],
+        "pending": [],
+        "convention_rules": [],
+        "candidates": [],
+    }
+    section: str | None = None
+    current: dict[str, Any] | None = None
+    list_key: str | None = None
+
+    for raw_line in text.splitlines():
+        if not raw_line.strip() or raw_line.strip().startswith("#"):
+            continue
+        if not raw_line.startswith(" ") and ":" in raw_line:
+            key, _, val = raw_line.partition(":")
+            key = key.strip()
+            val = val.strip()
+            if key in ("schema", "updated_at", "source"):
+                if current and section:
+                    data[section].append(current)
+                    current = None
+                section = None
+                list_key = None
+                data[key] = int(val) if key == "schema" and val.isdigit() else _unesc_yaml_scalar(val)
+                continue
+            if key in ("exclusions", "pending", "convention_rules", "candidates"):
+                if current and section:
+                    data[section].append(current)
+                current = None
+                list_key = None
+                section = key
+                if val == "[]":
+                    data[key] = []
+                    section = None
+                continue
+
+        if section is None:
+            continue
+
+        if raw_line.startswith("  - "):
+            if current is not None:
+                data[section].append(current)
+            body = raw_line[4:]
+            current = {}
+            list_key = None
+            if ":" in body:
+                k, _, v = body.partition(":")
+                k, v = k.strip(), v.strip()
+                if v == "":
+                    list_key = k
+                    current[k] = []
+                else:
+                    current[k] = _unesc_yaml_scalar(v)
+            continue
+
+        if current is None:
+            continue
+
+        if raw_line.startswith("      - "):
+            if list_key:
+                current.setdefault(list_key, []).append(_unesc_yaml_scalar(raw_line[8:]))
+            continue
+
+        if raw_line.startswith("    ") and ":" in raw_line:
+            k, _, v = raw_line.strip().partition(":")
+            k, v = k.strip(), v.strip()
+            if v == "":
+                list_key = k
+                current[k] = []
+            else:
+                list_key = None
+                current[k] = _unesc_yaml_scalar(v)
+
+    if current is not None and section:
+        data[section].append(current)
+    return data
+
+
+def write_context(rd: Path, context: dict[str, Any]) -> None:
+    (rd / "context.yaml").write_text(dump_yaml(context), encoding="utf-8")
+    # Twin JSON foi artefato transitório da migração — não gravar mais
+    legacy_json = rd / "context.json"
+    if legacy_json.is_file():
+        legacy_json.unlink()
+
+
+def load_context(rd: Path) -> dict[str, Any] | None:
+    # Preferir JSON residual só para recuperação; YAML é a fonte
+    js = rd / "context.json"
+    yaml_path = rd / "context.yaml"
+    if yaml_path.is_file():
+        parsed = parse_context_yaml(yaml_path.read_text(encoding="utf-8"))
+        # YAML antigo sem candidates/rules: complementar com JSON residual se existir
+        if js.is_file() and not parsed.get("candidates") and not parsed.get("convention_rules"):
+            try:
+                from_json = json.loads(js.read_text(encoding="utf-8"))
+                for key in ("convention_rules", "candidates", "exclusions", "pending"):
+                    if from_json.get(key):
+                        parsed[key] = from_json[key]
+            except json.JSONDecodeError:
+                pass
+        return parsed
+    if js.is_file():
+        try:
+            return json.loads(js.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return None
+    return None
 
 
 def build_context(
@@ -354,21 +540,6 @@ def build_context(
     }
 
 
-def write_context(rd: Path, context: dict[str, Any]) -> None:
-    (rd / "context.yaml").write_text(dump_yaml(context), encoding="utf-8")
-    (rd / "context.json").write_text(
-        json.dumps(context, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-
-
-def load_context(rd: Path) -> dict[str, Any] | None:
-    js = rd / "context.json"
-    if js.is_file():
-        return json.loads(js.read_text(encoding="utf-8"))
-    return None
-
-
 def write_decisions(path: Path, decisions: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8") as f:
         for d in decisions:
@@ -401,7 +572,6 @@ def file_stats(project: Path) -> dict[str, Any]:
         "memoria.legacy.md": rd / "memoria.legacy.md",
         "decisions.jsonl": rd / "decisions.jsonl",
         "context.yaml": rd / "context.yaml",
-        "context.json": rd / "context.json",
         "convencoes.md": rd / "convencoes.md",
         ".memoria-version": rd / ".memoria-version",
     }
@@ -462,9 +632,9 @@ def cmd_backup(project: Path) -> int:
 
 
 def purge_v1_files(rd: Path) -> list[str]:
-    """Remove artefatos v1/legacy; backup permanece só em backups/."""
+    """Remove artefatos v1/legacy e twin JSON transitório; backup só em backups/."""
     removed: list[str] = []
-    for name in ("memoria.md", "memoria.legacy.md"):
+    for name in ("memoria.md", "memoria.legacy.md", "context.json"):
         p = rd / name
         if p.is_file():
             p.unlink()
@@ -510,7 +680,7 @@ def cmd_migrar(project: Path, write: bool) -> int:
     rd = review_dir(project)
     memoria = rd / "memoria.md"
     already_v2 = mode(project) == "v2"
-    leftover_names = ("memoria.md", "memoria.legacy.md")
+    leftover_names = ("memoria.md", "memoria.legacy.md", "context.json")
     leftover = [n for n in leftover_names if (rd / n).is_file()]
 
     # Já v2: nunca re-parseia memoria.md (pode ser mais velha que decisions.jsonl)
@@ -527,13 +697,22 @@ def cmd_migrar(project: Path, write: bool) -> int:
             dest_dir.mkdir(parents=True, exist_ok=True)
             if not (dest_dir / "memoria-original.md").is_file():
                 shutil.copy2(memoria, dest_dir / "memoria-original.md")
+        # Preserva rules/candidates do JSON residual ao reescrever YAML completo
+        existing = load_context(rd)
+        decisions = read_decisions(rd / "decisions.jsonl")
+        if decisions:
+            rebuilt = build_context(project, "ensure-v2", decisions)
+            if existing:
+                for key in ("convention_rules", "candidates"):
+                    if existing.get(key) and not rebuilt.get(key):
+                        rebuilt[key] = existing[key]
+                if existing.get("exclusions") and len(existing["exclusions"]) > len(rebuilt.get("exclusions", [])):
+                    rebuilt["exclusions"] = existing["exclusions"]
+            write_context(rd, rebuilt)
+        elif existing:
+            write_context(rd, existing)
         removed = purge_v1_files(rd)
         ensure_v2_scaffold(project)
-        # Garante twin JSON se só existir YAML (projetos migrados antes)
-        if (rd / "context.yaml").is_file() and not (rd / "context.json").is_file():
-            decisions = read_decisions(rd / "decisions.jsonl")
-            if decisions:
-                write_context(rd, build_context(project, "ensure-v2", decisions))
         print(f"Removido: {', '.join(removed) if removed else '(nada)'}")
         return 0
 
@@ -564,7 +743,7 @@ def cmd_migrar(project: Path, write: bool) -> int:
     print(f"Candidates: {len(context['candidates'])}")
     print(f"memoria.md: {memoria.stat().st_size} bytes")
     print(f"context:    ~{len(dump_yaml(context))} bytes (estimado)")
-    print("Após --write: remove memoria.md e memoria.legacy.md (só v2 + backup em backups/)")
+    print("Após --write: remove memoria.md, memoria.legacy.md e context.json (só v2 + backup em backups/)")
 
     if not write:
         print("\nDry-run. Use --write para gravar e remover v1.")
@@ -582,7 +761,7 @@ def cmd_migrar(project: Path, write: bool) -> int:
     write_context(rd, context)
     (rd / ".memoria-version").write_text("2\n", encoding="utf-8")
     removed = purge_v1_files(rd)
-    print("\nGravado: decisions.jsonl, context.yaml, context.json, .memoria-version")
+    print("\nGravado: decisions.jsonl, context.yaml, .memoria-version")
     print(f"Removido: {', '.join(removed)}")
     print(f"Backup: {dest_dir / 'memoria-original.md'}")
     return 0
@@ -609,7 +788,7 @@ def cmd_compactar(project: Path, write: bool) -> int:
         return 0
 
     write_context(rd, context)
-    print(f"\nGravado: {rd / 'context.yaml'} (+ context.json)")
+    print(f"\nGravado: {rd / 'context.yaml'}")
     return 0
 
 
@@ -617,14 +796,17 @@ def cmd_promover(project: Path, write: bool, all_candidates: bool) -> int:
     rd = review_dir(project)
     context = load_context(rd)
     if context is None:
-        if (rd / "context.yaml").is_file() and (rd / "decisions.jsonl").is_file():
-            # context.json ausente (migração antiga) — recompacta a partir de decisions
+        if (rd / "decisions.jsonl").is_file():
             decisions = read_decisions(rd / "decisions.jsonl")
             context = build_context(project, "promover", decisions)
-            write_context(rd, context)
+            if write:
+                write_context(rd, context)
         else:
-            print("Erro: context.yaml/json ausente — rode /memoria migrar ou compactar", file=sys.stderr)
+            print("Erro: context.yaml ausente — rode /memoria migrar ou compactar", file=sys.stderr)
             return 1
+    elif write:
+        # Normaliza YAML completo e remove twin JSON residual
+        write_context(rd, context)
 
     sections: dict[str, list[str]] = {}
 

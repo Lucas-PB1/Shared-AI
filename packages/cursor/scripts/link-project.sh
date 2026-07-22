@@ -57,7 +57,7 @@ else
   fi
 fi
 # Nunca deixar v1/legacy no projeto
-rm -f "$REVIEW_DIR/memoria.md" "$REVIEW_DIR/memoria.legacy.md"
+rm -f "$REVIEW_DIR/memoria.md" "$REVIEW_DIR/memoria.legacy.md" "$REVIEW_DIR/context.json"
 
 # Garantir ausência de espelhos: orquestrador + commands só em ~/.cursor/
 [[ -n "$RULES_DIR" ]] && remove_project_orchestrator_rule_symlinks "$RULES_DIR"
