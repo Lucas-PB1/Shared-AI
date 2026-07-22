@@ -466,8 +466,12 @@ test_onboard_noninteractive() {
 test_memoria_migrar_restore() {
   project="$(hostdime_make_project)"
   mkdir -p "$project/.cursor/review"
-  cp "$ROOT/packages/code-review/templates/memoria.md" "$project/.cursor/review/memoria.md"
-  cat >>"$project/.cursor/review/memoria.md" <<'EOF'
+  cat >"$project/.cursor/review/memoria.md" <<'EOF'
+# Memória de review
+
+## Convenções validadas pelo time
+
+_(vazio)_
 
 ## Histórico
 

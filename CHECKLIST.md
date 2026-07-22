@@ -22,7 +22,7 @@ Melhorias priorizadas do pacote. Atualize ao concluir itens ou repriorizar.
 
 - [ ] **Pipelines Cursor SDK** — agent no CI para `/avaliar-diff` em MRs
 - [ ] **Cursor Automations** — templates prontos no pacote
-- [ ] **Memória cross-projeto** — agregar padrões de `memoria.md` / review
+- [ ] **Memória cross-projeto** — agregar padrões de `context.yaml` / `convencoes.md` entre repos
 - [ ] **Perfil `monorepo`** — roteamento por workspace/pacote
 - [ ] **`/criar-skill` e `/criar-rule`** — scaffolding com templates hostdime
 - [ ] **Release automation** — VERSION + changelog a partir do histórico
