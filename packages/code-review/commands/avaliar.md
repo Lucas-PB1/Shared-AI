@@ -25,7 +25,7 @@ O **arquivo avaliado no repo não é alterado nem deletado** — só copiado par
 
 ## Memória do projeto (só v2)
 
-Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `/migrar-cursor` ou `npm run memoria -- migrar --write` e **não** ler `memoria.md` (legado removido).
+Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `npm run memoria -- migrar --write` e **não** ler `memoria.md` (legado removido).
 
 1. Se existir `context.yaml`, aplicar `exclusions` (não sugerir o que foi `rejeitado` / `nao-aplicavel` no escopo) e priorizar `pending` com `revisit: next-touch`.
 2. Se existir `convencoes.md`, alinhar sugestões e geração aos bullets cujo escopo casa com o arquivo (`## Escopo:`).

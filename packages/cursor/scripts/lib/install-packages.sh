@@ -168,6 +168,6 @@ prune_user_symlinks_if_requested() {
   done
   prune_managed_symlinks "$cursor_dir/skills" "${names[@]}"
 
-  names=(avaliar.md finalizar.md avaliar-diff.md memoria.md skills-why.md hubspot-mcp.md cursor-cli.md historico.md sync-inbox.md onboard.md migrar-cursor.md)
+  names=(avaliar.md finalizar.md avaliar-diff.md memoria.md skills-why.md hubspot-mcp.md cursor-cli.md historico.md sync-inbox.md onboard.md)
   prune_managed_symlinks "$cursor_dir/commands" "${names[@]}"
 }

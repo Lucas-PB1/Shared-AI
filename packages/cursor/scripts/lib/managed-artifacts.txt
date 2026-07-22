@@ -14,7 +14,6 @@ cursor-cli.md
 historico.md
 sync-inbox.md
 onboard.md
-migrar-cursor.md
 #
 # Skills (~/.cursor/skills/) — uma pasta por nome em:
 #   packages/cursor/skills/

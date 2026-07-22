@@ -112,11 +112,6 @@ EOF
   assert "ignore decisions mantido" grep -qxF '.cursor/review/decisions.jsonl' "$project/.gitignore"
 }
 
-test_migrar_cursor_command_installed() {
-  assert "migrar-cursor.md no pacote" test -f "$HOSTDIME_IA_ROOT/packages/cursor/commands/migrar-cursor.md"
-  assert "migrar-cursor global" test -L "$CURSOR_USER_DIR/commands/migrar-cursor.md"
-}
-
 test_link_preserves_real() {
   project="$(hostdime_make_project)"
   mkdir -p "$project/.cursor/rules"
@@ -518,7 +513,6 @@ run_test "link remove legado command" test_link_removes_legacy_command
 run_test "link preserva real" test_link_preserves_real
 run_test "link preserva command real" test_link_preserves_real_command
 run_test "gitignore scrub orphans" test_gitignore_scrub_orphans
-run_test "migrar-cursor command installed" test_migrar_cursor_command_installed
 run_test "bootstrap profile" test_bootstrap_profile
 run_test "bootstrap invalid" test_bootstrap_invalid_profile
 run_test "detach" test_detach
