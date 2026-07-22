@@ -4,7 +4,7 @@ Instalado com `npm run setup:code-review` (inclui `npm install` + `composer inst
 
 Commands: `/avaliar`, `/avaliar-diff`, `/finalizar`, `/memoria`, `/skills-why`.
 
-Memória por projeto: `.cursor/review/` (gitignored). v1: `memoria.md`; v2 opt-in via `/memoria migrar`.
+Memória por projeto: `.cursor/review/` (gitignored) — **só v2** (`decisions.jsonl`, `context.yaml`, `convencoes.md`). Migração: `/migrar-cursor` ou `/memoria migrar --write` (remove `memoria.md`).
 
 Diagnóstico: `npm run doctor`.
 

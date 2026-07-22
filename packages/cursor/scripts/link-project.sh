@@ -44,10 +44,20 @@ mkdir -p "$REVIEW_DIR"/{inbox,reports,resultados}
 
 touch "$REVIEW_DIR/inbox/.gitkeep" "$REVIEW_DIR/reports/.gitkeep" 2>/dev/null || true
 
-MEMORIA_TEMPLATE="$HOSTDIME_IA_ROOT/packages/code-review/templates/memoria.md"
-if [[ ! -f "$REVIEW_DIR/memoria.md" && -f "$MEMORIA_TEMPLATE" ]]; then
-  cp "$MEMORIA_TEMPLATE" "$REVIEW_DIR/memoria.md"
+MEMORIA_PY="$HOSTDIME_IA_ROOT/packages/code-review/tools/review-memoria.py"
+if [[ -f "$MEMORIA_PY" ]]; then
+  python3 "$MEMORIA_PY" migrar --write "$TARGET" >/dev/null || true
+else
+  # Fallback mínimo sem CLI
+  echo "2" >"$REVIEW_DIR/.memoria-version"
+  [[ -f "$REVIEW_DIR/decisions.jsonl" ]] || : >"$REVIEW_DIR/decisions.jsonl"
+  CONV_TEMPLATE="$HOSTDIME_IA_ROOT/packages/code-review/templates/convencoes.md"
+  if [[ ! -f "$REVIEW_DIR/convencoes.md" && -f "$CONV_TEMPLATE" ]]; then
+    cp "$CONV_TEMPLATE" "$REVIEW_DIR/convencoes.md"
+  fi
 fi
+# Nunca deixar v1/legacy no projeto
+rm -f "$REVIEW_DIR/memoria.md" "$REVIEW_DIR/memoria.legacy.md"
 
 # Garantir ausência de espelhos: orquestrador + commands só em ~/.cursor/
 [[ -n "$RULES_DIR" ]] && remove_project_orchestrator_rule_symlinks "$RULES_DIR"
@@ -65,7 +75,7 @@ ensure_project_gitignore "$TARGET"
 if [[ "$QUIET" -eq 0 ]]; then
   echo ""
   echo "Concluído em $TARGET/.cursor/"
-  echo "  review/ → reports/, resultados/, memoria.md (v1) + /memoria para v2"
+  echo "  review/ → reports/, resultados/, memória v2 (context/decisions)"
   echo "  orquestrador → ~/.cursor/rules/ (global)"
   echo "  commands → ~/.cursor/commands/ (global)"
   [[ "$LINK_ORCHESTRATOR_REMOVED" -gt 0 ]] && echo "  removidos do projeto: $LINK_ORCHESTRATOR_REMOVED skills-orchestrator-*.mdc"

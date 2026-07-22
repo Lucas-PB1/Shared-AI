@@ -47,7 +47,8 @@ test_link_symlinks() {
   assert "rule hubspot global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-hubspot.mdc"
   assert "rule okf global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-okf.mdc"
   assert "review inbox" test -d "$project/.cursor/review/inbox"
-  assert "memoria template" test -f "$project/.cursor/review/memoria.md"
+  assert "memoria v2" test -f "$project/.cursor/review/.memoria-version"
+  assert "sem memoria.md" test ! -f "$project/.cursor/review/memoria.md"
 }
 
 test_link_removes_legacy_orchestrator() {
@@ -478,9 +479,13 @@ EOF
   python3 "$ROOT/packages/code-review/tools/review-memoria.py" migrar --write "$project" >/dev/null
   assert "memoria v2 marker" test -f "$project/.cursor/review/.memoria-version"
   assert "context yaml" test -f "$project/.cursor/review/context.yaml"
+  assert "context json" test -f "$project/.cursor/review/context.json"
   assert "decisions jsonl" test -f "$project/.cursor/review/decisions.jsonl"
+  assert "sem memoria.md" test ! -f "$project/.cursor/review/memoria.md"
+  assert "sem legacy" test ! -f "$project/.cursor/review/memoria.legacy.md"
   python3 "$ROOT/packages/code-review/tools/review-memoria.py" restore --write "$project" >/dev/null
-  assert "restored v1" test ! -f "$project/.cursor/review/.memoria-version"
+  assert "restore keeps v2" test -f "$project/.cursor/review/.memoria-version"
+  assert "restore sem memoria.md" test ! -f "$project/.cursor/review/memoria.md"
   assert "backup kept" test -f "$project/.cursor/review/backups/memoria-original.md"
 }
 

@@ -68,10 +68,22 @@ foreach ($keep in @(
     if (-not (Test-Path $keep)) { New-Item -ItemType File -Path $keep -Force | Out-Null }
 }
 
-$memoriaTemplate = Join-Path $root 'packages/code-review/templates/memoria.md'
-$memoriaDest = Join-Path $reviewDir 'memoria.md'
-if (-not (Test-Path $memoriaDest) -and (Test-Path $memoriaTemplate)) {
-    Copy-Item $memoriaTemplate $memoriaDest
+$memoriaPy = Join-Path $root 'packages/code-review/tools/review-memoria.py'
+if (Test-Path $memoriaPy) {
+    & python3 $memoriaPy migrar --write $Target 2>$null | Out-Null
+} else {
+    Set-Content -Path (Join-Path $reviewDir '.memoria-version') -Value "2`n" -NoNewline
+    $decisions = Join-Path $reviewDir 'decisions.jsonl'
+    if (-not (Test-Path $decisions)) { New-Item -ItemType File -Path $decisions -Force | Out-Null }
+    $convTpl = Join-Path $root 'packages/code-review/templates/convencoes.md'
+    $convDest = Join-Path $reviewDir 'convencoes.md'
+    if (-not (Test-Path $convDest) -and (Test-Path $convTpl)) {
+        Copy-Item $convTpl $convDest
+    }
+}
+foreach ($legacy in @('memoria.md', 'memoria.legacy.md')) {
+    $p = Join-Path $reviewDir $legacy
+    if (Test-Path $p) { Remove-Item -LiteralPath $p -Force }
 }
 
 # Garantir ausência de espelhos: orquestrador + commands só em ~/.cursor/
@@ -94,7 +106,7 @@ Ensure-ProjectGitignore $Target
 if (-not $Quiet) {
     Write-Host ''
     Write-Host "Concluído em $Target/.cursor/"
-    Write-Host '  review/ → reports/, resultados/, memoria.md'
+    Write-Host '  review/ → reports/, resultados/, memória v2 (context/decisions)'
     Write-Host '  orquestrador → ~/.cursor/rules/ (global)'
     Write-Host '  commands → ~/.cursor/commands/ (global)'
     if ($script:LinkOrchestratorRemoved -gt 0) {

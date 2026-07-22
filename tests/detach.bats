@@ -21,7 +21,8 @@ teardown() {
   [[ "$(hostdime_count_command_symlinks "$project")" -eq 0 ]]
   [[ -f "$project/.cursor/rules/react-project.mdc" ]]
   [[ -f "$project/.cursor/SKILLS-ROUTING.md" ]]
-  [[ -f "$project/.cursor/review/memoria.md" ]]
+  [[ -f "$project/.cursor/review/.memoria-version" ]]
+  [[ ! -f "$project/.cursor/review/memoria.md" ]]
 }
 
 @test "detach desregistra projeto do registry por padrão" {

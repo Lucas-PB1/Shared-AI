@@ -8,5 +8,6 @@
 .cursor/review/.memoria-version
 .cursor/review/decisions.jsonl
 .cursor/review/context.yaml
+.cursor/review/context.json
 .cursor/review/convencoes.md
 .cursor/review/backups/

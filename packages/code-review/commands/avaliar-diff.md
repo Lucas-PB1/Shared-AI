@@ -13,7 +13,7 @@ Use para mapear o MR e priorizar; use `/avaliar <arquivo>` na fila para De/Para 
 
 ## Memória do projeto
 
-Mesmas regras do `/avaliar` (modo v2: `context.yaml` + `convencoes.md`; modo v1: seção **Convenções** de `memoria.md`).
+Mesmas regras do `/avaliar` (só v2: `context.yaml` + `convencoes.md`).
 
 ## Como triar
 

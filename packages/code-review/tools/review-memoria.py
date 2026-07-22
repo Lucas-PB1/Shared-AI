@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import json
+import os
 import re
 import shutil
 import sys
@@ -324,12 +325,20 @@ def build_context(
     source: str,
     decisions: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    memoria = review_dir(project) / "memoria.md"
-    convention_bullets, history, _ = parse_memoria(memoria)
-    slug_index = load_slug_index(review_dir(project) / "resultados")
+    rd = review_dir(project)
+    memoria = rd / "memoria.md"
+    convention_bullets: list[dict[str, str]] = []
+    history: list[Any] = []
+    if memoria.is_file():
+        convention_bullets, history, _ = parse_memoria(memoria)
+    slug_index = load_slug_index(rd / "resultados")
 
     if decisions is None:
-        decisions = history_to_decisions(history, slug_index)
+        decisions_path = rd / "decisions.jsonl"
+        if decisions_path.is_file():
+            decisions = read_decisions(decisions_path)
+        else:
+            decisions = history_to_decisions(history, slug_index)
 
     excl_conv, conv_rules, _ = conventions_to_rules(convention_bullets)
     exclusions, pending, candidates = merge_history_into_context(decisions, excl_conv, [])
@@ -343,6 +352,21 @@ def build_context(
         "convention_rules": conv_rules,
         "candidates": candidates,
     }
+
+
+def write_context(rd: Path, context: dict[str, Any]) -> None:
+    (rd / "context.yaml").write_text(dump_yaml(context), encoding="utf-8")
+    (rd / "context.json").write_text(
+        json.dumps(context, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def load_context(rd: Path) -> dict[str, Any] | None:
+    js = rd / "context.json"
+    if js.is_file():
+        return json.loads(js.read_text(encoding="utf-8"))
+    return None
 
 
 def write_decisions(path: Path, decisions: list[dict[str, Any]]) -> None:
@@ -377,6 +401,7 @@ def file_stats(project: Path) -> dict[str, Any]:
         "memoria.legacy.md": rd / "memoria.legacy.md",
         "decisions.jsonl": rd / "decisions.jsonl",
         "context.yaml": rd / "context.yaml",
+        "context.json": rd / "context.json",
         "convencoes.md": rd / "convencoes.md",
         ".memoria-version": rd / ".memoria-version",
     }
@@ -436,12 +461,94 @@ def cmd_backup(project: Path) -> int:
     return 0
 
 
+def purge_v1_files(rd: Path) -> list[str]:
+    """Remove artefatos v1/legacy; backup permanece só em backups/."""
+    removed: list[str] = []
+    for name in ("memoria.md", "memoria.legacy.md"):
+        p = rd / name
+        if p.is_file():
+            p.unlink()
+            removed.append(name)
+    return removed
+
+
+def ensure_v2_scaffold(project: Path) -> None:
+    rd = review_dir(project)
+    rd.mkdir(parents=True, exist_ok=True)
+    version = rd / ".memoria-version"
+    if not version.is_file():
+        version.write_text("2\n", encoding="utf-8")
+    decisions = rd / "decisions.jsonl"
+    if not decisions.is_file():
+        decisions.write_text("", encoding="utf-8")
+    ctx = rd / "context.yaml"
+    if not ctx.is_file():
+        empty = {
+            "schema": SCHEMA_VERSION,
+            "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "source": "ensure-v2",
+            "exclusions": [],
+            "pending": [],
+            "convention_rules": [],
+            "candidates": [],
+        }
+        write_context(rd, empty)
+    conv = rd / "convencoes.md"
+    if not conv.is_file():
+        root = Path(os.environ.get("HOSTDIME_IA_ROOT", ""))
+        tpl = root / "packages/code-review/templates/convencoes.md" if root else None
+        if tpl and tpl.is_file():
+            shutil.copy2(tpl, conv)
+        else:
+            conv.write_text(
+                "# Convenções locais (gitignored)\n\n## Escopo global\n\n_(vazio)_\n",
+                encoding="utf-8",
+            )
+
+
 def cmd_migrar(project: Path, write: bool) -> int:
     rd = review_dir(project)
     memoria = rd / "memoria.md"
+    already_v2 = mode(project) == "v2"
+    leftover_names = ("memoria.md", "memoria.legacy.md")
+    leftover = [n for n in leftover_names if (rd / n).is_file()]
+
+    # Já v2: nunca re-parseia memoria.md (pode ser mais velha que decisions.jsonl)
+    if already_v2:
+        print("=== migrar ===")
+        print("Já em v2.")
+        if leftover:
+            print(f"Legacy residual: {', '.join(leftover)}")
+        if not write:
+            print("\nDry-run. Use --write para remover legacy residual (se houver).")
+            return 0
+        if memoria.is_file():
+            dest_dir = rd / "backups"
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            if not (dest_dir / "memoria-original.md").is_file():
+                shutil.copy2(memoria, dest_dir / "memoria-original.md")
+        removed = purge_v1_files(rd)
+        ensure_v2_scaffold(project)
+        # Garante twin JSON se só existir YAML (projetos migrados antes)
+        if (rd / "context.yaml").is_file() and not (rd / "context.json").is_file():
+            decisions = read_decisions(rd / "decisions.jsonl")
+            if decisions:
+                write_context(rd, build_context(project, "ensure-v2", decisions))
+        print(f"Removido: {', '.join(removed) if removed else '(nada)'}")
+        return 0
+
     if not memoria.is_file():
-        print("Erro: memoria.md não encontrado", file=sys.stderr)
-        return 1
+        print("=== migrar ===")
+        print("Sem memoria.md — scaffold v2 (sem legado).")
+        if not write:
+            print("\nDry-run. Use --write para criar .memoria-version + context/decisions.")
+            return 0
+        ensure_v2_scaffold(project)
+        removed = purge_v1_files(rd)
+        print("Gravado: scaffold v2")
+        if removed:
+            print(f"Removido: {', '.join(removed)}")
+        return 0
 
     convention_bullets, history, _ = parse_memoria(memoria)
     slug_index = load_slug_index(rd / "resultados")
@@ -457,37 +564,39 @@ def cmd_migrar(project: Path, write: bool) -> int:
     print(f"Candidates: {len(context['candidates'])}")
     print(f"memoria.md: {memoria.stat().st_size} bytes")
     print(f"context:    ~{len(dump_yaml(context))} bytes (estimado)")
+    print("Após --write: remove memoria.md e memoria.legacy.md (só v2 + backup em backups/)")
 
     if not write:
-        print("\nDry-run. Use --write para gravar.")
+        print("\nDry-run. Use --write para gravar e remover v1.")
         return 0
 
-    legacy = rd / "memoria.legacy.md"
-    if not legacy.is_file():
-        shutil.copy2(memoria, legacy)
+    # Backup em backups/ antes de apagar v1
+    dest_dir = rd / "backups"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    if not (dest_dir / "memoria-original.md").is_file():
+        shutil.copy2(memoria, dest_dir / "memoria-original.md")
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    shutil.copy2(memoria, dest_dir / f"memoria-{ts}.md")
 
     write_decisions(rd / "decisions.jsonl", decisions)
-    (rd / "context.yaml").write_text(dump_yaml(context), encoding="utf-8")
+    write_context(rd, context)
     (rd / ".memoria-version").write_text("2\n", encoding="utf-8")
-    print("\nGravado: decisions.jsonl, context.yaml, .memoria-version")
-    print(f"Preservado: memoria.md + memoria.legacy.md")
+    removed = purge_v1_files(rd)
+    print("\nGravado: decisions.jsonl, context.yaml, context.json, .memoria-version")
+    print(f"Removido: {', '.join(removed)}")
+    print(f"Backup: {dest_dir / 'memoria-original.md'}")
     return 0
 
 
 def cmd_compactar(project: Path, write: bool) -> int:
     rd = review_dir(project)
     decisions = read_decisions(rd / "decisions.jsonl")
-    if not decisions and (rd / "memoria.md").is_file():
-        _, history, _ = parse_memoria(rd / "memoria.md")
-        slug_index = load_slug_index(rd / "resultados")
-        decisions = history_to_decisions(history, slug_index)
 
     if not decisions:
         print("Erro: nenhuma decisão em decisions.jsonl", file=sys.stderr)
         return 1
 
-    source = "decisions.jsonl" if (rd / "decisions.jsonl").is_file() else "memoria.md"
-    context = build_context(project, source, decisions)
+    context = build_context(project, "decisions.jsonl", decisions)
 
     print("=== compactar (proposta) ===")
     print(f"Exclusions: {len(context['exclusions'])}")
@@ -499,31 +608,38 @@ def cmd_compactar(project: Path, write: bool) -> int:
         print("\nDry-run. Use --write para gravar context.yaml.")
         return 0
 
-    (rd / "context.yaml").write_text(dump_yaml(context), encoding="utf-8")
-    print(f"\nGravado: {rd / 'context.yaml'}")
+    write_context(rd, context)
+    print(f"\nGravado: {rd / 'context.yaml'} (+ context.json)")
     return 0
 
 
 def cmd_promover(project: Path, write: bool, all_candidates: bool) -> int:
-    memoria = review_dir(project) / "memoria.md"
-    if not memoria.is_file():
-        print("Erro: memoria.md necessário para convenções", file=sys.stderr)
-        return 1
+    rd = review_dir(project)
+    context = load_context(rd)
+    if context is None:
+        if (rd / "context.yaml").is_file() and (rd / "decisions.jsonl").is_file():
+            # context.json ausente (migração antiga) — recompacta a partir de decisions
+            decisions = read_decisions(rd / "decisions.jsonl")
+            context = build_context(project, "promover", decisions)
+            write_context(rd, context)
+        else:
+            print("Erro: context.yaml/json ausente — rode /memoria migrar ou compactar", file=sys.stderr)
+            return 1
 
-    context = build_context(project, "promover")
-    convention_bullets, _, _ = parse_memoria(memoria)
-    _, conv_rules, _ = conventions_to_rules(convention_bullets)
     sections: dict[str, list[str]] = {}
 
-    for r in conv_rules:
-        sections.setdefault(r["scope"], []).append(r["rule"])
+    for r in context.get("convention_rules", []):
+        sections.setdefault(r.get("scope", "**/*"), []).append(r["rule"] if "rule" in r else r.get("summary", ""))
 
-    for c in context["candidates"]:
+    for c in context.get("candidates", []):
         if not all_candidates and c.get("occurrences", 1) < 2:
             continue
         if c.get("promoted"):
             continue
-        sections.setdefault(c["scope"], []).append(c["rule"])
+        sections.setdefault(c.get("scope", "**/*"), []).append(c["rule"])
+
+    # limpa bullets vazios
+    sections = {k: [x for x in v if x] for k, v in sections.items() if any(v)}
 
     if not sections:
         print("Nenhuma regra para promover.")
@@ -533,7 +649,7 @@ def cmd_promover(project: Path, write: bool, all_candidates: bool) -> int:
         "# Convenções locais (gitignored)",
         "",
         f"Atualizado: {datetime.now().strftime('%Y-%m-%d')} via review-memoria promover",
-        "Origem: context.yaml → candidates",
+        "Origem: context → convention_rules + candidates",
         "",
     ]
     for scope, rules in sections.items():
@@ -554,64 +670,65 @@ def cmd_promover(project: Path, write: bool, all_candidates: bool) -> int:
         print("\nDry-run. Use --write para gravar convencoes.md.")
         return 0
 
-    out = review_dir(project) / "convencoes.md"
+    out = rd / "convencoes.md"
     out.write_text(content, encoding="utf-8")
     print(f"\nGravado: {out}")
     return 0
 
 
 def cmd_restore(project: Path, write: bool) -> int:
+    """Reconstrói v2 a partir de backups/memoria-original.md (não reativa v1)."""
     rd = review_dir(project)
     backup = rd / "backups" / "memoria-original.md"
     if not backup.is_file():
-        print("Erro: backup não encontrado — rode backup primeiro", file=sys.stderr)
+        print("Erro: backup não encontrado em backups/memoria-original.md", file=sys.stderr)
         return 1
 
     print("=== restore (proposta) ===")
-    print(f"Restaurar memoria.md a partir de {backup}")
-    print("Remover: .memoria-version, decisions.jsonl, context.yaml, convencoes.md, memoria.legacy.md")
+    print(f"Fonte: {backup}")
+    print("Reconstrói v2 (decisions/context) a partir do backup — não reativa memoria.md")
 
     if not write:
-        print("\nDry-run. Use --write para restaurar estado v1.")
+        print("\nDry-run. Use --write para re-migrar o backup para v2.")
         return 0
 
+    # Força caminho v1→v2: remove marker, copia backup como memoria.md, migrar limpa
+    version = rd / ".memoria-version"
+    if version.is_file():
+        version.unlink()
     shutil.copy2(backup, rd / "memoria.md")
-    for name in (
-        ".memoria-version",
-        "decisions.jsonl",
-        "context.yaml",
-        "convencoes.md",
-        "memoria.legacy.md",
-    ):
-        p = rd / name
-        if p.is_file():
-            p.unlink()
-    print("\nRestaurado para v1 (memoria.md do backup).")
-    return 0
+    return cmd_migrar(project, write=True)
 
 
 def cmd_diff(project: Path) -> int:
     rd = review_dir(project)
     memoria = rd / "memoria.md"
-    if not memoria.is_file():
-        print("Erro: memoria.md não encontrado", file=sys.stderr)
+    backup = rd / "backups" / "memoria-original.md"
+    source = memoria if memoria.is_file() else backup
+    if not source or not source.is_file():
+        print("Erro: sem memoria.md nem backups/memoria-original.md", file=sys.stderr)
         return 1
 
-    context = build_context(project, "memoria.md")
-    mem_bytes = memoria.stat().st_size
+    _, history, _ = parse_memoria(source)
+    slug_index = load_slug_index(rd / "resultados")
+    decisions = history_to_decisions(history, slug_index)
+    context = build_context(project, source.name, decisions)
+    mem_bytes = source.stat().st_size
     ctx_bytes = len(dump_yaml(context))
     dec_count = len(context["exclusions"]) + len(context["pending"]) + len(context["candidates"])
     conv_rules = len(context.get("convention_rules", []))
 
-    print("=== diff memoria.md → context.yaml ===")
-    print(f"memoria.md:     {mem_bytes:6} bytes")
-    print(f"context.yaml:   {ctx_bytes:6} bytes  ({100 * ctx_bytes / mem_bytes:.0f}% do original)")
-    conv_path = review_dir(project) / "convencoes.md"
+    label = "memoria.md" if source == memoria else "backup"
+    print(f"=== diff {label} → context.yaml ===")
+    print(f"{label + ':':14} {mem_bytes:6} bytes")
+    pct = (100 * ctx_bytes / mem_bytes) if mem_bytes else 0
+    print(f"context.yaml:   {ctx_bytes:6} bytes  ({pct:.0f}% do original)")
+    conv_path = rd / "convencoes.md"
     if conv_path.is_file():
         conv_bytes = conv_path.stat().st_size
         total_v2 = ctx_bytes + conv_bytes
         print(f"convencoes.md:  {conv_bytes:6} bytes")
-        print(f"v2 leitura:     {total_v2:6} bytes  ({100 * total_v2 / mem_bytes:.0f}% do memoria.md)")
+        print(f"v2 leitura:     {total_v2:6} bytes  ({100 * total_v2 / mem_bytes:.0f}% do original)")
     print(f"itens compactos: {dec_count} (+ {conv_rules} regras → convencoes.md no promover)")
     print(f"  exclusions:   {len(context['exclusions'])}")
     print(f"  pending:      {len(context['pending'])}")

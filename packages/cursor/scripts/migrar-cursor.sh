@@ -125,6 +125,44 @@ for extra in "$HOME/Projetos"; do
 done
 
 echo ""
+echo "→ memória de review (v1 → v2, sem legacy)"
+MEMORIA_PY="$HOSTDIME_IA_ROOT/packages/code-review/tools/review-memoria.py"
+if [[ ! -f "$MEMORIA_PY" ]]; then
+  echo "  ⚠ review-memoria.py ausente — pulando migração de memória" >&2
+  issues=$((issues + 1))
+else
+  while IFS= read -r project; do
+    [[ -n "$project" && -d "$project" ]] || continue
+    [[ -d "$project/.cursor/review" ]] || continue
+    name="$(basename "$project")"
+    if ! out="$(python3 "$MEMORIA_PY" migrar --write "$project" 2>&1)"; then
+      echo "  ✗ $name — migrar falhou"
+      printf '%s\n' "$out" | sed 's/^/      /' | head -8
+      issues=$((issues + 1))
+      continue
+    fi
+    # compactar/promover só se houver decisões (não falha a migração se vazio)
+    if [[ -s "$project/.cursor/review/decisions.jsonl" ]]; then
+      python3 "$MEMORIA_PY" compactar --write "$project" >/dev/null 2>&1 || true
+      python3 "$MEMORIA_PY" promover --all --write "$project" >/dev/null 2>&1 || true
+    fi
+    leftover=""
+    for f in memoria.md memoria.legacy.md; do
+      [[ -f "$project/.cursor/review/$f" ]] && leftover="$leftover $f"
+    done
+    if [[ -n "$leftover" ]]; then
+      echo "  ✗ $name — ainda tem:$leftover"
+      issues=$((issues + 1))
+    elif [[ ! -f "$project/.cursor/review/.memoria-version" ]]; then
+      echo "  ✗ $name — sem .memoria-version"
+      issues=$((issues + 1))
+    else
+      echo "  ✓ $name (memória v2)"
+    fi
+  done < <(list_projects)
+fi
+
+echo ""
 echo "→ globais em $CURSOR_DIR"
 if [[ -e "$CURSOR_DIR/rules/skills-orchestrator-base.mdc" ]]; then
   echo "  ✓ rules/skills-orchestrator-base.mdc"
@@ -146,8 +184,33 @@ else
 fi
 
 echo ""
+echo "→ projetos com mudanças git (conferir antes de commit)"
+dirty_any=0
+while IFS= read -r project; do
+  [[ -n "$project" && -d "$project/.git" ]] || continue
+  porcelain="$(git -C "$project" status --porcelain 2>/dev/null || true)"
+  [[ -n "$porcelain" ]] || continue
+  dirty_any=1
+  name="$(basename "$project")"
+  total="$(printf '%s\n' "$porcelain" | grep -cve '^$' || true)"
+  gi_lines="$(printf '%s\n' "$porcelain" | grep -ce '\.gitignore$' || true)"
+  if [[ "$total" -gt 0 && "$gi_lines" -eq "$total" ]]; then
+    echo "  · $name — só .gitignore (scrub dual-link) — $project"
+  elif [[ "$project" == "$HOSTDIME_IA_ROOT" ]]; then
+    echo "  · $name — pacote hostdime-ia (feature global) — $project"
+  else
+    echo "  · $name — outras mudanças + possível migração — $project"
+    printf '%s\n' "$porcelain" | sed 's/^/      /' | head -15
+  fi
+done < <(list_projects)
+
+if [[ "$dirty_any" -eq 0 ]]; then
+  echo "  (nenhum repo registrado com working tree dirty)"
+fi
+
+echo ""
 if [[ "$issues" -eq 0 ]]; then
-  echo "Migração concluída. Espelhos por projeto e ignores órfãos são lixo — se reaparecerem, rode de novo /migrar-cursor ou npm run sync. Não reintroduzir dual-link."
+  echo "Migração concluída. Espelhos por projeto, ignores órfãos, pastas rules/commands vazias e memória v1 são lixo — se reaparecerem, rode de novo /migrar-cursor ou npm run sync. Não reintroduzir dual-link nem memoria.md. Confira os projetos com .gitignore alterado antes de commitar."
   exit 0
 fi
 

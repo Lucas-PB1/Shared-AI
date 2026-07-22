@@ -18,31 +18,19 @@ Funciona em **qualquer projeto** — o command é symlink universal (como as rul
 | --- | --- |
 | `.cursor/review/reports/` | Rascunho do `/avaliar` — **removido** no `/finalizar` |
 | `.cursor/review/resultados/` | Pacote final (relatório + snapshot do código) |
-| `.cursor/review/memoria.md` | Convenções do time v1 (gitignored) |
-| `.cursor/review/context.yaml` | Exclusões e candidates v2 (gitignored) |
-| `.cursor/review/convencoes.md` | Padrão local promovido v2 (gitignored) |
+| `.cursor/review/context.yaml` | Exclusões e pending (gitignored) |
+| `.cursor/review/convencoes.md` | Padrão local promovido (gitignored) |
 
 O **arquivo avaliado no repo não é alterado nem deletado** — só copiado para `resultados/` no `/finalizar`.
 
-## Memória do projeto
+## Memória do projeto (só v2)
 
-Detectar modo: **v2** se existir `.cursor/review/.memoria-version` com `2`; senão **v1 (legacy)**.
-
-### Modo v2
+Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `/migrar-cursor` ou `npm run memoria -- migrar --write` e **não** ler `memoria.md` (legado removido).
 
 1. Se existir `context.yaml`, aplicar `exclusions` (não sugerir o que foi `rejeitado` / `nao-aplicavel` no escopo) e priorizar `pending` com `revisit: next-touch`.
 2. Se existir `convencoes.md`, alinhar sugestões e geração aos bullets cujo escopo casa com o arquivo (`## Escopo:`).
 3. **Não** ler `decisions.jsonl` (staging bruto).
 4. **Não** criar nem atualizar arquivos de memória — isso é `/memoria` e `/finalizar`.
-
-### Modo v1 (legacy)
-
-Se existir `.cursor/review/memoria.md`:
-
-1. Ler a seção **Convenções validadas pelo time**.
-2. **Não repetir** recomendações já marcadas como `rejeitado` ou `nao-aplicavel` no escopo correspondente.
-3. Alinhar sugestões com convenções `aceito` quando aplicável.
-4. Se o Histórico tiver ≥5 entradas, sugerir **uma vez** `/memoria migrar`.
 
 ## Como avaliar
 

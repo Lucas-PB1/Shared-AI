@@ -89,7 +89,7 @@ Write-Host ''
 Write-Host "Projeto preparado: $projectPath"
 Write-Host '  .cursor/rules/    → rules do projeto (*-project.mdc); orquestrador em ~/.cursor/rules/'
 Write-Host '  .cursor/commands/ → commands do projeto (opcional); hostdime em ~/.cursor/commands/'
-Write-Host '  .cursor/review/   → reports/, resultados/, memoria.md'
+Write-Host '  .cursor/review/   → reports/, resultados/, memória v2'
 Write-Host '  .cursor/skills/   → overrides do projeto'
 if ($profileName) { Write-Host "  perfil            → $profileName" }
 Write-Host '  .gitignore        → artefatos gerenciados (se .cursor/ não estiver ignorado)'

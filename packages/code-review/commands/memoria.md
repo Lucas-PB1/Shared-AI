@@ -1,6 +1,6 @@
 # Memória de review (`/memoria`)
 
-Gerencia a memória de review **v2** — migração explícita, compactação e promoção de convenções. Tudo em `.cursor/review/` (**gitignored**).
+Gerencia a memória de review **v2** — migração, compactação e promoção de convenções. Tudo em `.cursor/review/` (**gitignored**). Sem modo legacy: `memoria.md` / `memoria.legacy.md` são removidos após migrar.
 
 Ler skill **`review-inbox`** para o fluxo `/avaliar` + `/finalizar`.
 
@@ -8,18 +8,18 @@ Ler skill **`review-inbox`** para o fluxo `/avaliar` + `/finalizar`.
 
 | Invocação | Ação |
 | --- | --- |
-| `/memoria` ou `/memoria status` | Estado do projeto (v1/v2, arquivos, pendências) |
-| `/memoria backup` | Cópia de segurança de `memoria.md` antes de testar |
-| `/memoria diff` | Comparar tamanho `memoria.md` → `context.yaml` |
-| `/memoria migrar` | Converter `memoria.md` (v1) para v2 — **dry-run** |
-| `/memoria migrar --write` | Gravar após confirmação do dev |
+| `/memoria` ou `/memoria status` | Estado do projeto (arquivos, pendências) |
+| `/memoria backup` | Cópia de `memoria.md` (se ainda existir) em `backups/` |
+| `/memoria diff` | Comparar tamanho fonte → `context.yaml` |
+| `/memoria migrar` | v1→v2 ou scaffold/purge legacy — **dry-run** |
+| `/memoria migrar --write` | Gravar v2 e **remover** `memoria.md` / `memoria.legacy.md` |
 | `/memoria compactar` | `decisions.jsonl` → `context.yaml` — dry-run |
-| `/memoria compactar --write` | Gravar `context.yaml` |
+| `/memoria compactar --write` | Gravar `context.yaml` (+ `context.json`) |
 | `/memoria promover` | `candidates` → `convencoes.md` — dry-run |
 | `/memoria promover --write` | Gravar `convencoes.md` |
 | `/memoria promover --all --write` | Promover todos os candidates (mesmo com 1 ocorrência) |
-| `/memoria restore` | Voltar ao backup v1 — dry-run |
-| `/memoria restore --write` | Restaurar `memoria.md` e remover artefatos v2 |
+| `/memoria restore` | Re-migrar backup → v2 — dry-run |
+| `/memoria restore --write` | Reconstrói v2 a partir de `backups/` (não reativa v1) |
 
 ## CLI
 
@@ -33,42 +33,39 @@ npm run memoria -- promover [--write] [--all] [projeto]
 npm run memoria -- restore [--write] [projeto]
 ```
 
-## Modos
+## Modo único: v2
 
-| Modo | Detectar | `/finalizar` | `/avaliar` lê |
-| --- | --- | --- | --- |
-| **v1 (legacy)** | `memoria.md` sem `.memoria-version` | Atualiza `memoria.md` (comportamento atual) | Seção **Convenções** |
-| **v2** | `.memoria-version` = `2` | Append em `decisions.jsonl` apenas | `context.yaml` + `convencoes.md` |
+| Detectar | `/finalizar` | `/avaliar` lê |
+| --- | --- | --- |
+| `.memoria-version` = `2` | Append em `decisions.jsonl` | `context.yaml` + `convencoes.md` |
 
-**Nada migra sozinho** — bootstrap e `/finalizar` não criam v2 automaticamente.
+`/migrar-cursor` e `link-project` já sobem scaffold v2 e migram `memoria.md` antigas.
 
 ## Artefatos (gitignored)
 
 | Arquivo | Escrito por | Lido por |
 | --- | --- | --- |
-| `memoria.md` | `/finalizar` (v1) | `/avaliar` (v1) |
-| `backups/memoria-original.md` | `/memoria backup` | `/memoria restore` |
-| `memoria.legacy.md` | `/memoria migrar --write` | — (cópia de segurança) |
-| `.memoria-version` | `/memoria migrar --write` | detectar modo |
-| `decisions.jsonl` | `/finalizar` (v2) ou migrar | `/memoria compactar` |
-| `context.yaml` | `/memoria compactar --write` | `/avaliar`, `/avaliar-diff` (v2) |
-| `convencoes.md` | `/memoria promover --write` | `/avaliar`, geração de código (v2) |
+| `backups/memoria-original.md` | backup / migrar | restore / diff |
+| `.memoria-version` | migrar | detectar modo |
+| `decisions.jsonl` | `/finalizar` ou migrar | compactar |
+| `context.yaml` / `context.json` | migrar / compactar | `/avaliar`, promover |
+| `convencoes.md` | promover | `/avaliar`, geração |
+
+**Não** manter `memoria.md` nem `memoria.legacy.md` no projeto após migrar.
 
 ## Protocolo do Agent (`/memoria migrar`)
 
-1. Rodar `npm run memoria -- backup` se ainda não houver backup.
-2. Rodar `npm run memoria -- diff` e mostrar resumo ao dev.
-3. Rodar `npm run memoria -- migrar` (dry-run) — mostrar contagens.
-4. **Só com OK explícito do dev:** `npm run memoria -- migrar --write`.
-5. Sugerir `compactar --write` e `promover --write` como passos seguintes.
+1. Rodar `npm run memoria -- backup` se ainda houver `memoria.md` e não houver backup.
+2. Rodar `npm run memoria -- migrar` (dry-run) — mostrar contagens.
+3. **Só com OK explícito do dev** (exceto quando o fluxo for `/migrar-cursor`): `npm run memoria -- migrar --write`.
+4. Sugerir `compactar --write` e `promover --write` como passos seguintes.
 
 ## Protocolo do Agent (`/memoria restore`)
 
-Para re-testar migração a partir do backup:
+Reconstrói v2 a partir do backup (não volta a v1):
 
-1. `npm run memoria -- restore` (dry-run) — mostrar o que será removido.
+1. `npm run memoria -- restore` (dry-run).
 2. Com OK: `npm run memoria -- restore --write`.
-3. Opcional: `migrar --write` de novo.
 
 ## Resposta ao usuário
 

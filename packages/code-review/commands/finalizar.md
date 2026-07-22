@@ -13,23 +13,18 @@ Empacota o resultado quando o usuário **finalizou** o review (ex.: `/finalizar`
 2. **Perguntar ao dev** o que vale da análise (se ainda não estiver claro no chat):
    - por achado: `aceito` | `rejeitado` | `adiado` | `nao-aplicavel`
    - motivo breve quando `rejeitado` ou `nao-aplicavel`
-3. Persistir decisões conforme o modo (ver abaixo).
+3. Persistir decisões (só v2 — ver abaixo).
 4. Rodar `~/.cursor/review-finalizar.sh <caminho>`.
 5. Informar pasta gerada em `.cursor/review/resultados/`.
 
-### Modo v2 (`.cursor/review/.memoria-version` = `2`)
+### Memória v2 (obrigatório)
+
+Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `/migrar-cursor` ou `npm run memoria -- migrar --write` antes de finalizar. **Não** criar nem atualizar `memoria.md`.
 
 - **Append** em `.cursor/review/decisions.jsonl` (uma linha JSON por achado).
-- **Não** atualizar `context.yaml`, `convencoes.md` nem `memoria.md`.
+- **Não** atualizar `context.yaml` nem `convencoes.md`.
 - **Não** compactar nem promover — o dev usa `/memoria compactar` e `/memoria promover`.
 - Sugerir `/memoria status` se houver decisões não compactadas.
-
-### Modo v1 (legacy — padrão até `/memoria migrar`)
-
-- Atualizar `.cursor/review/memoria.md`:
-  - **append** em **Histórico** (data, slug, decisões por linha/achado)
-  - **reescrever** **Convenções validadas pelo time** (consolidar padrões do projeto)
-  - criar o arquivo a partir do template em `packages/code-review/templates/memoria.md` se não existir
 
 ## Limpeza (script)
 
@@ -51,4 +46,4 @@ O **arquivo avaliado no projeto nunca é deletado** — apenas copiado para `res
 
 ## Resposta ao usuário
 
-Informar só: caminho do pacote em `resultados/`, veredito, o que foi persistido (`memoria.md` ou `decisions.jsonl`), e que `reports/` foi limpo. Sem repetir o relatório.
+Informar só: caminho do pacote em `resultados/`, veredito, o que foi persistido (`decisions.jsonl`), e que `reports/` foi limpo. Sem repetir o relatório.

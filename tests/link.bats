@@ -16,7 +16,8 @@ teardown() {
   [[ ! -e "$project/.cursor/rules/skills-orchestrator-base.mdc" ]]
   [[ ! -e "$project/.cursor/commands/avaliar.md" ]]
   [[ -d "$project/.cursor/review/inbox" ]]
-  [[ -f "$project/.cursor/review/memoria.md" ]]
+  [[ -f "$project/.cursor/review/.memoria-version" ]]
+  [[ ! -f "$project/.cursor/review/memoria.md" ]]
   [[ -L "$CURSOR_USER_DIR/rules/skills-orchestrator-base.mdc" ]]
   [[ -L "$CURSOR_USER_DIR/commands/avaliar.md" ]]
 }
