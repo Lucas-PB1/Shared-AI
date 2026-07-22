@@ -17,8 +17,6 @@ Wizard de **primeira configuração**: instala o pacote, escolhe perfil, faz boo
 5. **bootstrap** — `review/` + rule/SKILLS-ROUTING do perfil + registry (sem espelhar orquestrador/commands)
 6. **Extras** — boot-sync, sync-inbox, Cursor CLI, MCP HubSpot (se perfil hubspot)
 
-Máquina ainda no dual-link antigo: use `/migrar-cursor` (não este wizard).
-
 ## Perfis
 
 | Perfil | Detectado quando |

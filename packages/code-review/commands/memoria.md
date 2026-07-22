@@ -39,7 +39,7 @@ npm run memoria -- restore [--write] [projeto]
 | --- | --- | --- |
 | `.memoria-version` = `2` | Append em `decisions.jsonl` | `context.yaml` + `convencoes.md` |
 
-`/migrar-cursor` e `link-project` já sobem scaffold v2 e migram `memoria.md` antigas.
+`link-project` sobe scaffold v2 e remove resíduos de `memoria.md` / legacy.
 
 ## Artefatos (gitignored)
 
@@ -57,7 +57,7 @@ npm run memoria -- restore [--write] [projeto]
 
 1. Rodar `npm run memoria -- backup` se ainda houver `memoria.md` e não houver backup.
 2. Rodar `npm run memoria -- migrar` (dry-run) — mostrar contagens.
-3. **Só com OK explícito do dev** (exceto quando o fluxo for `/migrar-cursor`): `npm run memoria -- migrar --write`.
+3. **Só com OK explícito do dev**: `npm run memoria -- migrar --write`.
 4. Sugerir `compactar --write` e `promover --write` como passos seguintes.
 
 ## Protocolo do Agent (`/memoria restore`)

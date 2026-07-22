@@ -108,7 +108,7 @@ count_user_symlink_issues() {
     fi
   done
 
-  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md cursor-cli.md historico.md sync-inbox.md onboard.md migrar-cursor.md; do
+  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
     dest="$CURSOR_DIR/commands/$cmd"
     if [[ -e "$dest" && ! -L "$dest" ]]; then
       skipped=$((skipped + 1))
@@ -182,7 +182,7 @@ for script in link-project.sh review-check.sh review-finalizar.sh review-diff.sh
   fi
 done
 
-for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md cursor-cli.md historico.md sync-inbox.md onboard.md migrar-cursor.md; do
+for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
   if [[ -L "$CURSOR_DIR/commands/$cmd" && -e "$CURSOR_DIR/commands/$cmd" ]]; then
     ok "command /${cmd%.md}"
   elif [[ -f "$CURSOR_DIR/commands/$cmd" ]]; then

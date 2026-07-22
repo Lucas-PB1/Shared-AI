@@ -19,7 +19,7 @@ Empacota o resultado quando o usuário **finalizou** o review (ex.: `/finalizar`
 
 ### Memória v2 (obrigatório)
 
-Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `/migrar-cursor` ou `npm run memoria -- migrar --write` antes de finalizar. **Não** criar nem atualizar `memoria.md`.
+Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `npm run memoria -- migrar --write` antes de finalizar. **Não** criar nem atualizar `memoria.md`.
 
 - **Append** em `.cursor/review/decisions.jsonl` (uma linha JSON por achado).
 - **Não** atualizar `context.yaml` nem `convencoes.md`.
