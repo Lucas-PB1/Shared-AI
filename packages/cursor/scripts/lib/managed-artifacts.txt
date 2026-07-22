@@ -1,15 +1,20 @@
 # Artefatos gerenciados pelo hostdime-ia (sync só mexe nestes)
 #
-# Rules (~/.cursor/rules/ e projeto/.cursor/rules/)
+# Rules — só em ~/.cursor/rules/ (não no projeto)
 skills-orchestrator-*.mdc
 #
-# Commands (~/.cursor/commands/ e projeto/.cursor/commands/)
+# Commands — só em ~/.cursor/commands/ (não no projeto)
 avaliar.md
 finalizar.md
 avaliar-diff.md
 memoria.md
 skills-why.md
 hubspot-mcp.md
+cursor-cli.md
+historico.md
+sync-inbox.md
+onboard.md
+migrar-cursor.md
 #
 # Skills (~/.cursor/skills/) — uma pasta por nome em:
 #   packages/cursor/skills/
@@ -17,3 +22,4 @@ hubspot-mcp.md
 #
 # Arquivo real no mesmo caminho → nunca sobrescrito (exceto --migrate para cópias antigas)
 # Skill do projeto em .cursor/skills/<nome>/ → sobrescreve a global
+# Projeto: só review/ (gitignore) + *-project.mdc / commands reais versionáveis

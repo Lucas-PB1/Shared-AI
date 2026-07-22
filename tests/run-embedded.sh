@@ -34,18 +34,80 @@ run_test() {
 test_link_symlinks() {
   project="$(hostdime_make_project)"
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
-  assert "orquestrador base" test -L "$project/.cursor/rules/skills-orchestrator-base.mdc"
-  assert "command avaliar" test -L "$project/.cursor/commands/avaliar.md"
-  assert "command memoria" test -L "$project/.cursor/commands/memoria.md"
-  assert "command hubspot-mcp" test -L "$project/.cursor/commands/hubspot-mcp.md"
-  assert "command historico" test -L "$project/.cursor/commands/historico.md"
-  assert "command cursor-cli" test -L "$project/.cursor/commands/cursor-cli.md"
-  assert "command sync-inbox" test -L "$project/.cursor/commands/sync-inbox.md"
-  assert "command onboard" test -L "$project/.cursor/commands/onboard.md"
-  assert "rule hubspot" test -L "$project/.cursor/rules/skills-orchestrator-hubspot.mdc"
-  assert "rule okf" test -L "$project/.cursor/rules/skills-orchestrator-okf.mdc"
+  assert "sem orquestrador no projeto" test ! -e "$project/.cursor/rules/skills-orchestrator-base.mdc"
+  assert "sem command no projeto" test ! -e "$project/.cursor/commands/avaliar.md"
+  assert "orquestrador global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-base.mdc"
+  assert "command avaliar global" test -L "$CURSOR_USER_DIR/commands/avaliar.md"
+  assert "command memoria global" test -L "$CURSOR_USER_DIR/commands/memoria.md"
+  assert "command hubspot-mcp global" test -L "$CURSOR_USER_DIR/commands/hubspot-mcp.md"
+  assert "command historico global" test -L "$CURSOR_USER_DIR/commands/historico.md"
+  assert "command cursor-cli global" test -L "$CURSOR_USER_DIR/commands/cursor-cli.md"
+  assert "command sync-inbox global" test -L "$CURSOR_USER_DIR/commands/sync-inbox.md"
+  assert "command onboard global" test -L "$CURSOR_USER_DIR/commands/onboard.md"
+  assert "rule hubspot global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-hubspot.mdc"
+  assert "rule okf global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-okf.mdc"
   assert "review inbox" test -d "$project/.cursor/review/inbox"
   assert "memoria template" test -f "$project/.cursor/review/memoria.md"
+}
+
+test_link_removes_legacy_orchestrator() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/rules"
+  ln -sf "$HOSTDIME_IA_ROOT/packages/cursor/rules/skills-orchestrator-base.mdc" \
+    "$project/.cursor/rules/skills-orchestrator-base.mdc"
+  "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
+  assert "orquestrador legado removido" test ! -e "$project/.cursor/rules/skills-orchestrator-base.mdc"
+}
+
+test_link_removes_legacy_command() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/commands"
+  ln -sf "$HOSTDIME_IA_ROOT/packages/code-review/commands/avaliar.md" \
+    "$project/.cursor/commands/avaliar.md"
+  "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
+  assert "command legado removido" test ! -e "$project/.cursor/commands/avaliar.md"
+  assert "command global" test -L "$CURSOR_USER_DIR/commands/avaliar.md"
+}
+
+test_gitignore_scrub_orphans() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/rules" "$project/.cursor/commands"
+  cat >"$project/.gitignore" <<'EOF'
+# hostdime-ia: cursor gerenciado localmente (npm run bootstrap)
+.cursor/rules/skills-orchestrator-*.mdc
+.cursor/commands/avaliar.md
+.cursor/review/memoria.md
+EOF
+  ln -sf "$HOSTDIME_IA_ROOT/packages/cursor/rules/skills-orchestrator-base.mdc" \
+    "$project/.cursor/rules/skills-orchestrator-base.mdc"
+  ln -sf "$HOSTDIME_IA_ROOT/packages/code-review/commands/avaliar.md" \
+    "$project/.cursor/commands/avaliar.md"
+
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/ensure-project-gitignore.sh"
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/link-from-repo.sh"
+  export HOSTDIME_IA_ROOT
+  "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
+
+  assert "symlink rules removido" test ! -e "$project/.cursor/rules/skills-orchestrator-base.mdc"
+  assert "symlink command removido" test ! -e "$project/.cursor/commands/avaliar.md"
+  if grep -qxF '.cursor/rules/skills-orchestrator-*.mdc' "$project/.gitignore"; then
+    assert "ignore orquestrador scrub" false
+  else
+    assert "ignore orquestrador scrub" true
+  fi
+  if grep -qxF '.cursor/commands/avaliar.md' "$project/.gitignore"; then
+    assert "ignore avaliar scrub" false
+  else
+    assert "ignore avaliar scrub" true
+  fi
+  assert "ignore review mantido" grep -qxF '.cursor/review/memoria.md' "$project/.gitignore"
+}
+
+test_migrar_cursor_command_installed() {
+  assert "migrar-cursor.md no pacote" test -f "$HOSTDIME_IA_ROOT/packages/cursor/commands/migrar-cursor.md"
+  assert "migrar-cursor global" test -L "$CURSOR_USER_DIR/commands/migrar-cursor.md"
 }
 
 test_link_preserves_real() {
@@ -55,6 +117,15 @@ test_link_preserves_real() {
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
   assert "rule real preservada" test ! -L "$project/.cursor/rules/skills-orchestrator-base.mdc"
   assert "conteúdo real" grep -q real "$project/.cursor/rules/skills-orchestrator-base.mdc"
+}
+
+test_link_preserves_real_command() {
+  project="$(hostdime_make_project)"
+  mkdir -p "$project/.cursor/commands"
+  echo "local" >"$project/.cursor/commands/avaliar.md"
+  "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
+  assert "command real preservado" test ! -L "$project/.cursor/commands/avaliar.md"
+  assert "conteúdo local" grep -q local "$project/.cursor/commands/avaliar.md"
 }
 
 test_bootstrap_profile() {
@@ -422,7 +493,7 @@ test_health_multi_project() {
   source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/health-check.sh"
   out="$(health_check_project "$project" 2>&1 || true)"
   assert "health python label" grep -q 'perfil: python' <<<"$out"
-  assert "health symlinks ok" grep -q 'symlinks .cursor/rules/' <<<"$out"
+  assert "health rules ok" grep -q 'rules do projeto ok' <<<"$out"
 
   label="$(health_detect_profile_label "$project")"
   assert "health_detect_profile_label" test "$label" = "python"
@@ -431,7 +502,12 @@ test_health_multi_project() {
 echo "HostDime IA — testes (runner embutido)"
 
 run_test "link symlinks" test_link_symlinks
+run_test "link remove legado orquestrador" test_link_removes_legacy_orchestrator
+run_test "link remove legado command" test_link_removes_legacy_command
 run_test "link preserva real" test_link_preserves_real
+run_test "link preserva command real" test_link_preserves_real_command
+run_test "gitignore scrub orphans" test_gitignore_scrub_orphans
+run_test "migrar-cursor command installed" test_migrar_cursor_command_installed
 run_test "bootstrap profile" test_bootstrap_profile
 run_test "bootstrap invalid" test_bootstrap_invalid_profile
 run_test "detach" test_detach

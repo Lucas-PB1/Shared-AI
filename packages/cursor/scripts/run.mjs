@@ -30,6 +30,7 @@ const BASH_MAP = {
   'sync-inbox': join(scriptsDir, 'sync-inbox.sh'),
   onboard: join(scriptsDir, 'onboard.sh'),
   health: join(scriptsDir, 'health.sh'),
+  'migrar-cursor': join(scriptsDir, 'migrar-cursor.sh'),
 };
 
 const PS1_MAP = {
@@ -46,6 +47,7 @@ const PS1_MAP = {
   agent: join(ps1Dir, 'Agent.ps1'),
   onboard: join(ps1Dir, 'Onboard.ps1'),
   health: join(ps1Dir, 'Health.ps1'),
+  'migrar-cursor': join(ps1Dir, 'Migrar-Cursor.ps1'),
 };
 
 const ALIASES = {
@@ -95,7 +97,7 @@ const [command, ...args] = process.argv.slice(2);
 if (!command || command === '--help' || command === '-h') {
   console.log(`Uso: node run.mjs <comando> [args...]
 
-Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico, memoria, cursor-cli, agent, sync-inbox, onboard, health`);
+Comandos: install, setup-code-review, bootstrap, detach, sync, status, doctor, boot-sync, historico, memoria, cursor-cli, agent, sync-inbox, onboard, health, migrar-cursor`);
   process.exit(0);
 }
 

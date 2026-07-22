@@ -7,7 +7,7 @@ description: >-
 
 # Review — `/avaliar`, `/avaliar-diff` e `/finalizar`
 
-Commands universais (symlink em `.cursor/commands/`, como as rules).
+Commands universais em `~/.cursor/commands/` (global; setup/sync).
 
 | Command | Uso |
 | --- | --- |
@@ -27,7 +27,7 @@ Commands universais (symlink em `.cursor/commands/`, como as rules).
 | `.cursor/review/context.yaml` | v2: exclusões e candidates compactos (gitignored) |
 | `.cursor/review/convencoes.md` | v2: padrão promovido para geração (gitignored) |
 
-Criadas automaticamente pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`).
+Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`). Commands hostdime **não** são espelhados no projeto.
 
 ## Fluxo
 
@@ -52,4 +52,4 @@ Criadas automaticamente pelo `link-project.sh` (hook sessionStart ou `npm run bo
 
 - Não alterar o arquivo do repo salvo pedido explícito
 - Tier 2 + skill de stack
-- Detalhes: `.cursor/commands/avaliar.md`, `avaliar-diff.md`, `finalizar.md`
+- Detalhes: `~/.cursor/commands/avaliar.md`, `avaliar-diff.md`, `finalizar.md`

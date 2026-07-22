@@ -16,7 +16,8 @@ teardown() {
 
   [[ -f "$project/.cursor/SKILLS-ROUTING.md" ]]
   [[ -f "$project/.cursor/rules/laravel-project.mdc" ]]
-  [[ "$(hostdime_count_orchestrator_symlinks "$project")" -ge 1 ]]
+  [[ "$(hostdime_count_orchestrator_symlinks "$project")" -eq 0 ]]
+  [[ -L "$CURSOR_USER_DIR/rules/skills-orchestrator-base.mdc" ]]
 
   grep -qF "$project" "$CURSOR_USER_DIR/hostdime-ia/projects.json"
 }

@@ -10,6 +10,40 @@ function Reset-LinkCounters {
     $script:LinkLinked = 0
     $script:LinkSkipped = 0
     $script:LinkBroken = 0
+    $script:LinkOrchestratorRemoved = 0
+    $script:LinkCommandsRemoved = 0
+}
+
+function Remove-ProjectOrchestratorRuleSymlinks {
+    param([Parameter(Mandatory)][string]$RulesDir)
+
+    $script:LinkOrchestratorRemoved = 0
+    if (-not (Test-Path -LiteralPath $RulesDir)) { return }
+
+    foreach ($f in Get-ChildItem -Path (Join-Path $RulesDir 'skills-orchestrator-*.mdc') -ErrorAction SilentlyContinue) {
+        if (Test-HostdimeSymlink $f.FullName) {
+            $name = $f.Name
+            Remove-Item -LiteralPath $f.FullName -Force
+            $script:LinkOrchestratorRemoved++
+            Write-LinkReport 'removed' "$RulesDir/$name (orquestrador global)"
+        }
+    }
+}
+
+function Remove-ProjectManagedCommandSymlinks {
+    param([Parameter(Mandatory)][string]$CommandsDir)
+
+    $script:LinkCommandsRemoved = 0
+    if (-not (Test-Path -LiteralPath $CommandsDir)) { return }
+
+    foreach ($f in Get-ChildItem -Path (Join-Path $CommandsDir '*.md') -ErrorAction SilentlyContinue) {
+        if (Test-HostdimeSymlink $f.FullName) {
+            $name = $f.Name
+            Remove-Item -LiteralPath $f.FullName -Force
+            $script:LinkCommandsRemoved++
+            Write-LinkReport 'removed' "$CommandsDir/$name (command global)"
+        }
+    }
 }
 
 function Write-LinkReport {

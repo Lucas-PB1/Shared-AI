@@ -2,7 +2,7 @@
 
 > **Repositório:** `packages/cursor/docs/SKILLS-ROUTING.md` → após `npm run setup:skills` vira `~/.cursor/SKILLS-ROUTING.md`.
 
-Skills genéricas em **`~/.cursor/skills/`** (fonte: `skills/` neste repo). Rules orquestradoras em **`~/.cursor/rules/`** (fonte: `rules/`), ligadas a cada projeto via symlink. Mapa: este arquivo.
+Skills genéricas em **`~/.cursor/skills/`** (fonte: `skills/` neste repo). Rules orquestradoras em **`~/.cursor/rules/`** e commands hostdime em **`~/.cursor/commands/`** — globais no usuário, sem symlink por projeto. Mapa: este arquivo.
 
 Skills **do projeto** (se existirem) em `.cursor/skills/<nome>/` **sobrescrevem** o pacote do usuário.
 
@@ -90,10 +90,10 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 
 ## Always-on (orquestrador)
 
-Em `~/.cursor/rules/` — ligadas ao projeto via symlink:
+Em `~/.cursor/rules/` (global; Cursor inclui a pasta home no contexto):
 
 - `base.mdc`
 - `intent.mdc`
 - `stack.mdc`
 
-Mais rules glob (react-ui, testing, …) no mesmo diretório.
+Mais rules glob (react-ui, testing, …) no mesmo diretório. Rules do projeto (`*-project.mdc`, history-watch) ficam só em `.cursor/rules/` do repo.

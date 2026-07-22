@@ -87,8 +87,8 @@ if ($profileName) {
 
 Write-Host ''
 Write-Host "Projeto preparado: $projectPath"
-Write-Host '  .cursor/rules/    → symlinks (orquestrador) + rules do projeto'
-Write-Host '  .cursor/commands/ → /avaliar, /avaliar-diff, /finalizar, /skills-why, /hubspot-mcp'
+Write-Host '  .cursor/rules/    → rules do projeto (*-project.mdc); orquestrador em ~/.cursor/rules/'
+Write-Host '  .cursor/commands/ → commands do projeto (opcional); hostdime em ~/.cursor/commands/'
 Write-Host '  .cursor/review/   → reports/, resultados/, memoria.md'
 Write-Host '  .cursor/skills/   → overrides do projeto'
 if ($profileName) { Write-Host "  perfil            → $profileName" }

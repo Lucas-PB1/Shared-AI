@@ -56,11 +56,10 @@ Referências (`references/*.md`): no mesmo diretório da skill encontrada.
 
 ## Localização das rules
 
-| Tipo | Onde vive | No projeto |
-| --- | --- | --- |
-| Orquestrador genérico | `~/.cursor/rules/skills-orchestrator-*.mdc` | **symlink** em `.cursor/rules/` |
-| Rule do projeto | — | arquivo real em `.cursor/rules/` (ex.: `hdbr-hubspot-project.mdc`) |
+| Tipo | Onde vive |
+| --- | --- |
+| Orquestrador genérico | `~/.cursor/rules/skills-orchestrator-*.mdc` (global; Cursor 2.1+) |
+| Rule do projeto | arquivo real em `.cursor/rules/` (ex.: `hdbr-hubspot-project.mdc`, history-watch) |
 
-Instalar links: `~/.cursor/link-project-rules.sh /caminho/do/repo`
-
-Cursor só carrega rules de `.cursor/rules/` do workspace — por isso o symlink, não cópia.
+Instalar orquestrador e commands no usuário: `npm run setup:skills` / `npm run sync`.  
+Review e rules do projeto: `~/.cursor/link-project.sh /caminho/do/repo` (não espelha orquestrador nem commands).

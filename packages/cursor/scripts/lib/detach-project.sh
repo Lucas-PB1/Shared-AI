@@ -10,7 +10,6 @@ detach_hostdime_from_project() {
   local rules_dir="$project/.cursor/rules"
   local commands_dir="$project/.cursor/commands"
   local removed=0
-  local f cmd name
 
   [[ -d "$project" ]] || {
     echo "Erro: projeto não encontrado: $project" >&2
@@ -28,35 +27,15 @@ detach_hostdime_from_project() {
 
   echo "→ removendo symlinks gerenciados em $project"
 
-  if [[ -d "$rules_dir" ]]; then
-    shopt -s nullglob
-    for f in "$rules_dir"/skills-orchestrator-*.mdc; do
-      [[ -L "$f" ]] || continue
-      if is_hostdime_symlink "$f"; then
-        name="$(basename "$f")"
-        rm -f "$f"
-        echo "  removido: .cursor/rules/$name"
-        removed=$((removed + 1))
-      fi
-    done
-    shopt -u nullglob
-  fi
-
-  if [[ -d "$commands_dir" ]]; then
-    for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md; do
-      f="$commands_dir/$cmd"
-      [[ -L "$f" ]] || continue
-      if is_hostdime_symlink "$f"; then
-        rm -f "$f"
-        echo "  removido: .cursor/commands/$cmd"
-        removed=$((removed + 1))
-      fi
-    done
-  fi
+  remove_project_orchestrator_rule_symlinks "$rules_dir"
+  remove_project_managed_command_symlinks "$commands_dir"
+  removed=$((LINK_ORCHESTRATOR_REMOVED + LINK_COMMANDS_REMOVED))
 
   if [[ "$removed" -eq 0 ]]; then
     echo "  (nenhum symlink gerenciado encontrado)"
   else
+    [[ "$LINK_ORCHESTRATOR_REMOVED" -gt 0 ]] && echo "  rules: $LINK_ORCHESTRATOR_REMOVED"
+    [[ "$LINK_COMMANDS_REMOVED" -gt 0 ]] && echo "  commands: $LINK_COMMANDS_REMOVED"
     echo "  total: $removed symlink(s)"
   fi
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wrapper hostdime para Cursor CLI — alinha rules/commands do projeto antes de rodar agent.
+# Wrapper hostdime para Cursor CLI — prepara review/ do projeto antes de rodar agent.
 # Uso: npm run agent -- [args...]
 #      npm run agent -- --project=/path "prompt"
 set -euo pipefail
@@ -24,7 +24,7 @@ Uso: agent-cli.sh [--project=PATH] [--dry-run] [--] [args do agent...]
 
 Antes de executar agent:
   - resolve a raiz do projeto (.cursor/ subindo diretórios)
-  - relinka rules/commands via link-project (como sessionStart da IDE)
+  - prepara review/ via link-project (como sessionStart da IDE)
 
 Exemplos:
   npm run agent

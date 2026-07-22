@@ -87,20 +87,20 @@ npm run agent -- resume
 agent update                     # atualizar CLI (direto)
 ```
 
-O wrapper `npm run agent` relinka `.cursor/rules` e commands via `link-project` antes de executar — mesmo efeito do hook `sessionStart` da IDE.
+O wrapper `npm run agent` prepara `review/` via `link-project` antes de executar — mesmo efeito do hook `sessionStart` da IDE. Orquestrador e commands hostdime já estão em `~/.cursor/`.
 
 ## Wrapper `npm run agent`
 
 | Passo | O que faz |
 | --- | --- |
 | 1 | Sobe diretórios até achar `.cursor/` (raiz do projeto) |
-| 2 | `link-project --quiet` — symlinks rules/commands/review |
+| 2 | `link-project --quiet` — review/ (+ remove orquestrador/commands antigos do projeto) |
 | 3 | Registra projeto no sync hostdime |
 | 4 | `cd` na raiz e executa `agent` com os args passados |
 
 Opções do wrapper: `--project=/path`, `--dry-run` (debug).
 
-O CLI carrega `.cursor/rules` do projeto automaticamente — com o relink, fica alinhado ao que a IDE usa.
+O CLI/IDE carregam rules/commands do projeto e do usuário (`~/.cursor/rules/`, `~/.cursor/commands/`).
 
 ## Segurança
 

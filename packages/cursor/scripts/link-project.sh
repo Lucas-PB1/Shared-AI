@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Liga rules, commands e pastas de review em .cursor/ do projeto (symlinks ao clone).
+# Prepara pastas de review em .cursor/ do projeto.
+# Rules do orquestrador e commands hostdime ficam só em ~/.cursor/ (não no projeto).
 # Uso: link-project.sh [--quiet] /caminho/do/repo
 set -euo pipefail
 
@@ -24,9 +25,6 @@ if [[ -z "${HOSTDIME_IA_ROOT:-}" || ! -d "$HOSTDIME_IA_ROOT" ]]; then
   exit 1
 fi
 
-RULE_SRC="$HOSTDIME_IA_ROOT/packages/cursor/rules"
-COMMAND_SRC="$HOSTDIME_IA_ROOT/packages/code-review/commands"
-COMMAND_CURSOR_SRC="$HOSTDIME_IA_ROOT/packages/cursor/commands"
 LIB="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/link-from-repo.sh"
 
 # shellcheck disable=SC1091
@@ -39,7 +37,10 @@ reset_link_counters
 RULES_DIR="$TARGET/.cursor/rules"
 COMMANDS_DIR="$TARGET/.cursor/commands"
 REVIEW_DIR="$TARGET/.cursor/review"
-mkdir -p "$RULES_DIR" "$COMMANDS_DIR" "$REVIEW_DIR"/{inbox,reports,resultados}
+mkdir -p "$REVIEW_DIR"/{inbox,reports,resultados}
+# Não criar rules/commands vazios — só limpar se já existirem
+[[ -d "$RULES_DIR" ]] || RULES_DIR=""
+[[ -d "$COMMANDS_DIR" ]] || COMMANDS_DIR=""
 
 touch "$REVIEW_DIR/inbox/.gitkeep" "$REVIEW_DIR/reports/.gitkeep" 2>/dev/null || true
 
@@ -48,18 +49,27 @@ if [[ ! -f "$REVIEW_DIR/memoria.md" && -f "$MEMORIA_TEMPLATE" ]]; then
   cp "$MEMORIA_TEMPLATE" "$REVIEW_DIR/memoria.md"
 fi
 
-link_glob "$RULE_SRC/skills-orchestrator-*.mdc" "$RULES_DIR"
-link_file "$COMMAND_SRC/avaliar.md" "$COMMANDS_DIR"
-link_file "$COMMAND_SRC/finalizar.md" "$COMMANDS_DIR"
-link_file "$COMMAND_SRC/avaliar-diff.md" "$COMMANDS_DIR"
-link_file "$COMMAND_SRC/memoria.md" "$COMMANDS_DIR"
-link_glob "$COMMAND_CURSOR_SRC/*.md" "$COMMANDS_DIR"
+# Garantir ausência de espelhos: orquestrador + commands só em ~/.cursor/
+[[ -n "$RULES_DIR" ]] && remove_project_orchestrator_rule_symlinks "$RULES_DIR"
+[[ -n "$COMMANDS_DIR" ]] && remove_project_managed_command_symlinks "$COMMANDS_DIR"
+
+# Pastas vazias após limpeza
+if [[ -n "$RULES_DIR" && -d "$RULES_DIR" ]] && [[ -z "$(find "$RULES_DIR" -mindepth 1 -maxdepth 1 2>/dev/null | head -1)" ]]; then
+  rmdir "$RULES_DIR" 2>/dev/null || true
+fi
+if [[ -n "$COMMANDS_DIR" && -d "$COMMANDS_DIR" ]] && [[ -z "$(find "$COMMANDS_DIR" -mindepth 1 -maxdepth 1 2>/dev/null | head -1)" ]]; then
+  rmdir "$COMMANDS_DIR" 2>/dev/null || true
+fi
 
 ensure_project_gitignore "$TARGET"
 if [[ "$QUIET" -eq 0 ]]; then
   echo ""
-  echo "Concluído: $LINK_LINKED symlink(s) em $TARGET/.cursor/"
+  echo "Concluído em $TARGET/.cursor/"
   echo "  review/ → reports/, resultados/, memoria.md (v1) + /memoria para v2"
+  echo "  orquestrador → ~/.cursor/rules/ (global)"
+  echo "  commands → ~/.cursor/commands/ (global)"
+  [[ "$LINK_ORCHESTRATOR_REMOVED" -gt 0 ]] && echo "  removidos do projeto: $LINK_ORCHESTRATOR_REMOVED skills-orchestrator-*.mdc"
+  [[ "$LINK_COMMANDS_REMOVED" -gt 0 ]] && echo "  removidos do projeto: $LINK_COMMANDS_REMOVED command(s)"
   [[ "$LINK_SKIPPED" -gt 0 ]] && echo "Ignorados (arquivo real do projeto): $LINK_SKIPPED"
 fi
 

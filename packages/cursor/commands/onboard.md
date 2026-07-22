@@ -10,12 +10,14 @@ Wizard de **primeira configuração**: instala o pacote, escolhe perfil, faz boo
 
 ## Fluxo
 
-1. **setup:skills** — se ainda não instalado
+1. **setup:skills** — se ainda não instalado (orquestrador + commands em `~/.cursor/`)
 2. **setup:code-review** — opcional (`/avaliar`, PHPStan, ESLint)
 3. **Caminho do projeto** — diretório raiz do repo
 4. **Perfil** — menu interativo ou detecção automática
-5. **bootstrap** — symlinks + rule/SKILLS-ROUTING do perfil
+5. **bootstrap** — `review/` + rule/SKILLS-ROUTING do perfil + registry (sem espelhar orquestrador/commands)
 6. **Extras** — boot-sync, sync-inbox, Cursor CLI, MCP HubSpot (se perfil hubspot)
+
+Máquina ainda no dual-link antigo: use `/migrar-cursor` (não este wizard).
 
 ## Perfis
 

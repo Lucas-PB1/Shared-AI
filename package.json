@@ -19,6 +19,7 @@
     "agent": "node packages/cursor/scripts/run.mjs agent",
     "sync-inbox": "node packages/cursor/scripts/run.mjs sync-inbox",
     "onboard": "node packages/cursor/scripts/run.mjs onboard",
+    "migrar-cursor": "node packages/cursor/scripts/run.mjs migrar-cursor",
     "health": "node packages/cursor/scripts/run.mjs health",
     "review:ci": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/review-ci.sh",
     "test": "bash tests/run-all.sh"

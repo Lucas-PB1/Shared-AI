@@ -117,9 +117,9 @@ while IFS= read -r project; do
     echo "  ⚠ $project ($broken symlink(s) quebrado(s))"
     issues=$((issues + 1))
   elif [[ "$skipped" -gt 0 ]]; then
-    echo "  ✓ $project ($skipped rule(s) própria(s) preservada(s))"
+    echo "  ✓ $project ($skipped rule(s) própria(s); orquestrador em ~/.cursor/rules/)"
   else
-    echo "  ✓ $project"
+    echo "  ✓ $project (orquestrador global)"
   fi
 done < <(list_projects)
 

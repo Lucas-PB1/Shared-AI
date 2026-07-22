@@ -22,15 +22,16 @@ Mapear **palavras ou objetivo** do pedido → ler SKILL.md (localização em `sk
 | `/historico`, historico, history watch, log.md escopo, history.md escopo | `history-watch` + command `/historico` |
 | `/cursor-cli`, cursor cli, agent cli, cursor agent terminal | command `/cursor-cli` |
 | `/sync-inbox`, sync inbox, inbox boot, continuar projeto, trabalho pendente | command `/sync-inbox` |
+| `/migrar-cursor`, migrar cursor, migração máquina, limpar dual-link | command `/migrar-cursor` |
 | review, auditoria, qualidade, code review | tier 2 + `eslint`, `prettier`, `testing` + skills da stack detectada |
 
 ### Review — pacote code-review (opcional)
 
 Só estender o roteamento abaixo se o pacote **code-review** estiver instalado (`npm run setup:code-review`). Detectar por **qualquer** destes sinais:
 
-- `.cursor/commands/avaliar.md` no workspace (symlink ou arquivo)
 - `~/.cursor/commands/avaliar.md`
 - `~/.cursor/skills/review-inbox/SKILL.md`
+- `.cursor/commands/avaliar.md` no workspace (command local do projeto, se existir)
 
 Se **nenhum** existir: manter só a linha genérica de review acima — **não** assumir `/avaliar`, `.cursor/review/inbox/` nem skills `review-*`.
 

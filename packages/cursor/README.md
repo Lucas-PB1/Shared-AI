@@ -2,6 +2,6 @@
 
 Instalado com `npm run setup:skills`.
 
-Rules, skills, hooks, `link-project.sh` → `~/.cursor/`.
+Rules do orquestrador, skills e commands → `~/.cursor/` (global). Review por projeto via `link-project.sh`.
 
-Bootstrap: `npm run bootstrap -- <repo> [--profile=laravel|hubspot|react]`. Detach: `npm run detach -- <repo>`. Testes: `npm run test`.
+Bootstrap: `npm run bootstrap -- <repo> [--profile=laravel|hubspot|react]`. Detach: `npm run detach -- <repo>`. Migração de máquina (dual-link → global): `npm run migrar-cursor` ou `/migrar-cursor`. Testes: `npm run test`.

@@ -34,14 +34,10 @@ teardown() {
   hubspot_mcp_installed
 }
 
-@test "link-project inclui command hubspot-mcp" {
-  project="$(hostdime_make_project)"
-  "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
-  [[ -L "$project/.cursor/commands/hubspot-mcp.md" ]]
+@test "setup instala command hubspot-mcp em ~/.cursor/commands" {
+  [[ -L "$CURSOR_USER_DIR/commands/hubspot-mcp.md" ]]
 }
 
-@test "link-project inclui rule skills-orchestrator-hubspot" {
-  project="$(hostdime_make_project)"
-  "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
-  [[ -L "$project/.cursor/rules/skills-orchestrator-hubspot.mdc" ]]
+@test "setup instala rule skills-orchestrator-hubspot em ~/.cursor/rules" {
+  [[ -L "$CURSOR_USER_DIR/rules/skills-orchestrator-hubspot.mdc" ]]
 }

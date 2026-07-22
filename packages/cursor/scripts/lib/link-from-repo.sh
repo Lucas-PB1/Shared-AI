@@ -155,4 +155,52 @@ reset_link_counters() {
   LINK_LINKED=0
   LINK_SKIPPED=0
   LINK_BROKEN=0
+  LINK_ORCHESTRATOR_REMOVED=0
+  LINK_COMMANDS_REMOVED=0
+}
+
+# Remove symlinks gerenciados skills-orchestrator-*.mdc do projeto
+# (orquestrador vive só em ~/.cursor/rules/ desde Cursor 2.1+).
+LINK_ORCHESTRATOR_REMOVED=0
+remove_project_orchestrator_rule_symlinks() {
+  local rules_dir="$1"
+  local f name
+
+  LINK_ORCHESTRATOR_REMOVED=0
+  [[ -d "$rules_dir" ]] || return 0
+
+  shopt -s nullglob
+  for f in "$rules_dir"/skills-orchestrator-*.mdc; do
+    [[ -L "$f" ]] || continue
+    if is_hostdime_symlink "$f"; then
+      name="$(basename "$f")"
+      rm -f "$f"
+      LINK_ORCHESTRATOR_REMOVED=$((LINK_ORCHESTRATOR_REMOVED + 1))
+      _link_report "removed" "$rules_dir/$name (orquestrador global)"
+    fi
+  done
+  shopt -u nullglob
+}
+
+# Remove symlinks gerenciados de commands no projeto
+# (commands hostdime vivem só em ~/.cursor/commands/).
+LINK_COMMANDS_REMOVED=0
+remove_project_managed_command_symlinks() {
+  local commands_dir="$1"
+  local f name
+
+  LINK_COMMANDS_REMOVED=0
+  [[ -d "$commands_dir" ]] || return 0
+
+  shopt -s nullglob
+  for f in "$commands_dir"/*.md; do
+    [[ -L "$f" ]] || continue
+    if is_hostdime_symlink "$f"; then
+      name="$(basename "$f")"
+      rm -f "$f"
+      LINK_COMMANDS_REMOVED=$((LINK_COMMANDS_REMOVED + 1))
+      _link_report "removed" "$commands_dir/$name (command global)"
+    fi
+  done
+  shopt -u nullglob
 }

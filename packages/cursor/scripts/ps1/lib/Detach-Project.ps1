@@ -16,35 +16,22 @@ function Remove-HostdimeFromProject {
 
     $rulesDir = Join-Path $Project '.cursor/rules'
     $commandsDir = Join-Path $Project '.cursor/commands'
-    $removed = 0
 
     Write-Host "→ removendo symlinks gerenciados em $Project"
 
-    if (Test-Path $rulesDir) {
-        foreach ($f in Get-ChildItem -Path (Join-Path $rulesDir 'skills-orchestrator-*.mdc') -ErrorAction SilentlyContinue) {
-            if (Test-HostdimeSymlink $f.FullName) {
-                $name = $f.Name
-                Remove-Item -LiteralPath $f.FullName -Force
-                Write-Host "  removido: .cursor/rules/$name"
-                $removed++
-            }
-        }
-    }
-
-    if (Test-Path $commandsDir) {
-        foreach ($cmd in @('avaliar.md', 'finalizar.md', 'avaliar-diff.md', 'skills-why.md', 'hubspot-mcp.md')) {
-            $f = Join-Path $commandsDir $cmd
-            if ((Test-Path $f) -and (Test-HostdimeSymlink $f)) {
-                Remove-Item -LiteralPath $f -Force
-                Write-Host "  removido: .cursor/commands/$cmd"
-                $removed++
-            }
-        }
-    }
+    Remove-ProjectOrchestratorRuleSymlinks -RulesDir $rulesDir
+    Remove-ProjectManagedCommandSymlinks -CommandsDir $commandsDir
+    $removed = $script:LinkOrchestratorRemoved + $script:LinkCommandsRemoved
 
     if ($removed -eq 0) {
         Write-Host '  (nenhum symlink gerenciado encontrado)'
     } else {
+        if ($script:LinkOrchestratorRemoved -gt 0) {
+            Write-Host "  rules: $script:LinkOrchestratorRemoved"
+        }
+        if ($script:LinkCommandsRemoved -gt 0) {
+            Write-Host "  commands: $script:LinkCommandsRemoved"
+        }
         Write-Host "  total: $removed symlink(s)"
     }
 

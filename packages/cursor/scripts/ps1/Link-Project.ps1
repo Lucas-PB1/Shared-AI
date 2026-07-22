@@ -1,4 +1,5 @@
-# Liga rules, commands e pastas de review em .cursor/ do projeto (symlinks ao clone).
+# Prepara pastas de review em .cursor/ do projeto.
+# Rules do orquestrador e commands hostdime ficam só em ~/.cursor/ (não no projeto).
 param(
     [switch]$Quiet,
     [Parameter(Position = 0)]
@@ -52,11 +53,7 @@ $rulesDir = Join-Path $Target '.cursor/rules'
 $commandsDir = Join-Path $Target '.cursor/commands'
 $reviewDir = Join-Path $Target '.cursor/review'
 
-foreach ($sub in @('rules', 'commands')) {
-    $path = Join-Path $Target ".cursor/$sub"
-    if (-not (Test-Path $path)) { New-Item -ItemType Directory -Path $path -Force | Out-Null }
-}
-
+# Não criar rules/commands vazios — só limpar se já existirem
 foreach ($sub in @('inbox', 'reports', 'resultados')) {
     $path = Join-Path $reviewDir $sub
     if (-not (Test-Path $path)) { New-Item -ItemType Directory -Path $path -Force | Out-Null }
@@ -77,22 +74,35 @@ if (-not (Test-Path $memoriaDest) -and (Test-Path $memoriaTemplate)) {
     Copy-Item $memoriaTemplate $memoriaDest
 }
 
-$ruleSrc = Join-Path $root 'packages/cursor/rules'
-$commandSrc = Join-Path $root 'packages/code-review/commands'
-$commandCursorSrc = Join-Path $root 'packages/cursor/commands'
+# Garantir ausência de espelhos: orquestrador + commands só em ~/.cursor/
+if (Test-Path $rulesDir) {
+    Remove-ProjectOrchestratorRuleSymlinks -RulesDir $rulesDir
+}
+if (Test-Path $commandsDir) {
+    Remove-ProjectManagedCommandSymlinks -CommandsDir $commandsDir
+}
 
-Link-Glob -Pattern (Join-Path $ruleSrc 'skills-orchestrator-*.mdc') -DestDir $rulesDir
-Link-File -Src (Join-Path $commandSrc 'avaliar.md') -DestDir $commandsDir
-Link-File -Src (Join-Path $commandSrc 'finalizar.md') -DestDir $commandsDir
-Link-File -Src (Join-Path $commandSrc 'avaliar-diff.md') -DestDir $commandsDir
-Link-Glob -Pattern (Join-Path $commandCursorSrc '*.md') -DestDir $commandsDir
+# Pastas vazias após limpeza
+foreach ($dir in @($rulesDir, $commandsDir)) {
+    if ((Test-Path $dir) -and -not (Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue | Select-Object -First 1)) {
+        Remove-Item -LiteralPath $dir -Force -ErrorAction SilentlyContinue
+    }
+}
 
 Ensure-ProjectGitignore $Target
 
 if (-not $Quiet) {
     Write-Host ''
-    Write-Host "Concluído: $script:LinkLinked symlink(s) em $Target/.cursor/"
+    Write-Host "Concluído em $Target/.cursor/"
     Write-Host '  review/ → reports/, resultados/, memoria.md'
+    Write-Host '  orquestrador → ~/.cursor/rules/ (global)'
+    Write-Host '  commands → ~/.cursor/commands/ (global)'
+    if ($script:LinkOrchestratorRemoved -gt 0) {
+        Write-Host "  removidos do projeto: $script:LinkOrchestratorRemoved skills-orchestrator-*.mdc"
+    }
+    if ($script:LinkCommandsRemoved -gt 0) {
+        Write-Host "  removidos do projeto: $script:LinkCommandsRemoved command(s)"
+    }
     if ($script:LinkSkipped -gt 0) {
         Write-Host "Ignorados (arquivo real do projeto): $script:LinkSkipped"
     }

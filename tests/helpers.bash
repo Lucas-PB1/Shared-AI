@@ -17,6 +17,12 @@ hostdime_test_setup() {
   # shellcheck disable=SC1091
   source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hostdime-env.sh"
   hostdime_write_env "$HOSTDIME_IA_ROOT"
+
+  # Orquestrador global (espelha setup:skills) — isolado em CURSOR_USER_DIR
+  # shellcheck disable=SC1091
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install-packages.sh"
+  install_skills_package "$HOSTDIME_IA_ROOT" >/dev/null
+  install_code_review_package "$HOSTDIME_IA_ROOT" >/dev/null
 }
 
 hostdime_test_teardown() {
@@ -36,10 +42,5 @@ hostdime_count_orchestrator_symlinks() {
 
 hostdime_count_command_symlinks() {
   local project="$1"
-  local count=0
-  local cmd
-  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md; do
-    [[ -L "$project/.cursor/commands/$cmd" ]] && count=$((count + 1))
-  done
-  printf '%s' "$count"
+  find "$project/.cursor/commands" -maxdepth 1 -name '*.md' -type l 2>/dev/null | wc -l
 }

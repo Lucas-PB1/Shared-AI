@@ -49,7 +49,7 @@ projeto/
 │   │   ├── history-watch-match.py # helper (copiar do pacote)
 │   │   └── hooks.json             # merge hook stop (projeto)
 │   └── commands/
-│       └── historico.md             # symlink via link-project
+│       └── historico.md             # em ~/.cursor/commands/ (global)
 └── <historyFile>                    # ex. docs/domain/log.md
 ```
 

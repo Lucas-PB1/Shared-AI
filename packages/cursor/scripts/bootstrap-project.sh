@@ -85,8 +85,8 @@ fi
 
 echo ""
 echo "Projeto preparado: $PROJECT"
-echo "  .cursor/rules/    → symlinks (orquestrador) + rules do projeto"
-echo "  .cursor/commands/ → /avaliar, /avaliar-diff, /finalizar, /skills-why, /hubspot-mcp"
+echo "  .cursor/rules/    → rules do projeto (*-project.mdc); orquestrador em ~/.cursor/rules/"
+echo "  .cursor/commands/ → commands do projeto (opcional); hostdime em ~/.cursor/commands/"
 echo "  .cursor/review/   → reports/, resultados/, memoria.md"
 echo "  .cursor/skills/   → overrides do projeto"
 [[ -n "$PROFILE" ]] && echo "  perfil            → $PROFILE"

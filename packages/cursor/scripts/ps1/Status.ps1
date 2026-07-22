@@ -124,9 +124,9 @@ foreach ($project in Get-RegisteredProjects) {
         Write-Host "  ⚠ $project ($broken symlink(s) quebrado(s))"
         $issues++
     } elseif ($skipped -gt 0) {
-        Write-Host "  ✓ $project ($skipped rule(s) própria(s) preservada(s))"
+        Write-Host "  ✓ $project ($skipped rule(s) própria(s); orquestrador em ~/.cursor/rules/)"
     } else {
-        Write-Host "  ✓ $project"
+        Write-Host "  ✓ $project (orquestrador global)"
     }
 }
 

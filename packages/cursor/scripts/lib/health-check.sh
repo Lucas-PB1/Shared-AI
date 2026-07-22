@@ -93,7 +93,7 @@ health_check_project() {
     echo "   ✗ $broken symlink(s) quebrado(s) em .cursor/rules/"
     issues=$((issues + 1))
   else
-    echo "   ✓ symlinks .cursor/rules/"
+    echo "   ✓ rules do projeto ok"
   fi
 
   profile="$(health_detect_profile_label "$project")"
