@@ -12,6 +12,8 @@ Thumbs.db
 # Dependências
 node_modules/
 vendor/
+__pycache__/
+*.py[cod]
 
 # Locks (dev local)
 composer.lock

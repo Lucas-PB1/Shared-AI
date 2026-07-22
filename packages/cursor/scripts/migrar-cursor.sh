@@ -115,7 +115,8 @@ while IFS= read -r project; do
   clean_one_project "$project"
 done < <(list_projects)
 
-for extra in "$HOME/Projetos"; do
+extras=("$HOME/Projetos")
+for extra in "${extras[@]}"; do
   [[ -d "$extra/.cursor" ]] || continue
   if printf '%s\n' "$projects_done" | grep -qxF "$extra"; then
     continue
