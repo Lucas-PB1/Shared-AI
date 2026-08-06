@@ -1,7 +1,8 @@
-# Convenções locais (gitignored)
+# Convenções do projeto (versionado quando commitado no repo alvo)
 
-Atualizado via /memoria promover
-Origem: context.yaml → candidates promovidos
+Atualizado via /memoria promover  
+Origem: context.yaml → candidates promovidos  
+No CI GitHub: `.cursor/review/convencoes.md` versionado é lido por escopo.
 
 ## Escopo global
 

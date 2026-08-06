@@ -1,0 +1,84 @@
+# /avaliar automático no GitHub — comentários por arquivo (análise estática).
+# Copiar para .github/workflows/avaliar-pr.yml no projeto alvo.
+# Documentação: packages/code-review/ci/README.md
+
+name: Avaliar PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Número do PR (obrigatório no dispatch manual)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: avaliar-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  HOSTDIME_IA_REPO: https://github.com/HostDimeBR/hostdime-ia.git
+  HOSTDIME_IA_REF: main
+
+jobs:
+  avaliar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Resolver número do PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ -n "${{ github.event.pull_request.number }}" ]]; then
+            echo "number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+            echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+            echo "head=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "number=${{ inputs.pr_number }}" >> "$GITHUB_OUTPUT"
+            base="$(gh pr view "${{ inputs.pr_number }}" --json baseRefOid -q .baseRefOid)"
+            head="$(gh pr view "${{ inputs.pr_number }}" --json headRefOid -q .headRefOid)"
+            echo "base=${base}" >> "$GITHUB_OUTPUT"
+            echo "head=${head}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node 20
+        uses: actions/setup-node@49933ea5286caeca1862693295897eee4e394375 # v4.4.2
+        with:
+          node-version: "20"
+
+      - name: Instalar hostdime-ia e deps de review
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git php-cli php-xml composer python3-pip
+          pip install --break-system-packages semgrep 2>/dev/null || pip install semgrep
+          export HOSTDIME_IA_ROOT="/tmp/hostdime-ia"
+          git clone --depth 1 --branch "$HOSTDIME_IA_REF" "$HOSTDIME_IA_REPO" "$HOSTDIME_IA_ROOT"
+          cd "$HOSTDIME_IA_ROOT" && npm ci && composer install --no-interaction --quiet
+          echo "HOSTDIME_IA_ROOT=$HOSTDIME_IA_ROOT" >> "$GITHUB_ENV"
+
+      - name: Instalar deps do projeto
+        run: npm ci
+
+      - name: /avaliar — comentários no PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          REVIEW_DIFF_BASE: ${{ steps.pr.outputs.base }}
+          HEAD_SHA: ${{ steps.pr.outputs.head }}
+          CI_COMMIT_SHA: ${{ steps.pr.outputs.head }}
+          CURSOR_PROJECT_DIR: ${{ github.workspace }}
+        run: bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-github-pr.sh"
