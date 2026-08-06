@@ -8,6 +8,7 @@ Comentários **por arquivo** no pull request — **estático + LLM** no formato 
 | --- | --- |
 | Orquestrador | `packages/code-review/tools/review-github-pr.sh` |
 | LLM | `packages/code-review/tools/review-llm.mjs` |
+| Roteamento skills | `packages/code-review/tools/review-skill-routing.mjs` |
 | Prompt | `packages/code-review/templates/avaliar-llm-system.md` |
 | Export exclusões | `packages/code-review/tools/review-export-exclusions.sh` |
 | Template workflow | `packages/code-review/ci/github-avaliar-pr.yml` |
@@ -46,11 +47,26 @@ git add .cursor/review/exclusions.yaml && git commit
 | `REVIEW_LLM_API_KEY` | Secret | Fallback | OpenAI/Anthropic direto (se não usar Cursor) |
 | `REVIEW_LLM_MODEL` | Variable | Não | Modelo do `agent` (ex. `gpt-5`) ou OpenAI |
 | `REVIEW_LLM_PROVIDER` | Variable | Não | `cursor` (default), `openai`, `anthropic` |
+| `REVIEW_SKILL_STACK` | Variable | Não | `false` desliga hints react/typescript no CI |
+| `REVIEW_SKILL_MAX_CHARS` | Variable | Não | Limite de chars de skills/rules no prompt (default `18000`) |
 
 ```bash
 gh secret set CURSOR_API_KEY --repo HostDimeBR/hostdime-hub
 # colar a key gerada em https://cursor.com/dashboard
 ```
+
+### Roteamento de skills (CI)
+
+Por arquivo, `review-skill-routing.mjs` injeta no prompt:
+
+| Origem | O que carrega |
+| --- | --- |
+| `.cursor/skills/hostdime-*/SKILL.md` | Skills versionadas no repo (sections, chrome, fields, …) |
+| `.cursor/rules/*.mdc` | Rules cujo `globs:` casa com o path |
+| `packages/code-review/skills/review-inbox/` | Metodologia `/avaliar` |
+| Stack (tsx/ts) | Hints embutidos ou `~/.cursor/skills/` se existir localmente |
+
+Mapa de path → skill espelha `.cursor/rules/hostdime-skills-routing.mdc` (ex.: `*Fields.tsx` → `hostdime-module-fields`, `modules/Section*` → `hostdime-sections`).
 
 Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
 
@@ -60,7 +76,7 @@ Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
 - **Incremental:** blob SHA por arquivo (estado em comentário oculto)
 - Por arquivo:
   1. `review-check.sh` (Semgrep, ESLint, PHPStan, tsc)
-  2. `review-llm.mjs` → relatório `/avaliar` (convencoes + exclusions + diff)
+  2. `review-llm.mjs` → relatório `/avaliar` (skills/rules por path + convencoes + exclusions + diff)
   3. Comentário no PR (cria ou atualiza)
   4. Comentários **inline** nos achados com `#### arquivo:L`
   5. Cópia em `.cursor/review/reports/` → artifact no workflow

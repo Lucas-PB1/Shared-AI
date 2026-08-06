@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { resolveContextForFile } from './review-skill-routing.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -237,10 +238,30 @@ async function callLLM(system, user) {
   return callOpenAI(system, user);
 }
 
-function buildUserPrompt({ relFile, stack, source, diff, staticOut, convencoes, exclusions }) {
+function buildUserPrompt({
+  relFile,
+  stack,
+  source,
+  diff,
+  staticOut,
+  convencoes,
+  exclusions,
+  skillsContext,
+  skillIds,
+  ruleIds,
+}) {
+  const routingMeta = [
+    skillIds?.length ? `Skills: ${skillIds.join(', ')}` : 'Skills: (none matched)',
+    ruleIds?.length ? `Rules: ${ruleIds.join(', ')}` : 'Rules: (none matched)',
+  ].join('\n');
+
   return [
     `File: ${relFile}`,
     `Stack: ${stack}`,
+    routingMeta,
+    '',
+    '--- PROJECT SKILLS & RULES (apply architecture/conventions) ---',
+    skillsContext || '(no project skills or rules for this path)',
     '',
     '--- SOURCE (full file) ---',
     source,
@@ -301,6 +322,10 @@ async function main() {
   const diff = readOptional(args.diffFile);
   const convencoes = convencoesForFile(args.project, args.file);
   const exclusions = exclusionsForFile(args.project, args.file);
+  const codeReviewRoot = process.env.HOSTDIME_IA_ROOT
+    ? path.join(process.env.HOSTDIME_IA_ROOT, 'packages/code-review')
+    : path.join(__dirname, '..');
+  const skillContext = resolveContextForFile(args.project, args.file, { codeReviewRoot });
   const system = loadSystemPrompt();
   const user = buildUserPrompt({
     relFile: args.file,
@@ -310,6 +335,9 @@ async function main() {
     staticOut,
     convencoes,
     exclusions,
+    skillsContext: skillContext.contextText,
+    skillIds: skillContext.skillIds,
+    ruleIds: skillContext.ruleIds,
   });
 
   const report = await callLLM(system, user);

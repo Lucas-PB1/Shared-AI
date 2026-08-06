@@ -7,6 +7,7 @@
 | `~/.cursor/review-ci.sh` | Review estático em arquivos do diff (CI / local) |
 | `~/.cursor/review-github-pr.sh` | /avaliar automático no GitHub — estático + LLM |
 | `review-llm.mjs` | Gera relatório /avaliar via LLM |
+| `review-skill-routing.mjs` | Resolve skills/rules por path do arquivo |
 | `review-export-exclusions.sh` | Exporta exclusions.yaml do context.yaml |
 | `~/.cursor/review-finalizar.sh` | Empacota resultado (`/finalizar`) |
 
