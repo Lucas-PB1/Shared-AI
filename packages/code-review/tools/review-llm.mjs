@@ -5,6 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -178,8 +179,60 @@ async function callAnthropic(system, user) {
   return block?.text?.trim() ?? '';
 }
 
+function resolveProvider() {
+  if (process.env.REVIEW_LLM_PROVIDER) {
+    return process.env.REVIEW_LLM_PROVIDER.toLowerCase();
+  }
+  if (process.env.CURSOR_API_KEY) return 'cursor';
+  return 'openai';
+}
+
+function resolveAgentBin() {
+  const candidates = [
+    process.env.CURSOR_AGENT_BIN,
+    `${process.env.HOME}/.cursor/bin/agent`,
+    `${process.env.HOME}/.local/bin/agent`,
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    if (candidate && fs.existsSync(candidate)) return candidate;
+  }
+  return 'agent';
+}
+
+async function callCursor(system, user) {
+  const apiKey = process.env.CURSOR_API_KEY || process.env.REVIEW_LLM_API_KEY;
+  if (!apiKey) {
+    throw new Error('CURSOR_API_KEY não definido');
+  }
+
+  const prompt = `${system}\n\n---\n\n${user}`;
+  const agent = resolveAgentBin();
+  const args = ['-p', '--force', prompt];
+  if (process.env.REVIEW_LLM_MODEL) {
+    args.push('--model', process.env.REVIEW_LLM_MODEL);
+  }
+
+  const result = spawnSync(agent, args, {
+    encoding: 'utf8',
+    env: { ...process.env, CURSOR_API_KEY: apiKey },
+    maxBuffer: 15 * 1024 * 1024,
+    timeout: 600_000,
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+  if (result.status !== 0) {
+    const err = (result.stderr || result.stdout || 'agent failed').trim();
+    throw new Error(`Cursor agent exit ${result.status}: ${err.slice(0, 800)}`);
+  }
+
+  return result.stdout.trim();
+}
+
 async function callLLM(system, user) {
-  const provider = (process.env.REVIEW_LLM_PROVIDER || 'openai').toLowerCase();
+  const provider = resolveProvider();
+  if (provider === 'cursor') return callCursor(system, user);
   if (provider === 'anthropic') return callAnthropic(system, user);
   return callOpenAI(system, user);
 }
@@ -224,8 +277,15 @@ async function main() {
     process.exit(1);
   }
 
-  if (!process.env.REVIEW_LLM_API_KEY) {
-    console.error('Erro: REVIEW_LLM_API_KEY não definido.');
+  const provider = resolveProvider();
+  const hasKey =
+    provider === 'cursor'
+      ? Boolean(process.env.CURSOR_API_KEY || process.env.REVIEW_LLM_API_KEY)
+      : Boolean(process.env.REVIEW_LLM_API_KEY);
+
+  if (!hasKey) {
+    const keyName = provider === 'cursor' ? 'CURSOR_API_KEY' : 'REVIEW_LLM_API_KEY';
+    console.error(`Erro: ${keyName} não definido.`);
     process.exit(1);
   }
 

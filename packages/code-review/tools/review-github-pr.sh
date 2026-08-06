@@ -65,7 +65,7 @@ file_diff_hunk() {
 }
 
 llm_enabled() {
-  [[ -n "${REVIEW_LLM_API_KEY:-}" ]] || return 1
+  [[ -n "${CURSOR_API_KEY:-}" || -n "${REVIEW_LLM_API_KEY:-}" ]] || return 1
   [[ "${REVIEW_AVALIAR_MODE:-both}" != "static" ]]
 }
 
@@ -344,7 +344,11 @@ main() {
 
   local llm_mode="estático"
   if llm_enabled; then
-    llm_mode="estático + LLM (/avaliar)"
+    if [[ -n "${CURSOR_API_KEY:-}" ]] || [[ "${REVIEW_LLM_PROVIDER:-}" == "cursor" ]]; then
+      llm_mode="estático + Cursor (/avaliar)"
+    else
+      llm_mode="estático + LLM (/avaliar)"
+    fi
   fi
 
   local base_arg="${REVIEW_DIFF_BASE:-}"

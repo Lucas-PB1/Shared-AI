@@ -42,11 +42,17 @@ git add .cursor/review/exclusions.yaml && git commit
 
 | Nome | Tipo | Obrigatório | Descrição |
 | --- | --- | --- | --- |
-| `REVIEW_LLM_API_KEY` | Secret | Sim (Fase 2) | API key OpenAI ou Anthropic |
-| `REVIEW_LLM_MODEL` | Variable | Não | Default `gpt-4o-mini` (OpenAI) |
-| `REVIEW_LLM_PROVIDER` | Variable | Não | `openai` (default) ou `anthropic` |
+| **`CURSOR_API_KEY`** | Secret | **Sim (recomendado)** | [Cursor Dashboard → Integrations / API Keys](https://cursor.com/dashboard) |
+| `REVIEW_LLM_API_KEY` | Secret | Fallback | OpenAI/Anthropic direto (se não usar Cursor) |
+| `REVIEW_LLM_MODEL` | Variable | Não | Modelo do `agent` (ex. `gpt-5`) ou OpenAI |
+| `REVIEW_LLM_PROVIDER` | Variable | Não | `cursor` (default), `openai`, `anthropic` |
 
-Sem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
+```bash
+gh secret set CURSOR_API_KEY --repo HostDimeBR/hostdime-hub
+# colar a key gerada em https://cursor.com/dashboard
+```
+
+Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
 
 ### Comportamento
 
