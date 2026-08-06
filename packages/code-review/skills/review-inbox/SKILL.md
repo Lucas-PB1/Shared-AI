@@ -24,7 +24,7 @@ Commands universais em `~/.cursor/commands/` (global; setup/sync).
 | `.cursor/review/resultados/` | Pacote final após `/finalizar` |
 | `.cursor/review/decisions.jsonl` | staging de decisões (gitignored) |
 | `.cursor/review/context.yaml` | exclusões, pending, rules e candidates (gitignored) |
-| `.cursor/review/convencoes.md` | padrão promovido para geração (gitignored) |
+| `.cursor/review/convencoes.md` | padrão promovido — **versionado** em projetos com CI GitHub (`/avaliar` automático) |
 
 Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`). Commands hostdime **não** são espelhados no projeto. Memória **só v2** — sem `memoria.md` / legacy.
 
@@ -46,6 +46,12 @@ Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run boo
 2. Relatório em `.cursor/review/reports/diff-<data>.md` + fila deep dive
 3. `/avaliar <arquivo>` para cada item da fila
 4. `/finalizar` por arquivo quando aplicável
+
+**GitHub (automático no PR)**
+
+1. Workflow `avaliar-pr.yml` — `review-github-pr.sh` comenta por arquivo
+2. Incremental por blob SHA; convenções lidas de `convencoes.md` versionado
+3. Deep dive manual: `/avaliar` + `/finalizar` como antes
 
 ## Regras
 
