@@ -10,6 +10,6 @@ Diagnóstico: `npm run doctor`.
 
 CI GitLab: [ci/README.md](ci/README.md) — job `hostdime-review` com paridade ao `review-check.sh`.
 
-CI GitHub: [ci/README.md](ci/README.md) — workflow `/avaliar` automático (`review-github-pr.sh`) com comentários por arquivo no PR.
+CI GitHub: [ci/README.md](ci/README.md) — `/avaliar` automático no PR (Fase 2: estático + LLM).
 
 Bootstrap do projeto: `npm run bootstrap -- <repo>`.

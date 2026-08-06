@@ -1,65 +1,93 @@
 # CI — review estático e /avaliar automático no GitHub
 
-## GitHub — `/avaliar` automático no PR
+## GitHub — `/avaliar` automático no PR (Fase 2)
 
-Comentários **por arquivo** no pull request (análise estática = paridade com `review-check.sh`).
+Comentários **por arquivo** no pull request — **estático + LLM** no formato `/avaliar` (De/Para, GitHub + PT).
 
 | Artefato | Onde |
 | --- | --- |
-| Script | `packages/code-review/tools/review-github-pr.sh` |
+| Orquestrador | `packages/code-review/tools/review-github-pr.sh` |
+| LLM | `packages/code-review/tools/review-llm.mjs` |
+| Prompt | `packages/code-review/templates/avaliar-llm-system.md` |
+| Export exclusões | `packages/code-review/tools/review-export-exclusions.sh` |
 | Template workflow | `packages/code-review/ci/github-avaliar-pr.yml` |
 | Exemplo ativo | `hostdime-hub` → `.github/workflows/avaliar-pr.yml` |
 
 ### Incluir no projeto
 
-Copie `github-avaliar-pr.yml` para `.github/workflows/avaliar-pr.yml` ou use o do `hostdime-hub` como referência.
+Copie `github-avaliar-pr.yml` para `.github/workflows/avaliar-pr.yml`.
 
 **Versionar no repo alvo:**
 
 | Arquivo | Motivo |
 | --- | --- |
-| `.cursor/review/convencoes.md` | Convenções aplicáveis no CI (referência por escopo) |
+| `.cursor/review/convencoes.md` | Convenções por escopo (LLM + referência) |
+| `.cursor/review/exclusions.yaml` | Achados rejeitados / não aplicáveis (CI não repete) |
 | `.cursor/review/.memoria-version` | Schema v2 (`2`) |
 
-Manter **gitignored**: `context.yaml`, `decisions.jsonl`, `reports/`, `resultados/` (memória local / staging).
+Manter **gitignored**: `context.yaml`, `decisions.jsonl`, `reports/` (CI), `resultados/`.
 
-Promover convenções: `/memoria promover` no Cursor → commit `convencoes.md`.
+**Promover memória local → CI:**
+
+```bash
+# convenções
+/memoria promover   # no Cursor → commit convencoes.md
+
+# exclusões
+bash review-export-exclusions.sh /caminho/do/projeto
+git add .cursor/review/exclusions.yaml && git commit
+```
+
+### Secrets e variables (GitHub)
+
+| Nome | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| `REVIEW_LLM_API_KEY` | Secret | Sim (Fase 2) | API key OpenAI ou Anthropic |
+| `REVIEW_LLM_MODEL` | Variable | Não | Default `gpt-4o-mini` (OpenAI) |
+| `REVIEW_LLM_PROVIDER` | Variable | Não | `openai` (default) ou `anthropic` |
+
+Sem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
 
 ### Comportamento
 
 - Dispara em `pull_request` (`opened`, `synchronize`, `reopened`)
-- Lista arquivos alterados (`review-diff.sh`)
-- **Incremental:** só re-revisa arquivo cujo blob SHA mudou desde a última execução (estado em comentário oculto no PR)
-- Por arquivo: Semgrep, ESLint, PHPStan, tsc → comentário no PR (atualiza se já existir)
-- Comentário-resumo no topo com contagem
-- Job **falha** se houver achados estáticos (exit 1)
-- Deep dive De/Para: continua manual com `/avaliar` no Cursor
+- **Incremental:** blob SHA por arquivo (estado em comentário oculto)
+- Por arquivo:
+  1. `review-check.sh` (Semgrep, ESLint, PHPStan, tsc)
+  2. `review-llm.mjs` → relatório `/avaliar` (convencoes + exclusions + diff)
+  3. Comentário no PR (cria ou atualiza)
+  4. Comentários **inline** nos achados com `#### arquivo:L`
+  5. Cópia em `.cursor/review/reports/` → artifact no workflow
+- Job **falha** se veredito ≠ OK
+- `/finalizar` no Cursor continua para decisões do dev
 
-### Variáveis
+### Modos (`REVIEW_AVALIAR_MODE`)
 
-| Variável | Padrão |
+| Valor | Efeito |
 | --- | --- |
-| `HOSTDIME_IA_REPO` | `https://github.com/HostDimeBR/hostdime-ia.git` |
-| `HOSTDIME_IA_REF` | `main` |
+| `both` | Estático + LLM (default) |
+| `static` | Só Fase 1 |
+| `llm` | Só LLM (ainda roda static internamente para contexto) |
 
-### Local (antes de abrir PR)
+No dispatch manual: input `mode`.
+
+### Local
 
 ```bash
 cd /caminho/do/projeto
 export GH_TOKEN=$(gh auth token)
 export PR_NUMBER=42
-export REVIEW_DIFF_BASE=main
+export REVIEW_DIFF_BASE=origin/main
 export HEAD_SHA=$(git rev-parse HEAD)
+export REVIEW_LLM_API_KEY=sk-...
 HOSTDIME_IA_ROOT=/caminho/hostdime-ia npm run review:github-pr
 ```
 
-Ou na raiz do hostdime-ia:
+Testar só LLM de um arquivo:
 
 ```bash
-cd /caminho/do/projeto
-PR_NUMBER=42 REVIEW_DIFF_BASE=origin/main HEAD_SHA=HEAD \
-  HOSTDIME_IA_ROOT=/caminho/hostdime-ia \
-  bash /caminho/hostdime-ia/packages/code-review/tools/review-github-pr.sh
+REVIEW_LLM_API_KEY=sk-... node packages/code-review/tools/review-llm.mjs \
+  --project /caminho/projeto --file src/Foo.tsx
 ```
 
 ---
@@ -77,33 +105,8 @@ include:
     ref: main
 ```
 
-Ajuste `project` e `ref` conforme o clone da sua organização.
-
-### Variáveis opcionais
-
-| Variável | Padrão | Uso |
-| --- | --- | --- |
-| `HOSTDIME_IA_REPO` | URL do clone | Só usado se `HOSTDIME_IA_ROOT` não estiver definido |
-| `HOSTDIME_IA_REF` | `main` | Branch/tag do hostdime-ia |
-| `HOSTDIME_IA_ROOT` | _(clone em `/tmp/hostdime-ia`)_ | Caminho com `node_modules` e `vendor` já instalados (cache) |
-
-### Local (antes de abrir MR)
+### Local
 
 ```bash
-cd /caminho/do/seu/projeto
-HOSTDIME_IA_ROOT=/caminho/hostdime-ia \
-  bash /caminho/hostdime-ia/packages/code-review/tools/review-ci.sh main
+HOSTDIME_IA_ROOT=/caminho/hostdime-ia npm run review:ci -- main
 ```
-
-Ou na raiz do hostdime-ia:
-
-```bash
-npm run review:ci -- main
-```
-
-### Comportamento
-
-- Roda em **merge requests** (`merge_request_event`)
-- Lista arquivos alterados (`review-diff.sh`) — usa `CI_MERGE_REQUEST_DIFF_BASE_SHA` no GitLab
-- Executa `check-inbox.sh` por arquivo com `REVIEW_CHECK_CI=1` (falha o job se houver achados)
-- Não substitui o `/avaliar` com LLM — só análise estática, igual ao passo 1 do command

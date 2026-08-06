@@ -24,6 +24,7 @@ Commands universais em `~/.cursor/commands/` (global; setup/sync).
 | `.cursor/review/resultados/` | Pacote final após `/finalizar` |
 | `.cursor/review/decisions.jsonl` | staging de decisões (gitignored) |
 | `.cursor/review/context.yaml` | exclusões, pending, rules e candidates (gitignored) |
+| `.cursor/review/exclusions.yaml` | exclusões versionadas para CI (export de context.yaml) |
 | `.cursor/review/convencoes.md` | padrão promovido — **versionado** em projetos com CI GitHub (`/avaliar` automático) |
 
 Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`). Commands hostdime **não** são espelhados no projeto. Memória **só v2** — sem `memoria.md` / legacy.
@@ -47,11 +48,11 @@ Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run boo
 3. `/avaliar <arquivo>` para cada item da fila
 4. `/finalizar` por arquivo quando aplicável
 
-**GitHub (automático no PR)**
+**GitHub (automático no PR — Fase 2)**
 
-1. Workflow `avaliar-pr.yml` — `review-github-pr.sh` comenta por arquivo
-2. Incremental por blob SHA; convenções lidas de `convencoes.md` versionado
-3. Deep dive manual: `/avaliar` + `/finalizar` como antes
+1. Workflow `avaliar-pr.yml` — estático + LLM (`review-llm.mjs`) por arquivo
+2. Versionar `convencoes.md` + `exclusions.yaml`; incremental por blob SHA
+3. Secret `REVIEW_LLM_API_KEY` no repo; `/finalizar` manual no Cursor
 
 ## Regras
 

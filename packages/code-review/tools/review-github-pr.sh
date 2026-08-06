@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# /avaliar automático no GitHub — análise estática por arquivo + comentários no PR.
+# /avaliar automático no GitHub — estático + LLM (Fase 2) + comentários por arquivo.
 # Uso (CI): PR_NUMBER=42 REVIEW_DIFF_BASE=<base-sha> HEAD_SHA=<head-sha> review-github-pr.sh
-# Uso (local): gh auth login && PR_NUMBER=42 review-github-pr.sh
 set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -55,6 +54,40 @@ file_blob_sha() {
   local file="$1"
   local head="${HEAD_SHA:-HEAD}"
   git -C "$PROJECT" rev-parse "${head}:${file}" 2>/dev/null || git -C "$PROJECT" rev-parse "HEAD:${file}"
+}
+
+file_diff_hunk() {
+  local file="$1"
+  local base="${REVIEW_DIFF_BASE:-main}"
+  git -C "$PROJECT" diff "$base...${HEAD_SHA:-HEAD}" -- "$file" 2>/dev/null \
+    || git -C "$PROJECT" diff "$base" "${HEAD_SHA:-HEAD}" -- "$file" 2>/dev/null \
+    || true
+}
+
+llm_enabled() {
+  [[ -n "${REVIEW_LLM_API_KEY:-}" ]] || return 1
+  [[ "${REVIEW_AVALIAR_MODE:-both}" != "static" ]]
+}
+
+parse_verdict_from_report() {
+  local report="$1"
+  if printf '%s' "$report" | grep -qE '^\*\*Veredito:\*\*[[:space:]]*OK[[:space:]]*$'; then
+    printf '%s' "OK"
+    return
+  fi
+  if printf '%s' "$report" | grep -qiE '^\*\*Veredito:\*\*[[:space:]]*N[aã]o recomendado'; then
+    printf '%s' "Não recomendado"
+    return
+  fi
+  if printf '%s' "$report" | grep -qiE '^\*\*Veredito:\*\*[[:space:]]*Ajustes necessários'; then
+    printf '%s' "Ajustes necessários"
+    return
+  fi
+  printf '%s' "Ajustes necessários"
+}
+
+verdict_is_failure() {
+  [[ "$1" != "OK" ]]
 }
 
 state_load() {
@@ -120,39 +153,11 @@ find_file_comment_id() {
   gh_api_issue_comments | jq -r --arg m "$marker" '.[] | select(.body | contains($m)) | .id' | head -1
 }
 
-convencoes_for_file() {
-  local file="$1"
-  local path="${CONVENCOES_PATH:-$PROJECT/.cursor/review/convencoes.md}"
-  [[ -f "$path" ]] || return 0
-
-  awk -v target="$file" '
-    /^## Escopo: / {
-      scope = substr($0, 12)
-      gsub(/^[[:space:]]+|[[:space:]]+$/, "", scope)
-      in_section = 0
-      if (scope == "**/*" || scope == "*") {
-        in_section = 1
-      } else if (match(scope, /\/\*\*$/)) {
-        prefix = substr(scope, 1, RSTART - 1)
-        if (index(target, prefix) == 1) in_section = 1
-      } else if (target == scope) {
-        in_section = 1
-      }
-      next
-    }
-    /^## / { in_section = 0; next }
-    in_section && /^- / { print $0 }
-  ' "$path"
-}
-
-build_report() {
+build_static_fallback_report() {
   local file="$1"
   local stack="$2"
   local verdict="$3"
   local check_output="$4"
-  local blob_sha="$5"
-  local convencoes
-  convencoes="$(convencoes_for_file "$file")"
 
   local body
   body="$(cat <<EOF
@@ -165,26 +170,8 @@ build_report() {
 EOF
 )"
 
-  if [[ -n "$convencoes" ]]; then
-    body+=$(
-      cat <<EOF
-
-### Convenções aplicáveis (referência)
-
-${convencoes}
-
-EOF
-    )
-  fi
-
   if [[ "$verdict" == "OK" ]]; then
-    body+=$(
-      cat <<EOF
-
-Nenhum achado relevante na análise estática (Semgrep, ESLint, PHPStan, tsc).
-
-EOF
-    )
+    body+=$'\nNenhum achado relevante na análise estática (Semgrep, ESLint, PHPStan, tsc).\n'
   else
     body+=$(
       cat <<EOF
@@ -204,16 +191,74 @@ EOF
     )
   fi
 
-  body+=$(
-    cat <<EOF
+  printf '%s' "$body"
+}
+
+wrap_pr_comment() {
+  local file="$1"
+  local blob_sha="$2"
+  local report="$3"
+  local origin="$4"
+
+  cat <<EOF
+${report}
 
 ---
+**Origem:** ${origin}
 *Review automático · hostdime-ia · \`${blob_sha:0:7}\`*
 <!-- avaliar-file:${file} -->
 EOF
-  )
+}
 
-  printf '%s' "$body"
+run_llm_review() {
+  local file="$1"
+  local static_file="$2"
+  local diff_file="$3"
+  local out_file="$4"
+
+  node "$TOOLS_DIR/review-llm.mjs" \
+    --project "$PROJECT" \
+    --file "$file" \
+    --static-file "$static_file" \
+    --diff-file "$diff_file" \
+    --output "$out_file"
+}
+
+save_report_copy() {
+  local file="$1"
+  local report_file="$2"
+  local slug
+  slug="$(printf '%s' "$file" | sed 's/\//-/g;s/\.[^.]*$//')"
+  local dest_dir="$PROJECT/.cursor/review/reports"
+  mkdir -p "$dest_dir"
+  cp "$report_file" "$dest_dir/ci-$(date +%F)_${slug}.md"
+}
+
+post_inline_findings() {
+  local file="$1"
+  local report="$2"
+  local head="${HEAD_SHA:-HEAD}"
+
+  [[ "${REVIEW_AVALIAR_INLINE:-1}" == "1" ]] || return 0
+
+  while IFS= read -r line; do
+    [[ "$line" =~ ^####[[:space:]]+[^:]+:([0-9]+)[[:space:]]—[[:space:]]+(.*)$ ]] || continue
+    local line_no="${BASH_REMATCH[1]}"
+    local title="${BASH_REMATCH[2]}"
+    local gh_body
+    gh_body="$(cat <<EOF
+**$(parse_verdict_from_report "$report")** — ${title}
+
+<!-- avaliar-inline:${file}:${line_no} -->
+EOF
+)"
+    gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" \
+      -f body="$gh_body" \
+      -f commit_id="$head" \
+      -f path="$file" \
+      -F line="$line_no" \
+      -f side="RIGHT" >/dev/null 2>&1 || true
+  done < <(printf '%s\n' "$report")
 }
 
 upsert_file_comment() {
@@ -234,6 +279,7 @@ post_summary() {
   local reviewed="$1"
   local skipped="$2"
   local failed="$3"
+  local llm_mode="$4"
   local marker="<!-- avaliar-pr-summary -->"
   local body
   body="$(cat <<EOF
@@ -243,10 +289,11 @@ post_summary() {
 | --- | --- |
 | Revisados nesta execução | ${reviewed} |
 | Sem diff novo (pulados) | ${skipped} |
-| Com achados estáticos | ${failed} |
+| Com achados (≠ OK) | ${failed} |
+| Modo | ${llm_mode} |
 | Head | \`${HEAD_SHA:-HEAD}\` |
 
-Análise estática por arquivo (paridade com \`review-check.sh\`). Deep dive com De/Para: \`/avaliar\` no Cursor.
+Relatório no formato \`/avaliar\` por arquivo. Decisões finais: \`/finalizar\` no Cursor.
 
 ${marker}
 EOF
@@ -265,6 +312,7 @@ main() {
   require_cmd gh
   require_cmd jq
   require_cmd git
+  require_cmd node
 
   HOSTDIME_IA_ROOT="$(resolve_hostdime_ia_root)"
   PROJECT="$(resolve_project)"
@@ -294,22 +342,32 @@ main() {
 
   cd "$PROJECT"
 
+  local llm_mode="estático"
+  if llm_enabled; then
+    llm_mode="estático + LLM (/avaliar)"
+  fi
+
   local base_arg="${REVIEW_DIFF_BASE:-}"
   mapfile -t files < <("$TOOLS_DIR/review-diff.sh" "$base_arg" 2>/dev/null)
 
   state_load
 
   local reviewed=0 skipped=0 failed=0
-  local file blob_sha prev_sha stack verdict output check_status
+  local file blob_sha prev_sha stack verdict static_output check_status
+  local tmp_dir report_file report_body comment_body origin
+
+  tmp_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_dir"' EXIT
 
   echo "=== /avaliar GitHub PR #${PR_NUMBER} ==="
   echo "repo: $GITHUB_REPOSITORY"
   echo "projeto: $PROJECT"
+  echo "modo: $llm_mode"
   echo "arquivos no diff: ${#files[@]}"
   echo ""
 
   if [[ "${#files[@]}" -eq 0 ]]; then
-    post_summary 0 0 0
+    post_summary 0 0 0 "$llm_mode"
     echo "Nenhum arquivo revisável no diff."
     exit 0
   fi
@@ -329,24 +387,52 @@ main() {
 
     echo "► $file"
     stack="$(infer_stack "$file")"
-    output=""
+    static_output=""
     check_status=0
-    output="$(HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" REVIEW_CHECK_CI=1 "$TOOLS_DIR/check-inbox.sh" "$PROJECT/$file" 2>&1)" || check_status=$?
+    static_output="$(HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" REVIEW_CHECK_CI=1 "$TOOLS_DIR/check-inbox.sh" "$PROJECT/$file" 2>&1)" || check_status=$?
 
-    if [[ "$check_status" -eq 0 ]]; then
-      verdict="OK"
-    else
-      verdict="Ajustes necessários"
-      failed=$((failed + 1))
+    local static_verdict="OK"
+    if [[ "$check_status" -ne 0 ]]; then
+      static_verdict="Ajustes necessários"
     fi
 
-    upsert_file_comment "$file" "$(build_report "$file" "$stack" "$verdict" "$output" "$blob_sha")"
+    verdict="$static_verdict"
+    report_body=""
+    origin="/avaliar automático (CI)"
+
+    if llm_enabled; then
+      printf '%s' "$static_output" >"$tmp_dir/static.log"
+      file_diff_hunk "$file" >"$tmp_dir/diff.patch"
+      report_file="$tmp_dir/report.md"
+      echo "  … LLM"
+      if run_llm_review "$file" "$tmp_dir/static.log" "$tmp_dir/diff.patch" "$report_file"; then
+        report_body="$(cat "$report_file")"
+        verdict="$(parse_verdict_from_report "$report_body")"
+        origin="/avaliar automático (CI — estático + LLM)"
+        save_report_copy "$file" "$report_file"
+        post_inline_findings "$file" "$report_body"
+      else
+        echo "  ⚠ LLM falhou — fallback estático" >&2
+        report_body="$(build_static_fallback_report "$file" "$stack" "$static_verdict" "$static_output")"
+        verdict="$static_verdict"
+      fi
+    else
+      report_body="$(build_static_fallback_report "$file" "$stack" "$static_verdict" "$static_output")"
+      verdict="$static_verdict"
+    fi
+
+    comment_body="$(wrap_pr_comment "$file" "$blob_sha" "$report_body" "$origin")"
+    upsert_file_comment "$file" "$comment_body"
     state_set_file_sha "$file" "$blob_sha"
     reviewed=$((reviewed + 1))
+
+    if verdict_is_failure "$verdict"; then
+      failed=$((failed + 1))
+    fi
   done
 
   state_save
-  post_summary "$reviewed" "$skipped" "$failed"
+  post_summary "$reviewed" "$skipped" "$failed" "$llm_mode"
 
   echo ""
   echo "=== Concluído: ${reviewed} revisado(s), ${skipped} pulado(s), ${failed} com achados ==="

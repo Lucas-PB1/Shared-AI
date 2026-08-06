@@ -1,4 +1,4 @@
-# /avaliar automático no GitHub — comentários por arquivo (análise estática).
+# /avaliar automático no GitHub — Fase 2: estático + LLM + comentários por arquivo.
 # Copiar para .github/workflows/avaliar-pr.yml no projeto alvo.
 # Documentação: packages/code-review/ci/README.md
 
@@ -13,6 +13,15 @@ on:
         description: "Número do PR (obrigatório no dispatch manual)"
         required: true
         type: string
+      mode:
+        description: "Modo: both (estático+LLM), static, llm"
+        required: false
+        default: "both"
+        type: choice
+        options:
+          - both
+          - static
+          - llm
 
 permissions:
   contents: read
@@ -25,11 +34,12 @@ concurrency:
 env:
   HOSTDIME_IA_REPO: https://github.com/HostDimeBR/hostdime-ia.git
   HOSTDIME_IA_REF: main
+  REVIEW_AVALIAR_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'both' }}
 
 jobs:
   avaliar:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - name: Checkout PR head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -63,7 +73,7 @@ jobs:
         run: |
           apt-get update -qq
           apt-get install -y -qq git php-cli php-xml composer python3-pip
-          pip install --break-system-packages semgrep 2>/dev/null || pip install semgrep
+          pip install --break-system-packages semgrep pyyaml 2>/dev/null || pip install semgrep pyyaml
           export HOSTDIME_IA_ROOT="/tmp/hostdime-ia"
           git clone --depth 1 --branch "$HOSTDIME_IA_REF" "$HOSTDIME_IA_REPO" "$HOSTDIME_IA_ROOT"
           cd "$HOSTDIME_IA_ROOT" && npm ci && composer install --no-interaction --quiet
@@ -72,7 +82,7 @@ jobs:
       - name: Instalar deps do projeto
         run: npm ci
 
-      - name: /avaliar — comentários no PR
+      - name: /avaliar — estático + LLM + comentários no PR
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -81,4 +91,15 @@ jobs:
           HEAD_SHA: ${{ steps.pr.outputs.head }}
           CI_COMMIT_SHA: ${{ steps.pr.outputs.head }}
           CURSOR_PROJECT_DIR: ${{ github.workspace }}
+          REVIEW_LLM_API_KEY: ${{ secrets.REVIEW_LLM_API_KEY }}
+          REVIEW_LLM_MODEL: ${{ vars.REVIEW_LLM_MODEL }}
+          REVIEW_LLM_PROVIDER: ${{ vars.REVIEW_LLM_PROVIDER }}
         run: bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-github-pr.sh"
+
+      - name: Upload relatórios CI
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540448eaca123afa0633a8f1 # v4.6.2
+        with:
+          name: avaliar-reports-pr-${{ steps.pr.outputs.number }}
+          path: .cursor/review/reports/
+          if-no-files-found: ignore
