@@ -293,7 +293,7 @@ post_summary() {
 | Modo | ${llm_mode} |
 | Head | \`${HEAD_SHA:-HEAD}\` |
 
-Relatório no formato \`/avaliar\` por arquivo. Decisões finais: \`/finalizar\` no Cursor.
+Relatório no formato \`/avaliar\` por arquivo — **não bloqueia merge** (modo soft). Decisões finais: \`/finalizar\` no Cursor ou resposta nos threads.
 
 ${marker}
 EOF
@@ -436,6 +436,14 @@ main() {
 
   echo ""
   echo "=== Concluído: ${reviewed} revisado(s), ${skipped} pulado(s), ${failed} com achados ==="
+
+  # Modo soft (default): comenta no PR sem falhar o check — dev decide no thread.
+  if [[ "${REVIEW_AVALIAR_SOFT:-true}" == "true" ]]; then
+    if [[ "$failed" -gt 0 ]]; then
+      echo "Modo soft: ${failed} arquivo(s) com achados — PR não bloqueado."
+    fi
+    exit 0
+  fi
 
   if [[ "$failed" -gt 0 ]]; then
     exit 1

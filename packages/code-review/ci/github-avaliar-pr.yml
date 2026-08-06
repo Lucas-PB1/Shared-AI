@@ -35,6 +35,7 @@ env:
   HOSTDIME_IA_REPO: https://github.com/HostDimeBR/hostdime-ia.git
   HOSTDIME_IA_REF: main
   REVIEW_AVALIAR_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'both' }}
+  REVIEW_AVALIAR_SOFT: "true"
 
 jobs:
   avaliar:

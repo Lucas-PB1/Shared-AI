@@ -58,7 +58,8 @@ Sem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
   3. Comentário no PR (cria ou atualiza)
   4. Comentários **inline** nos achados com `#### arquivo:L`
   5. Cópia em `.cursor/review/reports/` → artifact no workflow
-- Job **falha** se veredito ≠ OK
+- Job **não bloqueia merge** por default (`REVIEW_AVALIAR_SOFT=true`) — comenta achados para o dev
+- Job **falha** só se `REVIEW_AVALIAR_SOFT=false` (gate hard, opcional)
 - `/finalizar` no Cursor continua para decisões do dev
 
 ### Modos (`REVIEW_AVALIAR_MODE`)
