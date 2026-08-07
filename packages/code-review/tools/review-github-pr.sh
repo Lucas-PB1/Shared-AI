@@ -250,32 +250,147 @@ save_report_copy() {
 
 find_inline_comment_id() {
   local file="$1"
-  local line_no="$2"
-  local marker="<!-- avaliar-inline:${file}:${line_no} -->"
+  local start_line="$2"
+  local marker="<!-- avaliar-inline:${file}:${start_line} -->"
   gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate \
     | jq -r --arg m "$marker" '.[] | select(.body | contains($m)) | .id' | head -1
 }
 
-upsert_inline_comment() {
-  local file="$1"
-  local line_no="$2"
-  local body="$3"
-  local head="${HEAD_SHA:-HEAD}"
-  local comment_id
-  comment_id="$(find_inline_comment_id "$file" "$line_no")"
+extract_section_code() {
+  local block="$1"
+  local section="$2"
+  printf '%s' "$block" | awk -v section="$section" '
+    BEGIN { marker = "^\\*\\*" section ":\\*\\*$" }
+    $0 ~ marker { found = 1; next }
+    found && /^\*\*/ { exit }
+    found && /^```/ {
+      if (in_fence) { exit }
+      in_fence = 1
+      next
+    }
+    found && in_fence && /^```/ { exit }
+    found && in_fence { print }
+  '
+}
 
-  if [[ -n "$comment_id" && "$comment_id" != "null" ]]; then
-    gh api --method PATCH "repos/${GITHUB_REPOSITORY}/pulls/comments/${comment_id}" \
-      -f body="$body" >/dev/null
+count_code_lines() {
+  local code="$1"
+  if [[ -z "$code" ]]; then
+    printf '0'
     return 0
   fi
+  printf '%s' "$code" | awk 'END { print NR + 0 }'
+}
 
-  gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" \
-    -f body="$body" \
-    -f commit_id="$head" \
-    -f path="$file" \
-    -F line="$line_no" \
-    -f side="RIGHT" >/dev/null 2>&1
+resolve_de_start_line() {
+  local file="$1"
+  local hint_line="$2"
+  local de_code="$3"
+  local first trimmed line_num
+  trimmed="$(printf '%s' "$de_code" | sed '/./,$!d' | head -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+  [[ -n "$trimmed" ]] || { printf '%s' "$hint_line"; return 0; }
+
+  line_num="$(git -C "$PROJECT" show "${HEAD_SHA:-HEAD}:${file}" 2>/dev/null \
+    | awk -v needle="$trimmed" -v hint="$hint_line" '
+      index($0, needle) {
+        n = NR
+        d = n - hint
+        if (d < 0) d = -d
+        print d, n
+      }
+    ' | sort -n | head -1 | awk '{ print $2 }')"
+  if [[ -n "$line_num" ]]; then
+    printf '%s' "$line_num"
+  else
+    printf '%s' "$hint_line"
+  fi
+}
+
+extract_pt_summary() {
+  local block="$1"
+  printf '%s' "$block" | awk '
+    /^\*\*Em português:\*\*/ { found = 1; next }
+    found && /^> / { sub(/^> /, ""); print; exit }
+    found && /^>/ { sub(/^>/, ""); print; exit }
+  '
+}
+
+# Converte bloco De/Para em comentário com ```suggestion (aceite 1-clique no GitHub).
+build_inline_suggestion_body() {
+  local block="$1"
+  local de_code para_code title summary de_lines start_line end_line
+
+  de_code="$(extract_section_code "$block" "De")"
+  para_code="$(extract_section_code "$block" "Para")"
+  [[ -n "$de_code" ]] || return 1
+  [[ "$block" == *'**Para:**'* ]] || return 1
+
+  de_lines="$(count_code_lines "$de_code")"
+  [[ "$de_lines" -gt 0 ]] || return 1
+  [[ "$de_lines" -le 20 ]] || return 1
+
+  title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
+  summary="$(extract_pt_summary "$block")"
+
+  local body="$title"
+  if [[ -n "$summary" ]]; then
+    body+=$'\n\n'"${summary}"
+  fi
+  body+=$'\n\n'"\`\`\`suggestion"
+  if [[ -n "$para_code" ]]; then
+    body+=$'\n'"${para_code}"
+  fi
+  body+=$'\n'"\`\`\`"
+
+  SUGGESTION_START_LINE=""
+  SUGGESTION_END_LINE=""
+  if [[ "$title" =~ ^####[[:space:]]+[^:]+:([0-9]+) ]]; then
+    start_line="${BASH_REMATCH[1]}"
+    end_line=$((start_line + de_lines - 1))
+    SUGGESTION_START_LINE="$start_line"
+    SUGGESTION_END_LINE="$end_line"
+  fi
+
+  printf '%s' "$body"
+  return 0
+}
+
+upsert_inline_comment() {
+  local file="$1"
+  local end_line="$2"
+  local body="$3"
+  local start_line="${4:-$2}"
+  local head="${HEAD_SHA:-HEAD}"
+  local marker="<!-- avaliar-inline:${file}:${start_line} -->"
+  local comment_id
+  local full_body="$body"
+
+  if [[ "$full_body" != *"$marker"* ]]; then
+    full_body="${full_body}"$'\n\n'"${marker}"
+  fi
+
+  comment_id="$(find_inline_comment_id "$file" "$start_line")"
+  if [[ -n "$comment_id" && "$comment_id" != "null" ]]; then
+    gh api --method DELETE "repos/${GITHUB_REPOSITORY}/pulls/comments/${comment_id}" >/dev/null 2>&1 || true
+  fi
+
+  if [[ "$start_line" != "$end_line" ]]; then
+    gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" \
+      -f body="$full_body" \
+      -f commit_id="$head" \
+      -f path="$file" \
+      -F start_line="$start_line" \
+      -f start_side="RIGHT" \
+      -F line="$end_line" \
+      -f side="RIGHT" >/dev/null 2>&1
+  else
+    gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" \
+      -f body="$full_body" \
+      -f commit_id="$head" \
+      -f path="$file" \
+      -F line="$end_line" \
+      -f side="RIGHT" >/dev/null 2>&1
+  fi
 }
 
 # Um inline por linha com achado acionável (De/Para). Ignora notas de Revisado (diff).
@@ -306,6 +421,7 @@ post_inline_findings() {
 
   declare -A best_block
   declare -A best_score
+  declare -A best_start
   local rs=$'\036'
 
   while IFS= read -r -d "$rs" block || [[ -n "${block:-}" ]]; do
@@ -320,6 +436,7 @@ post_inline_findings() {
     if [[ -z "${best_block[$line_no]:-}" || ${best_score[$line_no]:-0} -lt $score ]]; then
       best_block[$line_no]="$block"
       best_score[$line_no]=$score
+      best_start[$line_no]="$line_no"
     fi
   done < "$tmp_blocks"
 
@@ -329,7 +446,8 @@ post_inline_findings() {
     [[ -z "$comment_id" ]] && continue
     local stale=1
     for line_no in "${!best_block[@]}"; do
-      if [[ "$body" == *"<!-- avaliar-inline:${file}:${line_no} -->"* ]]; then
+      local start_key="${best_start[$line_no]:-$line_no}"
+      if [[ "$body" == *"<!-- avaliar-inline:${file}:${start_key} -->"* ]]; then
         stale=0
         break
       fi
@@ -342,16 +460,31 @@ post_inline_findings() {
       | jq -r --arg p "$prefix" '.[] | select(.body | contains($p)) | "\(.id)\t\(.body)"'
   )
 
-  local line_no block gh_body
+  local line_no block gh_body start_line end_line use_suggestion
+  use_suggestion="${REVIEW_AVALIAR_SUGGESTION:-1}"
   for line_no in "${!best_block[@]}"; do
     block="${best_block[$line_no]}"
-    gh_body="$(cat <<EOF
-${block}
+    start_line="${best_start[$line_no]:-$line_no}"
+    end_line="$start_line"
+    gh_body="$block"
 
-<!-- avaliar-inline:${file}:${line_no} -->
-EOF
-)"
-    if upsert_inline_comment "$file" "$line_no" "$gh_body"; then
+    if [[ "$use_suggestion" == "1" ]]; then
+      SUGGESTION_START_LINE=""
+      SUGGESTION_END_LINE=""
+      if suggested_body="$(build_inline_suggestion_body "$block")"; then
+        gh_body="$suggested_body"
+        if [[ -n "${SUGGESTION_START_LINE:-}" && -n "${SUGGESTION_END_LINE:-}" ]]; then
+          local de_code de_lines resolved_start
+          de_code="$(extract_section_code "$block" "De")"
+          de_lines="$(count_code_lines "$de_code")"
+          resolved_start="$(resolve_de_start_line "$file" "$SUGGESTION_START_LINE" "$de_code")"
+          start_line="$resolved_start"
+          end_line=$((resolved_start + de_lines - 1))
+        fi
+      fi
+    fi
+
+    if upsert_inline_comment "$file" "$end_line" "$gh_body" "$start_line"; then
       posted=$((posted + 1))
     fi
   done

@@ -24,6 +24,8 @@ Verdict:
 
 When the diff has changes, include `### Revisado (diff)` in the saved report — one `#### filename:L — title` per changed line, with `**Em português:**` only (no De/Para) for observational notes. **GitHub inline comments** are posted only from finding sections below (Impeditivo / Erros / Melhoria essencial) when the block has **De:** and **Para:**.
 
+In finding blocks, **`L` must be the first line number of the `De` snippet** in the file (start of the replace range). The first fenced code block under **Para:** must be the exact replacement text (same line span as **De:** when possible) — it becomes a one-click GitHub suggestion.
+
 Report format (exactly):
 
 ## `relative/path/to/file`
