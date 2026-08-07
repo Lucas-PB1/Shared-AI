@@ -665,14 +665,13 @@ upsert_file_comment() {
 post_summary() {
   local llm_mode="$1"
   local files_log="$2"
-  local inline_log="$3"
-  local total_in_diff="$4"
+  local total_in_diff="$3"
   local marker="<!-- avaliar-pr-summary -->"
   local head_short="${HEAD_SHA:-HEAD}"
   head_short="${head_short:0:7}"
 
   local reviewed=0 skipped=0 failed=0 inline_this_run=0 blocking_this_run=0
-  local files_section="" inline_section="" merge_section=""
+  local files_section="" merge_section=""
   local line action file verdict inline_count blocking
 
   if [[ -f "$files_log" ]]; then
@@ -705,31 +704,6 @@ post_summary() {
     done <"$files_log"
   fi
 
-  if [[ -f "$inline_log" ]]; then
-    while IFS=$'\t' read -r file start_line end_line title blocking; do
-      [[ -z "$file" ]] && continue
-      local loc="$file"
-      if [[ "$start_line" == "$end_line" ]]; then
-        loc+=":${start_line}"
-      else
-        loc+=":${start_line}-${end_line}"
-      fi
-      local kind="ajuste"
-      [[ "${blocking:-0}" == "1" ]] && kind="**impeditivo**"
-      inline_section+=$'| `'"${loc}"$'` | '"${kind}"$' | '"${title:-—}"$' |\n'
-    done <"$inline_log"
-  fi
-
-  local pr_inline_count=0
-  local pr_inline_section=""
-  while IFS=$'\t' read -r path line title blocking_flag; do
-    [[ -z "$path" ]] && continue
-    pr_inline_count=$((pr_inline_count + 1))
-    local kind="ajuste"
-    [[ "$blocking_flag" == "1" ]] && kind="**impeditivo**"
-    pr_inline_section+=$'| `'"${path}:${line}"$'` | '"${kind}"$' | '"${title:-—}"$' |\n'
-  done < <(fetch_pr_avaliar_inlines)
-
   local resultado=""
   if [[ "$total_in_diff" -eq 0 ]]; then
     resultado="ℹ️ **Nenhum arquivo revisável** no diff deste PR."
@@ -752,26 +726,6 @@ post_summary() {
 
   if [[ -z "$files_section" && "$total_in_diff" -gt 0 ]]; then
     files_section="| _(sem registro nesta execução)_ | — | — |\n"
-  fi
-
-  if [[ -n "$inline_section" ]]; then
-    inline_section="### Comentários inline (nesta execução)
-
-| Onde | Tipo | Assunto |
-| --- | --- | --- |
-${inline_section}"
-  else
-    inline_section="### Comentários inline (nesta execução)
-
-**Nenhum** — nada foi publicado no diff nesta execução."
-  fi
-
-  if [[ "$pr_inline_count" -gt 0 ]]; then
-    inline_section+=$'\n\n'"### Comentários inline ativos no PR
-
-| Onde | Tipo | Assunto |
-| --- | --- | --- |
-${pr_inline_section}"
   fi
 
   if [[ "$blocking_this_run" -gt 0 ]]; then
@@ -801,7 +755,6 @@ ${resultado}
 | Arquivo | Status nesta execução | Veredito |
 | --- | --- | --- |
 ${files_section}
-${inline_section}
 
 ---
 
@@ -829,21 +782,6 @@ EOF
   else
     gh pr comment "$PR_NUMBER" --body "$body" >/dev/null
   fi
-}
-
-# Lista comentários inline do /avaliar ainda ativos no PR (todas as execuções).
-fetch_pr_avaliar_inlines() {
-  gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate 2>/dev/null \
-    | jq -r '.[] | select(.body | contains("<!-- avaliar-inline:")) | "\(.path)\t\(.line)\t\(.body)"' \
-    | while IFS=$'\t' read -r path line body; do
-        [[ -z "$path" ]] && continue
-        local title blocking_flag=0
-        title="$(printf '%s' "$body" | head -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-        if printf '%s' "$body" | grep -q 'avaliar-blocking'; then
-          blocking_flag=1
-        fi
-        printf '%s\t%s\t%s\t%s\n' "$path" "$line" "$title" "$blocking_flag"
-      done
 }
 
 main() {
@@ -915,7 +853,7 @@ main() {
   echo ""
 
   if [[ "${#files[@]}" -eq 0 ]]; then
-    post_summary "$llm_mode" "$SUMMARY_FILES_LOG" "$SUMMARY_INLINE_LOG" 0
+    post_summary "$llm_mode" "$SUMMARY_FILES_LOG" 0
     echo "Nenhum arquivo revisável no diff."
     exit 0
   fi
@@ -1002,7 +940,7 @@ main() {
   done
 
   state_save
-  post_summary "$llm_mode" "$SUMMARY_FILES_LOG" "$SUMMARY_INLINE_LOG" "${#files[@]}"
+  post_summary "$llm_mode" "$SUMMARY_FILES_LOG" "${#files[@]}"
 
   echo ""
   echo "=== Concluído: ${reviewed} revisado(s), ${skipped} pulado(s), ${failed} com achados ==="
