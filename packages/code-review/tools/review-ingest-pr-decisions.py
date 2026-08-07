@@ -423,19 +423,16 @@ def classify_thread(
     }
 
 
-def append_unique(decisions_path: Path, new_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    existing = read_decisions(decisions_path)
-    seen = {(d.get("finding_id"), d.get("file"), d.get("source")) for d in existing}
-    added: list[dict[str, Any]] = []
-    for item in new_items:
-        key = (item.get("finding_id"), item.get("file"), item.get("source"))
-        if key in seen:
-            continue
-        existing.append(item)
-        seen.add(key)
-        added.append(item)
+def upsert_pr_decisions(
+    decisions_path: Path,
+    pr_number: int,
+    new_items: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    source = f"github-pr-{pr_number}"
+    existing = [d for d in read_decisions(decisions_path) if d.get("source") != source]
+    existing.extend(new_items)
     write_decisions(decisions_path, existing)
-    return added
+    return new_items
 
 
 def run_export_exclusions(project: Path) -> None:
@@ -492,8 +489,8 @@ def cmd_ingest(
         version.write_text("2\n", encoding="utf-8")
 
     decisions_path = rd / "decisions.jsonl"
-    added = append_unique(decisions_path, proposed)
-    print(f"\n+{len(added)} entrada(s) em decisions.jsonl")
+    added = upsert_pr_decisions(decisions_path, pr_number, proposed)
+    print(f"\n{len(added)} decisão(ões) gravada(s) em decisions.jsonl (source github-pr-{pr_number})")
 
     all_decisions = read_decisions(decisions_path)
     context = build_context(project, f"github-pr-{pr_number}", all_decisions)
