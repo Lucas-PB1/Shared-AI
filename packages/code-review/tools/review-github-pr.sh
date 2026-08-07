@@ -221,7 +221,6 @@ ${report}
 **Origem:** ${origin}
 *Review automático · hostdime-ia · \`${blob_sha:0:7}\`*
 <!-- avaliar-file:${file} -->
-<!-- avaliar-file-inline:${file} -->
 EOF
 }
 
@@ -249,53 +248,25 @@ save_report_copy() {
   cp "$report_file" "$dest_dir/ci-$(date +%F)_${slug}.md"
 }
 
-post_inline_findings() {
+find_inline_comment_id() {
   local file="$1"
-  local report="$2"
-  local head="${HEAD_SHA:-HEAD}"
-
-  [[ "${REVIEW_AVALIAR_INLINE:-1}" == "1" ]] || return 0
-
-  while IFS= read -r line; do
-    [[ "$line" =~ ^####[[:space:]]+[^:]+:([0-9]+)[[:space:]]—[[:space:]]+(.*)$ ]] || continue
-    local line_no="${BASH_REMATCH[1]}"
-    local title="${BASH_REMATCH[2]}"
-    local gh_body
-    gh_body="$(cat <<EOF
-**$(parse_verdict_from_report "$report")** — ${title}
-
-<!-- avaliar-inline:${file}:${line_no} -->
-EOF
-)"
-    gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" \
-      -f body="$gh_body" \
-      -f commit_id="$head" \
-      -f path="$file" \
-      -F line="$line_no" \
-      -f side="RIGHT" >/dev/null 2>&1 || true
-  done < <(printf '%s\n' "$report")
-}
-
-find_inline_file_comment_id() {
-  local file="$1"
-  local marker="<!-- avaliar-file-inline:${file} -->"
+  local line_no="$2"
+  local marker="<!-- avaliar-inline:${file}:${line_no} -->"
   gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate \
     | jq -r --arg m "$marker" '.[] | select(.body | contains($m)) | .id' | head -1
 }
 
-upsert_file_inline_comment() {
+upsert_inline_comment() {
   local file="$1"
-  local body="$2"
+  local line_no="$2"
+  local body="$3"
   local head="${HEAD_SHA:-HEAD}"
-  local line
-  line="$(first_changed_line "$file")"
   local comment_id
-  comment_id="$(find_inline_file_comment_id "$file")"
+  comment_id="$(find_inline_comment_id "$file" "$line_no")"
 
   if [[ -n "$comment_id" && "$comment_id" != "null" ]]; then
     gh api --method PATCH "repos/${GITHUB_REPOSITORY}/pulls/comments/${comment_id}" \
       -f body="$body" >/dev/null
-    echo "  ↻ inline no diff (linha ${line})"
     return 0
   fi
 
@@ -303,10 +274,67 @@ upsert_file_inline_comment() {
     -f body="$body" \
     -f commit_id="$head" \
     -f path="$file" \
-    -F line="$line" \
-    -f side="RIGHT" >/dev/null 2>&1 \
-    && echo "  ✓ inline no diff (linha ${line})" \
-    || echo "  ⚠ inline falhou — fallback issue comment" >&2
+    -F line="$line_no" \
+    -f side="RIGHT" >/dev/null 2>&1
+}
+
+# Um comentário inline por linha (dedupe). Bloco #### completo — sem relatório inteiro repetido.
+post_inline_findings() {
+  local file="$1"
+  local report="$2"
+  local head="${HEAD_SHA:-HEAD}"
+  local verdict
+  local tmp_blocks="$3"
+  local posted=0
+
+  [[ "${REVIEW_AVALIAR_INLINE:-1}" == "1" ]] || { printf '0'; return 0; }
+
+  verdict="$(parse_verdict_from_report "$report")"
+
+  awk '
+    /^#### / {
+      if (block != "") print block
+      block = $0
+      next
+    }
+    { block = (block == "" ? $0 : block ORS $0) }
+    END { if (block != "") print block }
+  ' <<< "$report" >"$tmp_blocks"
+
+  declare -A best_block
+  declare -A best_score
+
+  while IFS= read -r block || [[ -n "$block" ]]; do
+    [[ -z "$block" ]] && continue
+    [[ "$block" =~ ^####[[:space:]]+[^:]+:([0-9]+)[[:space:]]—[[:space:]]+(.*)$ ]] || continue
+    local line_no="${BASH_REMATCH[1]}"
+    local score=1
+    [[ "$block" == *'**De:**'* ]] && score=3
+    [[ "$block" == *'**Para:**'* ]] && score=2
+
+    if [[ -z "${best_block[$line_no]:-}" || ${best_score[$line_no]:-0} -lt $score ]]; then
+      best_block[$line_no]="$block"
+      best_score[$line_no]=$score
+    fi
+  done < "$tmp_blocks"
+
+  local line_no block gh_body
+  for line_no in "${!best_block[@]}"; do
+    block="${best_block[$line_no]}"
+    gh_body="$(cat <<EOF
+**Veredito:** ${verdict}
+
+${block}
+
+<!-- avaliar-inline:${file}:${line_no} -->
+EOF
+)"
+    if upsert_inline_comment "$file" "$line_no" "$gh_body"; then
+      posted=$((posted + 1))
+    fi
+  done
+
+  printf '%s' "$posted"
 }
 
 upsert_file_comment() {
@@ -406,7 +434,7 @@ main() {
 
   local reviewed=0 skipped=0 failed=0
   local file blob_sha prev_sha stack verdict static_output check_status
-  local tmp_dir report_file report_body comment_body origin
+  local tmp_dir report_file report_body origin inline_count
 
   tmp_dir="$(mktemp -d)"
   trap 'rm -rf "$tmp_dir"' EXIT
@@ -428,6 +456,7 @@ main() {
     [[ -n "$file" ]] || continue
     [[ -f "$PROJECT/$file" ]] || continue
 
+    inline_count=0
     blob_sha="$(file_blob_sha "$file")"
     prev_sha="$(state_get_file_sha "$file")"
 
@@ -462,7 +491,10 @@ main() {
         verdict="$(parse_verdict_from_report "$report_body")"
         origin="/avaliar automático (CI — estático + LLM)"
         save_report_copy "$file" "$report_file"
-        post_inline_findings "$file" "$report_body"
+        inline_count="$(post_inline_findings "$file" "$report_body" "$tmp_dir/findings.blocks")"
+        if [[ "${inline_count:-0}" -gt 0 ]]; then
+          echo "  ✓ ${inline_count} inline(s) no diff"
+        fi
       else
         echo "  ⚠ LLM falhou — fallback estático" >&2
         report_body="$(build_static_fallback_report "$file" "$stack" "$static_verdict" "$static_output")"
@@ -473,12 +505,20 @@ main() {
       verdict="$static_verdict"
     fi
 
-    comment_body="$(wrap_pr_comment "$file" "$blob_sha" "$report_body" "$origin")"
-    if [[ "${REVIEW_AVALIAR_INLINE:-1}" == "1" ]] \
-      && upsert_file_inline_comment "$file" "$comment_body"; then
-      :
-    else
-      upsert_file_comment "$file" "$comment_body"
+    if [[ "${inline_count:-0}" -eq 0 ]]; then
+      local comment_body
+      comment_body="$(wrap_pr_comment "$file" "$blob_sha" "$report_body" "$origin")"
+      if [[ "${REVIEW_AVALIAR_INLINE:-1}" == "1" ]]; then
+        local line
+        line="$(first_changed_line "$file")"
+        if upsert_inline_comment "$file" "$line" "$comment_body"; then
+          echo "  ✓ inline no diff (linha ${line})"
+        else
+          upsert_file_comment "$file" "$comment_body"
+        fi
+      else
+        upsert_file_comment "$file" "$comment_body"
+      fi
     fi
     state_set_file_sha "$file" "$blob_sha"
     reviewed=$((reviewed + 1))
