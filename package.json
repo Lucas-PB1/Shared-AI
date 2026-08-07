@@ -22,6 +22,7 @@
     "health": "node packages/cursor/scripts/run.mjs health",
     "review:ci": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/review-ci.sh",
     "review:github-pr": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/review-github-pr.sh",
+    "review:ingest-pr": "bash packages/code-review/tools/review-ingest-pr-decisions.sh",
     "review:export-exclusions": "bash packages/code-review/tools/review-export-exclusions.sh",
     "test": "bash tests/run-all.sh"
   },

@@ -1,0 +1,64 @@
+name: Avaliar PR — memória
+
+# Após merge: aprende com threads do /avaliar (aceito vs ignorado) → convencoes + exclusions.
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  ingest-memoria:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d049a06c279f0931722c8dc8 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Checkout hostdime-ia (sparse)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: HostDimeBR/hostdime-ia
+          ref: main
+          path: hostdime-ia
+          token: ${{ secrets.HOSTDIME_IA_TOKEN || github.token }}
+          sparse-checkout: |
+            packages/code-review
+          sparse-checkout-cone-mode: false
+
+      - name: Instalar deps
+        run: pip install pyyaml
+
+      - name: Ingerir decisões do PR mergeado
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HOSTDIME_IA_ROOT: ${{ github.workspace }}/hostdime-ia
+        run: |
+          bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ingest-pr-decisions.sh" --write .
+
+      - name: Commit memória versionada
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .cursor/review/convencoes.md .cursor/review/exclusions.yaml || true
+          if git diff --staged --quiet; then
+            echo "Sem alterações em convencoes/exclusions."
+            exit 0
+          fi
+          git commit -m "chore(review): memória pós-merge PR #${{ github.event.pull_request.number }}"
+          git push origin main

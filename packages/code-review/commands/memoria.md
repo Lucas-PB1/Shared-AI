@@ -21,6 +21,14 @@ Ler skill **`review-inbox`** para o fluxo `/avaliar` + `/finalizar`.
 | `/memoria restore` | Re-migrar backup → v2 — dry-run |
 | `/memoria restore --write` | Reconstrói v2 a partir de `backups/` (não reativa v1) |
 
+Após **merge de PR** com `/avaliar` no GitHub (workflow `avaliar-pr-memoria` ou manual):
+
+```bash
+PR_NUMBER=42 npm run review:ingest-pr -- --write /caminho/do/projeto
+```
+
+Ingere decisões dos threads → `decisions.jsonl` → compactar → promover → export.
+
 ## CLI
 
 ```bash

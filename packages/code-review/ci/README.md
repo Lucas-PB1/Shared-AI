@@ -11,12 +11,16 @@ Comentários **por arquivo** no pull request — **estático + LLM** no formato 
 | Roteamento skills | `packages/code-review/tools/review-skill-routing.mjs` |
 | Prompt | `packages/code-review/templates/avaliar-llm-system.md` |
 | Export exclusões | `packages/code-review/tools/review-export-exclusions.sh` |
+| Ingest pós-merge | `packages/code-review/tools/review-ingest-pr-decisions.py` |
 | Template workflow | `packages/code-review/ci/github-avaliar-pr.yml` |
+| Template memória | `packages/code-review/ci/github-avaliar-pr-memoria.yml` |
 | Exemplo ativo | `hostdime-hub` → `.github/workflows/avaliar-pr.yml` |
 
 ### Incluir no projeto
 
 Copie `github-avaliar-pr.yml` para `.github/workflows/avaliar-pr.yml`.
+
+Copie `github-avaliar-pr-memoria.yml` para `.github/workflows/avaliar-pr-memoria.yml` — dispara no **merge** do PR e atualiza `convencoes.md` / `exclusions.yaml` a partir dos threads do `/avaliar`.
 
 **Versionar no repo alvo:**
 
@@ -38,6 +42,17 @@ Manter **gitignored**: `context.yaml`, `decisions.jsonl`, `reports/` (CI), `resu
 bash review-export-exclusions.sh /caminho/do/projeto
 git add .cursor/review/exclusions.yaml && git commit
 ```
+
+**Aprendizado automático pós-merge (CI):**
+
+1. Dev mergeia PR com comentários `avaliar-inline`
+2. Workflow `avaliar-pr-memoria` classifica cada thread:
+   - suggestion aplicada / thread resolvido → **aceito** (candidate → `convencoes.md` após ≥2 ocorrências)
+   - resposta humana de rejeição → **rejeitado** → `exclusions.yaml`
+   - merge sem resposta → **rejeitado** (ignorado)
+3. Bot commita em `main` se `convencoes` ou `exclusions` mudarem
+
+Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-ia apontando `--project` pro hub.
 
 ### Secrets e variables (GitHub)
 
