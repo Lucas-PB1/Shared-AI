@@ -14,6 +14,16 @@ TARGET="${1:?Informe o diretório raiz do projeto}"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
 
+# Nunca tratar $HOME (nem o próprio ~/.cursor) como projeto — o cleanup
+# de orquestrador/commands apagaria os artefatos globais do usuário.
+TARGET_ABS="$(cd "$TARGET" 2>/dev/null && pwd -P)" || TARGET_ABS="$TARGET"
+HOME_ABS="$(cd "$HOME" 2>/dev/null && pwd -P)" || HOME_ABS="$HOME"
+CURSOR_ABS="$(cd "$CURSOR_DIR" 2>/dev/null && pwd -P)" || CURSOR_ABS="$CURSOR_DIR"
+if [[ "$TARGET_ABS" == "$HOME_ABS" || "$TARGET_ABS" == "$CURSOR_ABS" ]]; then
+  [[ "$QUIET" -eq 0 ]] && echo "Ignorado: $TARGET não pode ser bootstrap/sync (é o home ou ~/.cursor)" >&2
+  exit 0
+fi
+
 if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$ENV_FILE"

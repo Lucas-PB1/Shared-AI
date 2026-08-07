@@ -67,6 +67,12 @@ fi
 PROJECT="$(cd "$PROJECT" && pwd)"
 HOSTDIME_IA_ROOT="${HOSTDIME_IA_ROOT:-$MONOREPO_ROOT}"
 
+HOME_ABS="$(cd "$HOME" && pwd -P)"
+if [[ "$PROJECT" == "$HOME_ABS" || "$PROJECT" == "$(cd "$HOME/.cursor" && pwd -P)" ]]; then
+  echo "Erro: não use o home (~) nem ~/.cursor como projeto do hostdime-ia." >&2
+  exit 1
+fi
+
 if [[ -n "$PROFILE" ]]; then
   if ! profiles_is_valid "$PROFILE"; then
     echo "Erro: perfil desconhecido: $PROFILE" >&2

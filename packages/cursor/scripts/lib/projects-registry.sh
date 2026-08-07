@@ -30,10 +30,17 @@ def is_ephemeral(p: str) -> bool:
             return True
     return False
 
+def is_user_cursor_root(p: str) -> bool:
+    home = os.path.realpath(os.path.expanduser('~'))
+    cursor = os.path.realpath(os.path.join(home, '.cursor'))
+    return p == home or p == cursor
+
 default_registry = os.path.realpath(
     os.path.join(os.path.expanduser('~'), '.cursor', 'hostdime-ia', 'projects.json')
 )
 if is_ephemeral(path) and os.path.realpath(registry) == default_registry:
+    sys.exit(0)
+if is_user_cursor_root(path):
     sys.exit(0)
 
 with open(registry, 'r', encoding='utf-8') as f:
@@ -113,13 +120,19 @@ def is_ephemeral(path: str) -> bool:
             return True
     return False
 
+def is_user_cursor_root(path: str) -> bool:
+    home = os.path.realpath(os.path.expanduser('~'))
+    cursor = os.path.realpath(os.path.join(home, '.cursor'))
+    real = os.path.realpath(path)
+    return real == home or real == cursor
+
 with open(registry, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 kept = []
 for p in data.get('projects', []):
     path = p.get('path', '')
-    if path and os.path.isdir(path) and not is_ephemeral(path):
+    if path and os.path.isdir(path) and not is_ephemeral(path) and not is_user_cursor_root(path):
         kept.append(p)
 
 data['projects'] = kept
