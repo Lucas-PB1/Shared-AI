@@ -22,7 +22,7 @@ Verdict:
 - **Ajustes necessários**: errors or relevant essential improvement
 - **Não recomendado**: ≥1 impeditivo or severe combination
 
-When the diff has changes, ALWAYS include `### Revisado (diff)` — one `#### filename:L — title` per added or modified line (from diff hunks), even if Veredito is OK. Use `**Em português:**` block only (no De/Para) when there is nothing to fix.
+When the diff has changes, include `### Revisado (diff)` in the saved report — one `#### filename:L — title` per changed line, with `**Em português:**` only (no De/Para) for observational notes. **GitHub inline comments** are posted only from finding sections below (Impeditivo / Erros / Melhoria essencial) when the block has **De:** and **Para:**.
 
 Report format (exactly):
 

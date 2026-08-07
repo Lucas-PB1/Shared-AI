@@ -278,18 +278,14 @@ upsert_inline_comment() {
     -f side="RIGHT" >/dev/null 2>&1
 }
 
-# Um comentário inline por linha (dedupe). Bloco #### completo — sem relatório inteiro repetido.
+# Um inline por linha com achado acionável (De/Para). Ignora notas de Revisado (diff).
 post_inline_findings() {
   local file="$1"
   local report="$2"
-  local head="${HEAD_SHA:-HEAD}"
-  local verdict
   local tmp_blocks="$3"
   local posted=0
 
   [[ "${REVIEW_AVALIAR_INLINE:-1}" == "1" ]] || { printf '0'; return 0; }
-
-  verdict="$(parse_verdict_from_report "$report")"
 
   awk '
     /^#### / {
@@ -308,9 +304,10 @@ post_inline_findings() {
     [[ -z "$block" ]] && continue
     [[ "$block" =~ ^####[[:space:]]+[^:]+:([0-9]+)[[:space:]]—[[:space:]]+(.*)$ ]] || continue
     local line_no="${BASH_REMATCH[1]}"
-    local score=1
+    local score=0
     [[ "$block" == *'**De:**'* ]] && score=3
     [[ "$block" == *'**Para:**'* ]] && score=2
+    [[ "$score" -eq 0 ]] && continue
 
     if [[ -z "${best_block[$line_no]:-}" || ${best_score[$line_no]:-0} -lt $score ]]; then
       best_block[$line_no]="$block"
@@ -318,12 +315,29 @@ post_inline_findings() {
     fi
   done < "$tmp_blocks"
 
+  # Remove inline antigo deste arquivo que não é mais achado acionável.
+  local prefix="<!-- avaliar-inline:${file}:"
+  while IFS=$'\t' read -r comment_id body; do
+    [[ -z "$comment_id" ]] && continue
+    local stale=1
+    for line_no in "${!best_block[@]}"; do
+      if [[ "$body" == *"<!-- avaliar-inline:${file}:${line_no} -->"* ]]; then
+        stale=0
+        break
+      fi
+    done
+    if [[ "$stale" -eq 1 ]]; then
+      gh api --method DELETE "repos/${GITHUB_REPOSITORY}/pulls/comments/${comment_id}" >/dev/null 2>&1 || true
+    fi
+  done < <(
+    gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate \
+      | jq -r --arg p "$prefix" '.[] | select(.body | contains($p)) | "\(.id)\t\(.body)"'
+  )
+
   local line_no block gh_body
   for line_no in "${!best_block[@]}"; do
     block="${best_block[$line_no]}"
     gh_body="$(cat <<EOF
-**Veredito:** ${verdict}
-
 ${block}
 
 <!-- avaliar-inline:${file}:${line_no} -->
