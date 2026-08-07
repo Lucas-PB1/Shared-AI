@@ -104,6 +104,61 @@ verdict_is_failure() {
   [[ "$1" != "OK" ]]
 }
 
+report_has_impeditivo() {
+  local report="$1"
+  printf '%s' "$report" | grep -qE '^### Impeditivo' && return 0
+  [[ "$(parse_verdict_from_report "$report")" == "Não recomendado" ]]
+}
+
+block_is_impeditivo() {
+  local report="$1"
+  local block="$2"
+  local title
+  title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
+  [[ -n "$title" ]] || return 1
+  if [[ "$(parse_verdict_from_report "$report")" == "Não recomendado" ]]; then
+    return 0
+  fi
+  printf '%s' "$report" | awk -v t "$title" '
+    /^### Impeditivo/ { in_sec = 1; next }
+    in_sec && /^### / { in_sec = 0 }
+    in_sec && index($0, t) { found = 1; exit }
+    END { exit(found ? 0 : 1) }
+  '
+}
+
+extract_block_title() {
+  local block="$1"
+  local title
+  title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
+  [[ -n "$title" ]] || return 1
+  if [[ "$title" =~ ^####[[:space:]]+(.+)$ ]]; then
+    printf '%s' "${BASH_REMATCH[1]}"
+  else
+    printf '%s' "$title"
+  fi
+}
+
+summary_log_file() {
+  local action="$1"
+  local file="$2"
+  local verdict="${3:-—}"
+  local inline_count="${4:-0}"
+  local blocking="${5:-0}"
+  [[ -n "${SUMMARY_FILES_LOG:-}" ]] || return 0
+  printf '%s\t%s\t%s\t%s\t%s\n' "$action" "$file" "$verdict" "$inline_count" "$blocking" >>"$SUMMARY_FILES_LOG"
+}
+
+summary_log_inline() {
+  local file="$1"
+  local start_line="$2"
+  local end_line="$3"
+  local title="$4"
+  local blocking="${5:-0}"
+  [[ -n "${SUMMARY_INLINE_LOG:-}" ]] || return 0
+  printf '%s\t%s\t%s\t%s\t%s\n' "$file" "$start_line" "$end_line" "$title" "$blocking" >>"$SUMMARY_INLINE_LOG"
+}
+
 state_load() {
   STATE_JSON='{"files":{}}'
   local comment_id body
@@ -565,14 +620,26 @@ post_inline_findings() {
     gh_body="$(build_inline_comment_body "$block")"
     [[ -n "$gh_body" ]] || continue
 
+    local blocking_flag=0
+    if block_is_impeditivo "$report" "$block"; then
+      blocking_flag=1
+      gh_body+=$'\n\n'"<!-- avaliar-blocking -->"
+    fi
+
     if [[ "$use_suggestion" == "1" ]] && prepare_github_suggestion "$file" "$block"; then
       gh_body="$SUGGESTION_BODY"
       start_line="$SUGGESTION_START"
       end_line="$SUGGESTION_END"
+      if [[ "$blocking_flag" -eq 1 ]] && [[ "$gh_body" != *'avaliar-blocking'* ]]; then
+        gh_body+=$'\n\n'"<!-- avaliar-blocking -->"
+      fi
     fi
 
     if upsert_inline_comment "$file" "$end_line" "$gh_body" "$start_line"; then
       posted=$((posted + 1))
+      local inline_title
+      inline_title="$(extract_block_title "$block" || true)"
+      summary_log_inline "$file" "$start_line" "$end_line" "${inline_title:-—}" "$blocking_flag"
     fi
   done
 
@@ -594,24 +661,160 @@ upsert_file_comment() {
 }
 
 post_summary() {
-  local reviewed="$1"
-  local skipped="$2"
-  local failed="$3"
-  local llm_mode="$4"
+  local llm_mode="$1"
+  local files_log="$2"
+  local inline_log="$3"
+  local total_in_diff="$4"
   local marker="<!-- avaliar-pr-summary -->"
+  local head_short="${HEAD_SHA:-HEAD}"
+  head_short="${head_short:0:7}"
+
+  local reviewed=0 skipped=0 failed=0 inline_this_run=0 blocking_this_run=0
+  local files_section="" inline_section="" merge_section=""
+  local line action file verdict inline_count blocking
+
+  if [[ -f "$files_log" ]]; then
+    while IFS=$'\t' read -r action file verdict inline_count blocking; do
+      [[ -z "$file" ]] && continue
+      case "$action" in
+        review)
+          reviewed=$((reviewed + 1))
+          inline_this_run=$((inline_this_run + inline_count))
+          blocking_this_run=$((blocking_this_run + blocking))
+          if verdict_is_failure "$verdict"; then
+            failed=$((failed + 1))
+          fi
+          local status_icon="✅ revisado"
+          if [[ "${inline_count:-0}" -gt 0 ]]; then
+            status_icon="💬 ${inline_count} comentário(s) inline"
+          elif verdict_is_failure "$verdict"; then
+            status_icon="⚠️ achado (sem inline acionável)"
+          fi
+          if [[ "${blocking:-0}" -gt 0 ]]; then
+            status_icon="🛑 impeditivo"
+          fi
+          files_section+=$'| `'"${file}"$'` | '"${status_icon}"$' | '"${verdict:-—}"$' |\n'
+          ;;
+        skip)
+          skipped=$((skipped + 1))
+          files_section+=$'| `'"${file}"$'` | ⏭ pulado (já revisado neste head) | — |\n'
+          ;;
+      esac
+    done <"$files_log"
+  fi
+
+  if [[ -f "$inline_log" ]]; then
+    while IFS=$'\t' read -r file start_line end_line title blocking; do
+      [[ -z "$file" ]] && continue
+      local loc="$file"
+      if [[ "$start_line" == "$end_line" ]]; then
+        loc+=":${start_line}"
+      else
+        loc+=":${start_line}-${end_line}"
+      fi
+      local kind="ajuste"
+      [[ "${blocking:-0}" == "1" ]] && kind="**impeditivo**"
+      inline_section+=$'| `'"${loc}"$'` | '"${kind}"$' | '"${title:-—}"$' |\n'
+    done <"$inline_log"
+  fi
+
+  local pr_inline_count=0
+  local pr_inline_section=""
+  while IFS=$'\t' read -r path line title blocking_flag; do
+    [[ -z "$path" ]] && continue
+    pr_inline_count=$((pr_inline_count + 1))
+    local kind="ajuste"
+    [[ "$blocking_flag" == "1" ]] && kind="**impeditivo**"
+    pr_inline_section+=$'| `'"${path}:${line}"$'` | '"${kind}"$' | '"${title:-—}"$' |\n'
+  done < <(fetch_pr_avaliar_inlines)
+
+  local resultado=""
+  if [[ "$total_in_diff" -eq 0 ]]; then
+    resultado="ℹ️ **Nenhum arquivo revisável** no diff deste PR."
+  elif [[ "$reviewed" -eq 0 && "$skipped" -gt 0 && "$inline_this_run" -eq 0 && "$failed" -eq 0 ]]; then
+    resultado="✅ **Nenhum achado novo** — ${skipped} arquivo(s) no diff já foram revisados neste head; nada a reavaliar."
+  elif [[ "$failed" -eq 0 && "$inline_this_run" -eq 0 && "$blocking_this_run" -eq 0 ]]; then
+    if [[ "$reviewed" -gt 0 ]]; then
+      resultado="✅ **Nenhum achado** — ${reviewed} arquivo(s) revisado(s) nesta execução, tudo OK."
+    else
+      resultado="✅ **Nenhum achado** — diff conferido, sem pendências."
+    fi
+  elif [[ "$blocking_this_run" -gt 0 ]]; then
+    resultado="🛑 **Impeditivo** — ${blocking_this_run} achado(s) bloqueante(s) (impacto direto: crash, segurança, dados ou build). **Corrigir antes do merge.**"
+  elif [[ "$inline_this_run" -gt 0 || "$failed" -gt 0 ]]; then
+    local n=$((inline_this_run > failed ? inline_this_run : failed))
+    resultado="⚠️ **${n} achado(s)** — ver comentários inline na aba **Files changed**."
+  else
+    resultado="ℹ️ Execução concluída — ver detalhes abaixo."
+  fi
+
+  if [[ -z "$files_section" && "$total_in_diff" -gt 0 ]]; then
+    files_section="| _(sem registro nesta execução)_ | — | — |\n"
+  fi
+
+  if [[ -n "$inline_section" ]]; then
+    inline_section="### Comentários inline (nesta execução)
+
+| Onde | Tipo | Assunto |
+| --- | --- | --- |
+${inline_section}"
+  else
+    inline_section="### Comentários inline (nesta execução)
+
+**Nenhum** — nada foi publicado no diff nesta execução."
+  fi
+
+  if [[ "$pr_inline_count" -gt 0 ]]; then
+    inline_section+=$'\n\n'"### Comentários inline ativos no PR
+
+| Onde | Tipo | Assunto |
+| --- | --- | --- |
+${pr_inline_section}"
+  fi
+
+  if [[ "$blocking_this_run" -gt 0 ]]; then
+    if [[ "${REVIEW_AVALIAR_SOFT:-true}" == "true" ]]; then
+      merge_section="**Merge:** o check do GitHub **não falha** automaticamente (modo soft), mas há achado(s) **impeditivo(s)** — **não mergear** sem corrigir ou resolver no thread."
+    else
+      merge_section="**Merge:** check **bloqueado** — impeditivo detectado (modo strict)."
+    fi
+  elif [[ "$inline_this_run" -gt 0 || "$failed" -gt 0 ]]; then
+    if [[ "${REVIEW_AVALIAR_SOFT:-true}" == "true" ]]; then
+      merge_section="**Merge:** não bloqueia o check (modo soft). Decisões finais: \`/finalizar\` no Cursor ou resposta nos threads."
+    else
+      merge_section="**Merge:** check **bloqueado** — achados pendentes (modo strict)."
+    fi
+  else
+    merge_section="**Merge:** sem pendências reportadas. Decisões finais: \`/finalizar\` no Cursor se quiser registrar OK formal."
+  fi
+
   local body
   body="$(cat <<EOF
 ## /avaliar automático
 
-| Métrica | Valor |
-| --- | --- |
-| Revisados nesta execução | ${reviewed} |
-| Sem diff novo (pulados) | ${skipped} |
-| Com achados (≠ OK) | ${failed} |
-| Modo | ${llm_mode} |
-| Head | \`${HEAD_SHA:-HEAD}\` |
+${resultado}
 
-Relatório no formato \`/avaliar\` por arquivo — **não bloqueia merge** (modo soft). Decisões finais: \`/finalizar\` no Cursor ou resposta nos threads.
+### Arquivos no diff (${total_in_diff})
+
+| Arquivo | Status nesta execução | Veredito |
+| --- | --- | --- |
+${files_section}
+${inline_section}
+
+---
+
+| | |
+| --- | --- |
+| Modo | ${llm_mode} |
+| Head | \`${head_short}\` |
+| Revisados agora | ${reviewed} |
+| Pulados (sem diff novo) | ${skipped} |
+| Inline nesta execução | ${inline_this_run} |
+| Impeditivo nesta execução | ${blocking_this_run} |
+
+${merge_section}
+
+Relatório completo por arquivo: artifact \`avaliar-reports-pr-${PR_NUMBER}\` (quando disponível).
 
 ${marker}
 EOF
@@ -624,6 +827,21 @@ EOF
   else
     gh pr comment "$PR_NUMBER" --body "$body" >/dev/null
   fi
+}
+
+# Lista comentários inline do /avaliar ainda ativos no PR (todas as execuções).
+fetch_pr_avaliar_inlines() {
+  gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate 2>/dev/null \
+    | jq -r '.[] | select(.body | contains("<!-- avaliar-inline:")) | "\(.path)\t\(.line)\t\(.body)"' \
+    | while IFS=$'\t' read -r path line body; do
+        [[ -z "$path" ]] && continue
+        local title blocking_flag=0
+        title="$(printf '%s' "$body" | head -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        if printf '%s' "$body" | grep -q 'avaliar-blocking'; then
+          blocking_flag=1
+        fi
+        printf '%s\t%s\t%s\t%s\n' "$path" "$line" "$title" "$blocking_flag"
+      done
 }
 
 main() {
@@ -681,6 +899,12 @@ main() {
   tmp_dir="$(mktemp -d)"
   trap 'rm -rf "$tmp_dir"' EXIT
 
+  SUMMARY_FILES_LOG="$tmp_dir/summary-files.tsv"
+  SUMMARY_INLINE_LOG="$tmp_dir/summary-inline.tsv"
+  : >"$SUMMARY_FILES_LOG"
+  : >"$SUMMARY_INLINE_LOG"
+  export SUMMARY_FILES_LOG SUMMARY_INLINE_LOG
+
   echo "=== /avaliar GitHub PR #${PR_NUMBER} ==="
   echo "repo: $GITHUB_REPOSITORY"
   echo "projeto: $PROJECT"
@@ -689,7 +913,7 @@ main() {
   echo ""
 
   if [[ "${#files[@]}" -eq 0 ]]; then
-    post_summary 0 0 0 "$llm_mode"
+    post_summary "$llm_mode" "$SUMMARY_FILES_LOG" "$SUMMARY_INLINE_LOG" 0
     echo "Nenhum arquivo revisável no diff."
     exit 0
   fi
@@ -705,6 +929,7 @@ main() {
     if [[ "$prev_sha" == "$blob_sha" ]]; then
       echo "► $file — pulado (sem alteração desde última review)"
       skipped=$((skipped + 1))
+      summary_log_file skip "$file"
       continue
     fi
 
@@ -760,13 +985,22 @@ main() {
     state_set_file_sha "$file" "$blob_sha"
     reviewed=$((reviewed + 1))
 
+    local blocking_count=0
+    if [[ -f "$SUMMARY_INLINE_LOG" ]]; then
+      blocking_count="$(awk -F'\t' -v f="$file" '$1 == f && $5 == "1" { c++ } END { print c + 0 }' "$SUMMARY_INLINE_LOG")"
+    fi
+    if [[ "$blocking_count" -eq 0 ]] && [[ -n "$report_body" ]] && report_has_impeditivo "$report_body"; then
+      blocking_count=1
+    fi
+    summary_log_file review "$file" "$verdict" "${inline_count:-0}" "$blocking_count"
+
     if verdict_is_failure "$verdict"; then
       failed=$((failed + 1))
     fi
   done
 
   state_save
-  post_summary "$reviewed" "$skipped" "$failed" "$llm_mode"
+  post_summary "$llm_mode" "$SUMMARY_FILES_LOG" "$SUMMARY_INLINE_LOG" "${#files[@]}"
 
   echo ""
   echo "=== Concluído: ${reviewed} revisado(s), ${skipped} pulado(s), ${failed} com achados ==="
