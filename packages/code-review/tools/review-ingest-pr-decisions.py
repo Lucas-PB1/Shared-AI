@@ -4,7 +4,8 @@
 Heurísticas (sem LLM na v1):
 - Resposta humana no thread com padrão de rejeição → rejeitado / nao-aplicavel
 - Resposta humana ou thread resolvido + suggestion aplicada no merge → aceito
-- Merge sem resposta e thread aberto → rejeitado (ignorado no merge)
+- Para / De aplicados no merge (incl. remoção intra-PR) → aceito
+- Merge sem resposta, thread aberto e achado ainda presente → rejeitado (ignorado)
 
 Depois: append decisions.jsonl → compactar → promover → export exclusions.yaml
 """
@@ -46,6 +47,11 @@ write_decisions = _mem.write_decisions
 
 INLINE_MARKER = re.compile(r"<!--\s*avaliar-inline:([^:]+):(\d+)\s*-->")
 SUGGESTION_BLOCK = re.compile(r"```suggestion\s*\n([\s\S]*?)```", re.MULTILINE)
+MD_DE_PARA_BLOCK = re.compile(
+    r"\*\*(De|Para):\*\*\s*\n+```(?:\w+)?\s*\n([\s\S]*?)```",
+    re.MULTILINE,
+)
+BACKTICK_CODE = re.compile(r"`([^`]+)`")
 BOT_LOGINS = frozenset({"github-actions", "github-actions[bot]", "dependabot[bot]"})
 
 REJECT_PATTERNS = re.compile(
@@ -89,6 +95,8 @@ query($owner: String!, $repo: String!, $number: Int!) {
     pullRequest(number: $number) {
       merged
       mergedAt
+      baseRefOid
+      headRefOid
       mergeCommit { oid }
       title
       reviewThreads(first: 100) {
@@ -101,6 +109,7 @@ query($owner: String!, $repo: String!, $number: Int!) {
               line
               originalLine
               author { login }
+              commit { oid }
             }
           }
         }
@@ -158,6 +167,131 @@ def git_show(project: Path, sha: str, file_path: str) -> str:
     return proc.stdout
 
 
+def extract_de_para_from_body(body: str) -> tuple[str, str]:
+    de = ""
+    para = ""
+    for match in MD_DE_PARA_BLOCK.finditer(body):
+        label, code = match.group(1), match.group(2)
+        if label == "De":
+            de = code
+        else:
+            para = code
+    suggestion = SUGGESTION_BLOCK.search(body)
+    if suggestion:
+        para = para or suggestion.group(1)
+    return de, para
+
+
+def extract_code_indicators(body: str) -> list[str]:
+    indicators: list[str] = []
+    for match in BACKTICK_CODE.finditer(body):
+        token = match.group(1).strip()
+        if len(token) < 3:
+            continue
+        if token not in indicators:
+            indicators.append(token)
+    return indicators
+
+
+def git_rev_parse(project: Path, ref: str) -> str:
+    proc = subprocess.run(
+        ["git", "-C", str(project), "rev-parse", ref],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return ""
+    return proc.stdout.strip()
+
+
+def resolve_pr_commit_range(
+    project: Path,
+    pr: dict[str, Any],
+    merge_oid: str,
+) -> tuple[str, str]:
+    head_oid = git_rev_parse(project, f"{merge_oid}^2")
+    base_oid = git_rev_parse(project, f"{merge_oid}^1")
+    if head_oid and base_oid:
+        return base_oid, head_oid
+
+    base_oid = (pr.get("baseRefOid") or "").strip()
+    head_oid = (pr.get("headRefOid") or "").strip()
+    if base_oid and head_oid:
+        return base_oid, head_oid
+
+    return base_oid or merge_oid, head_oid or merge_oid
+
+
+def git_log_commits(project: Path, base_oid: str, head_oid: str) -> list[str]:
+    if not base_oid or not head_oid or base_oid == head_oid:
+        return [head_oid] if head_oid else []
+    proc = subprocess.run(
+        ["git", "-C", str(project), "rev-list", "--reverse", f"{base_oid}..{head_oid}"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return []
+    return [sha for sha in proc.stdout.splitlines() if sha.strip()]
+
+
+def snippet_ever_in_commit_range(
+    project: Path,
+    base_oid: str,
+    head_oid: str,
+    file_path: str,
+    snippet: str,
+    hint_line: int = 1,
+) -> bool:
+    norm = normalize_snippet(snippet)
+    if not norm or not file_path:
+        return False
+    commits = git_log_commits(project, base_oid, head_oid)
+    if not commits and head_oid:
+        commits = [head_oid]
+    for sha in commits:
+        content = git_show(project, sha, file_path)
+        if content and snippet_in_file(content, norm, hint_line):
+            return True
+    return False
+
+
+def fix_applied_in_pr(
+    project: Path,
+    *,
+    base_oid: str,
+    head_oid: str,
+    merge_oid: str,
+    file_path: str,
+    line: int,
+    de_code: str,
+    para_code: str,
+    body: str,
+) -> tuple[bool, str]:
+    file_merge = git_show(project, merge_oid, file_path) if merge_oid else ""
+    if not file_merge and head_oid:
+        file_merge = git_show(project, head_oid, file_path)
+
+    if para_code and file_merge and snippet_in_file(file_merge, para_code, line):
+        return True, "suggestion / Para aplicada no merge"
+
+    if de_code and file_merge:
+        if not snippet_in_file(file_merge, de_code, line) and snippet_ever_in_commit_range(
+            project, base_oid, head_oid, file_path, de_code, line
+        ):
+            return True, "código De removido ou corrigido no PR"
+
+    for indicator in extract_code_indicators(body):
+        if file_merge and indicator in file_merge:
+            continue
+        if snippet_ever_in_commit_range(
+            project, base_oid, head_oid, file_path, indicator, line
+        ):
+            return True, f"indicador `{indicator}` removido no PR"
+
+    return False, ""
+
+
 def snippet_in_file(file_content: str, snippet: str, hint_line: int) -> bool:
     norm = normalize_snippet(snippet)
     if not norm:
@@ -183,6 +317,8 @@ def classify_thread(
     thread: dict[str, Any],
     merged: bool,
     merge_oid: str,
+    base_oid: str,
+    head_oid: str,
     project: Path,
     pr_number: int,
 ) -> dict[str, Any] | None:
@@ -198,8 +334,7 @@ def classify_thread(
     file_path = marker.group(1) if marker else (root.get("path") or "")
     line = int(marker.group(2)) if marker else int(root.get("line") or root.get("originalLine") or 1)
     summary = extract_summary(body)
-    suggestion = SUGGESTION_BLOCK.search(body)
-    para = suggestion.group(1) if suggestion else ""
+    de_code, para_code = extract_de_para_from_body(body)
 
     human = [
         c
@@ -244,16 +379,27 @@ def classify_thread(
     if not merged:
         return None
 
-    file_content = git_show(project, merge_oid, file_path) if file_path and merge_oid else ""
-
-    if para and file_content and snippet_in_file(file_content, para, line):
+    applied, applied_reason = fix_applied_in_pr(
+        project,
+        base_oid=base_oid,
+        head_oid=head_oid,
+        merge_oid=merge_oid,
+        file_path=file_path,
+        line=line,
+        de_code=de_code,
+        para_code=para_code,
+        body=body,
+    )
+    if applied:
         return {
             **base,
             "decision": "aceito",
-            "reason": "suggestion / Para aplicada no merge",
+            "reason": applied_reason,
         }
 
-    if thread.get("isResolved") and file_content and para:
+    file_content = git_show(project, merge_oid, file_path) if file_path and merge_oid else ""
+
+    if thread.get("isResolved") and file_content and para_code:
         return {
             **base,
             "decision": "aceito",
@@ -312,11 +458,14 @@ def cmd_ingest(
         return 0
 
     merge_oid = (pr.get("mergeCommit") or {}).get("oid") or ""
+    base_oid, head_oid = resolve_pr_commit_range(project, pr, merge_oid)
     threads = (pr.get("reviewThreads") or {}).get("nodes") or []
 
     proposed: list[dict[str, Any]] = []
     for thread in threads:
-        decision = classify_thread(thread, True, merge_oid, project, pr_number)
+        decision = classify_thread(
+            thread, True, merge_oid, base_oid, head_oid, project, pr_number
+        )
         if decision:
             proposed.append(decision)
 

@@ -47,9 +47,9 @@ git add .cursor/review/exclusions.yaml && git commit
 
 1. Dev mergeia PR com comentários `avaliar-inline`
 2. Workflow `avaliar-pr-memoria` classifica cada thread:
-   - suggestion aplicada / thread resolvido → **aceito** (candidate → `convencoes.md` após ≥2 ocorrências)
+   - suggestion aplicada / thread resolvido / De removido intra-PR → **aceito** (candidate → `convencoes.md` após ≥2 ocorrências)
    - resposta humana de rejeição → **rejeitado** → `exclusions.yaml`
-   - merge sem resposta → **rejeitado** (ignorado)
+   - merge sem resposta e achado ainda presente → **rejeitado** (ignorado)
 3. Bot commita em `main` se `convencoes` ou `exclusions` mudarem
 
 Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-ia apontando `--project` pro hub.
