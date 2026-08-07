@@ -65,11 +65,6 @@ NAO_APLICAVEL_PATTERNS = re.compile(
     r"n[aã]o afeta produ|nao afeta produ|fora do escopo",
     re.IGNORECASE,
 )
-ACCEPT_PATTERNS = re.compile(
-    r"corrigido|fixed|feito|resolvido|applied|aceito|ok|done|merged fix",
-    re.IGNORECASE,
-)
-
 
 def run_gh(args: list[str]) -> Any:
     proc = subprocess.run(
