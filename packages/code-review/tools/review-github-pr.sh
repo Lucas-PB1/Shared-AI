@@ -803,7 +803,7 @@ ${inline_section}
 
 ---
 
-| | |
+| Detalhe | Valor |
 | --- | --- |
 | Modo | ${llm_mode} |
 | Head | \`${head_short}\` |
