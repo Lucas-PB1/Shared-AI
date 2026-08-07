@@ -4,14 +4,20 @@ name: Avaliar PR — memória
 on:
   pull_request:
     types: [closed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Número do PR mergeado (retry manual do ingest)
+        required: true
+        type: number
 
 permissions:
   contents: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   ingest-memoria:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -44,14 +50,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
           HOSTDIME_IA_ROOT: ${{ github.workspace }}/hostdime-ia
         run: |
           bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ingest-pr-decisions.sh" --write .
 
-      - name: Commit memória versionada
+      - name: Abrir PR com memória versionada
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUM: ${{ github.event.pull_request.number || inputs.pr_number }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -60,5 +67,17 @@ jobs:
             echo "Sem alterações em convencoes/exclusions."
             exit 0
           fi
-          git commit -m "chore(review): memória pós-merge PR #${{ github.event.pull_request.number }}"
-          git push origin main
+          BRANCH="chore/review-memoria-pr-${PR_NUM}"
+          git checkout -b "$BRANCH"
+          git commit -m "chore(review): memória pós-merge PR #${PR_NUM}"
+          git push -u origin "$BRANCH" --force
+          EXISTING="$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number' || true)"
+          if [[ -n "$EXISTING" ]]; then
+            echo "PR #$EXISTING já aberto para $BRANCH."
+            exit 0
+          fi
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore(review): memória pós-merge PR #${PR_NUM}" \
+            --body "Ingest automático do /avaliar após merge do PR #${PR_NUM}."
