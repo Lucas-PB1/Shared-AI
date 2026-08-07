@@ -113,18 +113,20 @@ report_has_impeditivo() {
 block_is_impeditivo() {
   local report="$1"
   local block="$2"
-  local title
+  local title impeditivo_section
   title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
   [[ -n "$title" ]] || return 1
   if [[ "$(parse_verdict_from_report "$report")" == "Não recomendado" ]]; then
     return 0
   fi
-  printf '%s' "$report" | awk -v t "$title" '
+  impeditivo_section="$(printf '%s' "$report" | awk '
     /^### Impeditivo/ { in_sec = 1; next }
     in_sec && /^### / { in_sec = 0 }
-    in_sec && index($0, t) { found = 1; exit }
-    END { exit(found ? 0 : 1) }
-  '
+    in_sec { print }
+  ')"
+  [[ -n "$impeditivo_section" ]] || return 1
+  # grep -F: título do LLM pode conter aspas/backslash — awk -v quebra nesses casos
+  printf '%s' "$impeditivo_section" | grep -qF -- "$title"
 }
 
 extract_block_title() {
