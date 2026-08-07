@@ -76,8 +76,13 @@ jobs:
             echo "PR #$EXISTING já aberto para $BRANCH."
             exit 0
           fi
-          gh pr create \
+          if ! gh pr create \
             --base main \
             --head "$BRANCH" \
             --title "chore(review): memória pós-merge PR #${PR_NUM}" \
-            --body "Ingest automático do /avaliar após merge do PR #${PR_NUM}."
+            --body "Ingest automático do /avaliar após merge do PR #${PR_NUM}."; then
+            echo "::warning::Branch $BRANCH pushada, mas o bot não pode abrir PR."
+            echo "Habilite Settings → Actions → Allow GitHub Actions to create pull requests."
+            echo "Ou abra PR manualmente: https://github.com/${{ github.repository }}/compare/main...$BRANCH"
+            exit 0
+          fi
