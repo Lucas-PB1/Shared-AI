@@ -1,7 +1,9 @@
 # Convenções do projeto
 
-Atualizado via `/memoria promover` ou manualmente.  
-No CI GitHub: `.cursor/review/convencoes.md` versionado é lido por escopo no `/avaliar`.
+Atualizado via **ingest pós-merge** (`avaliar-pr-memoria`) e `/memoria promover`.  
+No CI GitHub: este arquivo é lido por escopo no `/avaliar`.
+
+Regras de styling/CSS/Tailwind ficam na skill `hostdime-styling` (roteada no `/avaliar`).
 
 ## Como escrever escopos
 
@@ -13,10 +15,10 @@ Use **`## Escopo: rótulo (**/glob)`** — o glob entre parênteses casa com o p
 | Arquivo | `## Escopo: config (**/config/app.php)` |
 | Global | `## Escopo: global (**/*)` |
 
-Prefixo de path sem parênteses também funciona se o rótulo for substring do path (ex.: `## Escopo: src/legacy/**`).
+Prefixo de path sem parênteses também funciona se o rótulo for substring do path.
 
-Promova bullets após validação do time (≥2 aceites no ingest ou `/memoria promover --write`).
+Bullets entram após **≥2 aceites** do mesmo achado (`finding_id` no marker inline) no ingest (`decisions-ingest.jsonl`) ou `/memoria promover --write`.
 
 ## Escopo: global (**/*)
 
-_(vazio — preenchido via `/memoria promover` ou manualmente)_
+_(vazio — preenchido pelo ingest ou `/memoria promover`)_

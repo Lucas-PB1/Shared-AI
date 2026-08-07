@@ -7,7 +7,7 @@ Heurísticas (sem LLM na v1):
 - Fix aplicado no merge (suggestion / De / intra-PR) sem reply → aceito
 - Merge sem reply e achado ainda presente → rejeitado → exclusions.yaml
 
-Depois: append decisions.jsonl → compactar → promover → export exclusions.yaml
+Depois: append decisions-ingest.jsonl → compactar → promover → export exclusions.yaml
 """
 from __future__ import annotations
 
@@ -37,15 +37,21 @@ def _load_memoria():
 
 _mem = _load_memoria()
 SCHEMA_VERSION = _mem.SCHEMA_VERSION
+DECISIONS_INGEST_FILE = _mem.DECISIONS_INGEST_FILE
 build_context = _mem.build_context
 cmd_promover = _mem.cmd_promover
+decisions_ingest_path = _mem.decisions_ingest_path
 read_decisions = _mem.read_decisions
 review_dir = _mem.review_dir
 slugify = _mem.slugify
+stable_finding_id = _mem.stable_finding_id
+extract_finding_theme = _mem.extract_finding_theme
 write_context = _mem.write_context
 write_decisions = _mem.write_decisions
 
-INLINE_MARKER = re.compile(r"<!--\s*avaliar-inline:([^:]+):(\d+)\s*-->")
+INLINE_MARKER = re.compile(
+    r"<!--\s*avaliar-inline:([^:]+):(\d+)(?::fid:([a-z0-9-]+))?\s*-->"
+)
 SUGGESTION_BLOCK = re.compile(r"```suggestion\s*\n([\s\S]*?)```", re.MULTILINE)
 MD_DE_PARA_BLOCK = re.compile(
     r"\*\*(De|Para):\*\*\s*\n+```(?:\w+)?\s*\n([\s\S]*?)```",
@@ -328,7 +334,9 @@ def classify_thread(
     marker = INLINE_MARKER.search(body)
     file_path = marker.group(1) if marker else (root.get("path") or "")
     line = int(marker.group(2)) if marker else int(root.get("line") or root.get("originalLine") or 1)
-    summary = extract_summary(body)
+    marker_fid = marker.group(3) if marker else None
+    raw_summary = extract_summary(body)
+    summary = extract_finding_theme(raw_summary)
     de_code, para_code = extract_de_para_from_body(body)
 
     human = [
@@ -343,7 +351,7 @@ def classify_thread(
         "finalized_at": now,
         "review_slug": f"pr-{pr_number}",
         "file": file_path,
-        "finding_id": slugify(summary),
+        "finding_id": marker_fid or stable_finding_id(raw_summary),
         "line": line,
         "category": "pr-ingest",
         "summary": summary,
@@ -427,9 +435,27 @@ def upsert_pr_decisions(
 ) -> list[dict[str, Any]]:
     source = f"github-pr-{pr_number}"
     existing = [d for d in read_decisions(decisions_path) if d.get("source") != source]
-    existing.extend(new_items)
-    write_decisions(decisions_path, existing)
-    return new_items
+    normalized_new: list[dict[str, Any]] = []
+    for item in new_items:
+        row = dict(item)
+        summary = row.get("summary", "")
+        if summary:
+            theme = extract_finding_theme(summary)
+            row["summary"] = theme
+            row["finding_id"] = stable_finding_id(theme)
+        normalized_new.append(row)
+    existing.extend(normalized_new)
+    normalized_all: list[dict[str, Any]] = []
+    for item in existing:
+        row = dict(item)
+        summary = row.get("summary", "")
+        if summary:
+            theme = extract_finding_theme(summary)
+            row["summary"] = theme
+            row["finding_id"] = stable_finding_id(theme)
+        normalized_all.append(row)
+    write_decisions(decisions_path, normalized_all)
+    return normalized_new
 
 
 def run_export_exclusions(project: Path) -> None:
@@ -485,9 +511,12 @@ def cmd_ingest(
     if not version.is_file():
         version.write_text("2\n", encoding="utf-8")
 
-    decisions_path = rd / "decisions.jsonl"
+    decisions_path = decisions_ingest_path(project)
     added = upsert_pr_decisions(decisions_path, pr_number, proposed)
-    print(f"\n{len(added)} decisão(ões) gravada(s) em decisions.jsonl (source github-pr-{pr_number})")
+    print(
+        f"\n{len(added)} decisão(ões) gravada(s) em {DECISIONS_INGEST_FILE} "
+        f"(source github-pr-{pr_number})"
+    )
 
     all_decisions = read_decisions(decisions_path)
     context = build_context(project, f"github-pr-{pr_number}", all_decisions)
@@ -500,7 +529,10 @@ def cmd_ingest(
 
     run_export_exclusions(project)
     print("exclusions.yaml exportado")
-    print("\nPróximo: commit .cursor/review/convencoes.md + exclusions.yaml (+ decisions se versionado)")
+    print(
+        "\nPróximo: commit .cursor/review/decisions-ingest.jsonl + "
+        "convencoes.md + exclusions.yaml"
+    )
     return 0
 
 

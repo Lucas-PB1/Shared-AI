@@ -28,9 +28,10 @@ Copie `github-avaliar-pr-memoria.yml` para `.github/workflows/avaliar-pr-memoria
 | --- | --- |
 | `.cursor/review/convencoes.md` | Convenções por escopo (LLM + referência) |
 | `.cursor/review/exclusions.yaml` | Achados rejeitados / não aplicáveis (CI não repete) |
+| `.cursor/review/decisions-ingest.jsonl` | Histórico acumulado de decisões do ingest pós-merge (CI) |
 | `.cursor/review/.memoria-version` | Schema v2 (`2`) |
 
-Manter **gitignored**: `context.yaml`, `decisions.jsonl`, `reports/` (CI), `resultados/`.
+Manter **gitignored**: `context.yaml`, `decisions.jsonl` (staging local), `reports/` (CI), `resultados/`.
 
 **Promover memória local → CI:**
 
@@ -48,11 +49,11 @@ git add .cursor/review/exclusions.yaml && git commit
 1. Dev mergeia PR com comentários `avaliar-inline`
 2. Workflow `avaliar-pr-memoria` classifica cada thread (comentários de devs humanos no thread):
    - resposta **rejeitando** o achado (`ignorar`, `false positive`, `não se aplica`, …) → **rejeitado** / **nao-aplicavel** → `exclusions.yaml`
-   - resposta **sem objeção** (positiva, neutra ou vazia) → **aceito** → candidate em `context.yaml`
+   - resposta **sem objeção** (positiva, neutra ou vazia) → **aceito** → candidate em `decisions-ingest.jsonl`
    - fix no merge (suggestion / De / intra-PR) sem reply → **aceito**
    - merge sem reply e achado **ainda no código** → **rejeitado** → `exclusions.yaml`
-3. `aceito` vira bullet em `convencoes.md` após **≥2 ocorrências** do mesmo achado (ou `--all` no ingest)
-4. Bot abre PR com `convencoes.md` / `exclusions.yaml` se mudarem
+3. `aceito` vira bullet em `convencoes.md` após **≥2 ocorrências** do mesmo achado (`finding_id` estável no marker `<!-- avaliar-inline:path:line:fid:… -->`; histórico em `decisions-ingest.jsonl`)
+4. Bot abre PR com `decisions-ingest.jsonl` / `convencoes.md` / `exclusions.yaml` se mudarem
 
 Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-ia apontando `--project` pro hub.
 
@@ -100,6 +101,21 @@ Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
 - Job **não bloqueia merge** por default (`REVIEW_AVALIAR_SOFT=true`) — comenta achados para o dev
 - Job **falha** só se `REVIEW_AVALIAR_SOFT=false` (gate hard, opcional)
 - `/finalizar` no Cursor continua para decisões do dev
+
+### Cache (CI)
+
+O template `github-avaliar-pr.yml` restaura caches entre runs para reduzir cold start:
+
+| Cache | Path | Chave |
+| --- | --- | --- |
+| npm (projeto) | via `setup-node` | `package-lock.json` |
+| hostdime-ia | `hostdime-ia/node_modules`, `hostdime-ia/vendor` | hash de `package.json` + `composer.json` |
+| Cursor CLI | `~/.cursor` | `cursor-cli-{os}-v1` |
+| pip (semgrep) | `~/.cache/pip` | `pip-semgrep-{os}-v1` |
+
+No cache hit de hostdime-ia, `npm install` / `composer install` são pulados. O sparse checkout do `hostdime-ia` sempre roda (código de review + manifestos).
+
+Logs do LLM incluem timestamp UTC (`… LLM (HH:MM:SS UTC)` / `✓ LLM`) em `review-github-pr.sh`.
 
 ### Modos (`REVIEW_AVALIAR_MODE`)
 

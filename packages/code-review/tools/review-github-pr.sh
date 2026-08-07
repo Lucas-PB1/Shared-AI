@@ -141,6 +141,20 @@ extract_block_title() {
   fi
 }
 
+compute_finding_id() {
+  local title="$1"
+  printf '%s' "$title" | python3 "$TOOLS_DIR/review-memoria.py" finding-id
+}
+
+build_inline_marker() {
+  local file="$1"
+  local start_line="$2"
+  local title="$3"
+  local fid
+  fid="$(compute_finding_id "$title")"
+  printf '<!-- avaliar-inline:%s:%s:fid:%s -->' "$file" "$start_line" "$fid"
+}
+
 summary_log_file() {
   local action="$1"
   local file="$2"
@@ -308,9 +322,24 @@ save_report_copy() {
 find_inline_comment_id() {
   local file="$1"
   local start_line="$2"
-  local marker="<!-- avaliar-inline:${file}:${start_line} -->"
-  gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate \
-    | jq -r --arg m "$marker" '.[] | select(.body | contains($m)) | .id' | head -1
+  local title="${3:-}"
+  local fid marker marker_legacy comment_id
+
+  if [[ -n "$title" ]]; then
+    fid="$(compute_finding_id "$title")"
+    comment_id="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate \
+      | jq -r --arg f "$file" --arg fid ":fid:${fid} -->" '
+        .[] | select(.path == $f and (.body | contains($fid))) | .id' | head -1)"
+    if [[ -n "$comment_id" && "$comment_id" != "null" ]]; then
+      printf '%s' "$comment_id"
+      return 0
+    fi
+  fi
+
+  marker_legacy="<!-- avaliar-inline:${file}:${start_line} -->"
+  comment_id="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate \
+    | jq -r --arg m "$marker_legacy" '.[] | select(.body | contains($m)) | .id' | head -1)"
+  printf '%s' "$comment_id"
 }
 
 extract_section_code() {
@@ -512,16 +541,21 @@ upsert_inline_comment() {
   local end_line="$2"
   local body="$3"
   local start_line="${4:-$2}"
+  local title="${5:-}"
   local head="${HEAD_SHA:-HEAD}"
-  local marker="<!-- avaliar-inline:${file}:${start_line} -->"
-  local comment_id
-  local full_body="$body"
+  local marker comment_id full_body="$body"
+
+  if [[ -n "$title" ]]; then
+    marker="$(build_inline_marker "$file" "$start_line" "$title")"
+  else
+    marker="<!-- avaliar-inline:${file}:${start_line} -->"
+  fi
 
   if [[ "$full_body" != *"$marker"* ]]; then
     full_body="${full_body}"$'\n\n'"${marker}"
   fi
 
-  comment_id="$(find_inline_comment_id "$file" "$start_line")"
+  comment_id="$(find_inline_comment_id "$file" "$start_line" "$title")"
   if [[ -n "$comment_id" && "$comment_id" != "null" ]]; then
     gh api --method DELETE "repos/${GITHUB_REPOSITORY}/pulls/comments/${comment_id}" >/dev/null 2>&1 || true
   fi
@@ -574,6 +608,7 @@ post_inline_findings() {
   declare -A best_block
   declare -A best_score
   declare -A best_start
+  declare -A best_fid
   local rs=$'\036'
 
   while IFS= read -r -d "$rs" block || [[ -n "${block:-}" ]]; do
@@ -589,6 +624,11 @@ post_inline_findings() {
       best_block[$line_no]="$block"
       best_score[$line_no]=$score
       best_start[$line_no]="$line_no"
+      local block_title
+      block_title="$(extract_block_title "$block" || true)"
+      if [[ -n "$block_title" ]]; then
+        best_fid[$line_no]="$(compute_finding_id "$block_title")"
+      fi
     fi
   done < "$tmp_blocks"
 
@@ -599,7 +639,13 @@ post_inline_findings() {
     local stale=1
     for line_no in "${!best_block[@]}"; do
       local start_key="${best_start[$line_no]:-$line_no}"
-      if [[ "$body" == *"<!-- avaliar-inline:${file}:${start_key} -->"* ]]; then
+      local fid="${best_fid[$line_no]:-}"
+      if [[ -n "$fid" && "$body" == *":fid:${fid} -->"* ]]; then
+        stale=0
+        break
+      fi
+      if [[ "$body" == *"<!-- avaliar-inline:${file}:${start_key} -->"* ]] \
+        || [[ "$body" == *"<!-- avaliar-inline:${file}:${start_key}:fid:"* ]]; then
         stale=0
         break
       fi
@@ -637,7 +683,7 @@ post_inline_findings() {
       fi
     fi
 
-    if upsert_inline_comment "$file" "$end_line" "$gh_body" "$start_line"; then
+    if upsert_inline_comment "$file" "$end_line" "$gh_body" "$start_line" "$(extract_block_title "$block")"; then
       posted=$((posted + 1))
       local inline_title
       inline_title="$(extract_block_title "$block" || true)"
@@ -904,8 +950,9 @@ main() {
       printf '%s' "$static_output" >"$tmp_dir/static.log"
       file_diff_hunk "$file" >"$tmp_dir/diff.patch"
       report_file="$tmp_dir/report.md"
-      echo "  … LLM"
+      echo "  … LLM ($(date -u +%H:%M:%S) UTC)"
       if run_llm_review "$file" "$tmp_dir/static.log" "$tmp_dir/diff.patch" "$report_file"; then
+        echo "  ✓ LLM ($(date -u +%H:%M:%S) UTC)"
         report_body="$(cat "$report_file")"
         verdict="$(parse_verdict_from_report "$report_body")"
         origin="/avaliar automático (CI — estático + LLM)"

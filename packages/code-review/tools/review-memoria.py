@@ -20,6 +20,9 @@ HISTORY_LINE = re.compile(
 )
 HISTORY_SECTION = re.compile(r"^###\s+(\d{4}-\d{2}-\d{2})\s+—\s+(.+)$")
 CONVENTION_SECTION = re.compile(r"^###\s+(.+)$")
+CONVENCOES_SCOPE = re.compile(r"^##\s+Escopo:\s+(.+)$")
+FINDING_THEME = re.compile(r"^[^:\n]+:\d+(?:-\d+)?\s*[—\-]\s*(.+)$")
+DECISIONS_INGEST_FILE = "decisions-ingest.jsonl"
 
 SCOPE_MAP = {
     "simulator-core": "**/simulator-core/**",
@@ -38,10 +41,38 @@ def review_dir(project: Path) -> Path:
     return project / ".cursor" / "review"
 
 
+def decisions_ingest_path(project: Path) -> Path:
+    """Histórico versionado de decisões ingeridas pelo CI (github-pr-*)."""
+    return review_dir(project) / DECISIONS_INGEST_FILE
+
+
 def slugify(text: str) -> str:
     base = re.sub(r"[^\w\s-]", "", text.lower())
     base = re.sub(r"[-\s]+", "-", base).strip("-")
     return base[:80] or "finding"
+
+
+def extract_finding_theme(text: str) -> str:
+    """Remove prefixo arquivo:linha — do título do achado."""
+    stripped = text.strip()
+    if not stripped:
+        return "finding"
+    match = FINDING_THEME.match(stripped)
+    if match:
+        return match.group(1).strip()
+    return stripped
+
+
+def stable_finding_id(text: str) -> str:
+    """ID estável entre PRs — só a descrição do achado, não path/linha."""
+    return slugify(extract_finding_theme(text))
+
+
+def decision_store_label(decision: dict[str, Any]) -> str:
+    source = str(decision.get("source", ""))
+    if source.startswith("github-pr-"):
+        return DECISIONS_INGEST_FILE
+    return "decisions.jsonl"
 
 
 def infer_scope_from_file(file_path: str) -> str:
@@ -63,6 +94,130 @@ def infer_scope_from_section(title: str) -> str:
         if key.lower() in title_lower:
             return pattern
     return "**/*"
+
+
+def glob_matches_file(glob_pattern: str, file_path: str) -> bool:
+    normalized = file_path.replace("\\", "/")
+    pattern = glob_pattern.strip()
+    if not pattern:
+        return False
+    if pattern in ("**/*", "*"):
+        return True
+    if pattern.endswith("/**"):
+        prefix = pattern[:-3]
+        return normalized.startswith(prefix.rstrip("/") + "/") or normalized == prefix.rstrip("/")
+    return fnmatch.fnmatch(normalized, pattern)
+
+
+def extract_scope_glob(scope_label: str) -> str:
+    label = scope_label.strip()
+    paren = re.search(r"\(\*\*/[^)]+\)", label)
+    if paren:
+        return paren.group(0)[1:-1]
+    if label.startswith("**/"):
+        return label
+    return label
+
+
+def parse_convencoes_sections(content: str) -> tuple[str, list[dict[str, Any]]]:
+    """Retorna preâmbulo e seções ## Escopo: com bullets."""
+    preamble_lines: list[str] = []
+    sections: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+
+    for line in content.splitlines():
+        scope_match = CONVENCOES_SCOPE.match(line.strip())
+        if scope_match:
+            if current is not None:
+                sections.append(current)
+            label = scope_match.group(1).strip()
+            current = {
+                "header": line.rstrip(),
+                "label": label,
+                "glob": extract_scope_glob(label),
+                "bullets": [],
+            }
+            continue
+        if current is None:
+            preamble_lines.append(line)
+            continue
+        stripped = line.strip()
+        if stripped.startswith("- "):
+            current["bullets"].append(stripped[2:].strip())
+
+    if current is not None:
+        sections.append(current)
+
+    return "\n".join(preamble_lines).rstrip(), sections
+
+
+def render_convencoes_sections(preamble: str, sections: list[dict[str, Any]]) -> str:
+    lines: list[str] = []
+    if preamble.strip():
+        lines.append(preamble.rstrip())
+        lines.append("")
+    for section in sections:
+        lines.append(section["header"])
+        lines.append("")
+        if section["bullets"]:
+            for bullet in section["bullets"]:
+                lines.append(f"- {bullet}")
+        else:
+            lines.append("_(vazio)_")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def find_convencoes_section_index(sections: list[dict[str, Any]], scope: str) -> int | None:
+    scope_norm = scope.replace("\\", "/")
+
+    def scope_tokens(value: str) -> set[str]:
+        return {token for token in re.findall(r"[\w-]+", value) if len(token) > 3}
+
+    scope_set = scope_tokens(scope_norm)
+    best_idx: int | None = None
+    best_score = 0
+
+    for idx, section in enumerate(sections):
+        section_glob = section.get("glob") or extract_scope_glob(section.get("label", ""))
+        if scope_norm == section_glob:
+            return idx
+        section_set = scope_tokens(section_glob) | scope_tokens(section.get("label", ""))
+        overlap = len(scope_set & section_set)
+        if overlap > best_score:
+            best_score = overlap
+            best_idx = idx
+
+    return best_idx if best_score > 0 else None
+
+
+def merge_promoted_into_convencoes(existing: str, new_by_scope: dict[str, list[str]]) -> tuple[str, int]:
+    """Anexa bullets promovidos às seções existentes (dedupe por texto). Retorna (conteúdo, qtd novos)."""
+    preamble, sections = parse_convencoes_sections(existing)
+    known = {bullet.strip() for section in sections for bullet in section["bullets"]}
+    added = 0
+
+    for scope, rules in new_by_scope.items():
+        for rule in rules:
+            text = rule.strip()
+            if not text or text in known:
+                continue
+            idx = find_convencoes_section_index(sections, scope)
+            if idx is None:
+                sections.append(
+                    {
+                        "header": f"## Escopo: {scope}",
+                        "label": scope,
+                        "glob": scope,
+                        "bullets": [text],
+                    }
+                )
+            else:
+                sections[idx]["bullets"].append(text)
+            known.add(text)
+            added += 1
+
+    return render_convencoes_sections(preamble, sections), added
 
 
 def load_slug_index(resultados: Path) -> dict[str, str]:
@@ -241,7 +396,7 @@ def merge_history_into_context(
                     "since": d["finalized_at"][:10],
                     "occurrences": 1,
                     "sources": [source_ref],
-                    "inferred_from": "decisions.jsonl",
+                    "inferred_from": decision_store_label(d),
                 }
         elif decision == "adiado":
             pending.append(
@@ -277,7 +432,7 @@ def merge_history_into_context(
                     "decision": "aceito",
                     "occurrences": 1,
                     "promoted": False,
-                    "inferred_from": "decisions.jsonl",
+                    "inferred_from": decision_store_label(d),
                 }
 
     return list(excl_by_id.values()), pending, list(cand_by_id.values())
@@ -570,6 +725,19 @@ def read_decisions(path: Path) -> list[dict[str, Any]]:
     return out
 
 
+def read_merged_decisions(project: Path) -> list[dict[str, Any]]:
+    """Une histórico versionado do CI com staging local."""
+    rd = review_dir(project)
+    merged: list[dict[str, Any]] = read_decisions(decisions_ingest_path(project))
+    seen = {d.get("source", "") + d.get("finding_id", "") for d in merged}
+    for item in read_decisions(rd / "decisions.jsonl"):
+        key = item.get("source", "") + item.get("finding_id", "")
+        if key not in seen:
+            merged.append(item)
+            seen.add(key)
+    return merged
+
+
 def mode(project: Path) -> str:
     version_file = review_dir(project) / ".memoria-version"
     if version_file.is_file() and version_file.read_text(encoding="utf-8").strip() == "2":
@@ -781,10 +949,10 @@ def cmd_migrar(project: Path, write: bool) -> int:
 
 def cmd_compactar(project: Path, write: bool) -> int:
     rd = review_dir(project)
-    decisions = read_decisions(rd / "decisions.jsonl")
+    decisions = read_merged_decisions(project)
 
     if not decisions:
-        print("Erro: nenhuma decisão em decisions.jsonl", file=sys.stderr)
+        print("Erro: nenhuma decisão em decisions.jsonl ou decisions-ingest.jsonl", file=sys.stderr)
         return 1
 
     context = build_context(project, "decisions.jsonl", decisions)
@@ -808,8 +976,8 @@ def cmd_promover(project: Path, write: bool, all_candidates: bool) -> int:
     rd = review_dir(project)
     context = load_context(rd)
     if context is None:
-        if (rd / "decisions.jsonl").is_file():
-            decisions = read_decisions(rd / "decisions.jsonl")
+        decisions = read_merged_decisions(project)
+        if decisions:
             context = build_context(project, "promover", decisions)
             if write:
                 write_context(rd, context)
@@ -839,34 +1007,34 @@ def cmd_promover(project: Path, write: bool, all_candidates: bool) -> int:
         print("Nenhuma regra para promover.")
         return 0
 
-    lines = [
-        "# Convenções locais (gitignored)",
-        "",
-        f"Atualizado: {datetime.now().strftime('%Y-%m-%d')} via review-memoria promover",
-        "Origem: context → convention_rules + candidates",
-        "",
-    ]
-    for scope, rules in sections.items():
-        lines.append(f"## Escopo: {scope}")
-        lines.append("")
-        for rule in rules[:15]:
-            lines.append(f"- {rule}")
-        lines.append("")
-
-    content = "\n".join(lines)
+    out = rd / "convencoes.md"
+    existing = out.read_text(encoding="utf-8") if out.is_file() else ""
+    merged, added = merge_promoted_into_convencoes(existing, sections)
 
     print("=== promover (proposta) ===")
     print(f"Escopos: {len(sections)}")
-    print(f"Bullets: {sum(len(v) for v in sections.values())}")
-    print(f"Tamanho: {len(content)} bytes")
+    print(f"Bullets novos: {added}")
+    print(f"Tamanho: {len(merged)} bytes")
 
     if not write:
         print("\nDry-run. Use --write para gravar convencoes.md.")
         return 0
 
-    out = rd / "convencoes.md"
-    out.write_text(content, encoding="utf-8")
-    print(f"\nGravado: {out}")
+    if added == 0:
+        print("\nNenhum bullet novo em convencoes.md (já presentes ou abaixo do limiar).")
+        return 0
+
+    out.write_text(merged, encoding="utf-8")
+    print(f"\nGravado: {out} (+{added} bullet(s))")
+    return 0
+
+
+def cmd_finding_id(text: str) -> int:
+    payload = text.strip() if text.strip() else sys.stdin.read().strip()
+    if not payload:
+        print("Erro: informe título ou summary do achado (arg ou stdin)", file=sys.stderr)
+        return 1
+    print(stable_finding_id(payload))
     return 0
 
 
@@ -933,11 +1101,15 @@ def cmd_diff(project: Path) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Memória de review v2")
-    parser.add_argument("command", choices=["status", "backup", "migrar", "compactar", "promover", "restore", "diff"])
+    parser.add_argument("command", choices=["status", "backup", "migrar", "compactar", "promover", "restore", "diff", "finding-id"])
     parser.add_argument("project", nargs="?", default=".")
+    parser.add_argument("text", nargs="?", default="", help="finding-id: título ou summary do achado")
     parser.add_argument("--write", action="store_true", help="Gravar arquivos (sem isso = dry-run)")
     parser.add_argument("--all", action="store_true", help="promover: incluir candidates com 1 ocorrência")
     args = parser.parse_intermixed_args()
+
+    if args.command == "finding-id":
+        return cmd_finding_id(args.text)
 
     project = Path(args.project).resolve()
 

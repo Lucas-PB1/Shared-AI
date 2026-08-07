@@ -62,9 +62,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .cursor/review/convencoes.md .cursor/review/exclusions.yaml || true
+          git add .cursor/review/decisions-ingest.jsonl .cursor/review/convencoes.md .cursor/review/exclusions.yaml || true
           if git diff --staged --quiet; then
-            echo "Sem alterações em convencoes/exclusions."
+            echo "Sem alterações em decisions-ingest/convencoes/exclusions."
             exit 0
           fi
           BRANCH="chore/review-memoria-pr-${PR_NUM}"

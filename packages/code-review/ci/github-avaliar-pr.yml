@@ -43,18 +43,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - name: Checkout PR head
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-
-      - name: Instalar Cursor CLI
-        run: |
-          curl https://cursor.com/install -fsS | bash
-          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
-          "$HOME/.cursor/bin/agent" --version || agent --version
-
       - name: Resolver número do PR
         id: pr
         env:
@@ -66,30 +54,89 @@ jobs:
             echo "head=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
           else
             echo "number=${{ inputs.pr_number }}" >> "$GITHUB_OUTPUT"
-            base="$(gh pr view "${{ inputs.pr_number }}" --json baseRefOid -q .baseRefOid)"
-            head="$(gh pr view "${{ inputs.pr_number }}" --json headRefOid -q .headRefOid)"
+            base="$(gh pr view "${{ inputs.pr_number }}" --repo "${{ github.repository }}" --json baseRefOid -q .baseRefOid)"
+            head="$(gh pr view "${{ inputs.pr_number }}" --repo "${{ github.repository }}" --json headRefOid -q .headRefOid)"
             echo "base=${base}" >> "$GITHUB_OUTPUT"
             echo "head=${head}" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Checkout PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || steps.pr.outputs.head }}
+          fetch-depth: 0
+
+      - name: Cache Cursor CLI
+        uses: actions/cache@1bd7470caa7a9a2ea7a5325c469eaa8543a1b2c8 # v4.3.0
+        id: cursor-cache
+        with:
+          path: ~/.cursor
+          key: cursor-cli-${{ runner.os }}-v1
+
+      - name: Instalar Cursor CLI
+        run: |
+          if [[ -x "$HOME/.cursor/bin/agent" ]]; then
+            echo "Cursor CLI (cache hit)"
+          else
+            curl https://cursor.com/install -fsS | bash
+          fi
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+          "$HOME/.cursor/bin/agent" --version || agent --version
 
       - name: Setup Node 20
         uses: actions/setup-node@49933ea5286caeca1862693295897eee4e394375 # v4.4.2
         with:
           node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
 
-      - name: Instalar hostdime-ia e deps de review
+      - name: Checkout hostdime-ia (sparse)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: HostDimeBR/hostdime-ia
+          ref: ${{ env.HOSTDIME_IA_REF }}
+          path: hostdime-ia
+          token: ${{ secrets.HOSTDIME_IA_TOKEN || github.token }}
+          sparse-checkout: |
+            packages/code-review
+            package.json
+            composer.json
+          sparse-checkout-cone-mode: false
+
+      - name: Cache pip (semgrep)
+        uses: actions/cache@1bd7470caa7a9a2ea7a5325c469eaa8543a1b2c8 # v4.3.0
+        with:
+          path: ~/.cache/pip
+          key: pip-semgrep-${{ runner.os }}-v1
+
+      - name: Cache deps hostdime-ia
+        uses: actions/cache@1bd7470caa7a9a2ea7a5325c469eaa8543a1b2c8 # v4.3.0
+        id: ia-deps
+        with:
+          path: |
+            hostdime-ia/node_modules
+            hostdime-ia/vendor
+          key: ia-review-${{ hashFiles('hostdime-ia/package.json', 'hostdime-ia/composer.json') }}
+          restore-keys: |
+            ia-review-
+
+      - name: Instalar deps de review
         run: |
           set -euo pipefail
-          apt-get update -qq
-          apt-get install -y -qq git php-cli php-xml composer python3-pip
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq php-cli php-xml composer python3-pip
           pip install --break-system-packages semgrep pyyaml 2>/dev/null || pip install semgrep pyyaml
-          export HOSTDIME_IA_ROOT="/tmp/hostdime-ia"
-          git clone --depth 1 --branch "$HOSTDIME_IA_REF" "$HOSTDIME_IA_REPO" "$HOSTDIME_IA_ROOT"
-          cd "$HOSTDIME_IA_ROOT"
-          # lockfiles não versionados no hostdime-ia (.gitignore)
-          npm install --no-fund --no-audit --ignore-scripts
-          composer install --no-interaction --quiet --no-ansi
-          echo "HOSTDIME_IA_ROOT=$HOSTDIME_IA_ROOT" >> "$GITHUB_ENV"
+          cd hostdime-ia
+          if [[ "${{ steps.ia-deps.outputs.cache-hit }}" != "true" ]]; then
+            # hostdime-ia não versiona package-lock.json / composer.lock (.gitignore)
+            npm install --no-fund --no-audit --ignore-scripts
+            composer install --no-interaction --quiet --no-ansi
+          else
+            echo "hostdime-ia deps (cache hit)"
+          fi
+          test -x node_modules/.bin/eslint
+          test -x vendor/bin/phpstan
+          echo "HOSTDIME_IA_ROOT=${{ github.workspace }}/hostdime-ia" >> "$GITHUB_ENV"
 
       - name: Instalar deps do projeto
         run: npm ci
@@ -105,7 +152,7 @@ jobs:
           CURSOR_PROJECT_DIR: ${{ github.workspace }}
           REVIEW_AVALIAR_SOFT: "true"
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          REVIEW_LLM_MODEL: ${{ vars.REVIEW_LLM_MODEL }}
+          REVIEW_LLM_MODEL: ${{ vars.REVIEW_LLM_MODEL || 'composer-2.5' }}
           REVIEW_LLM_API_KEY: ${{ secrets.REVIEW_LLM_API_KEY }}
         run: bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-github-pr.sh"
 

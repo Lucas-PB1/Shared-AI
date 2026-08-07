@@ -22,7 +22,8 @@ Commands universais em `~/.cursor/commands/` (global; setup/sync).
 | --- | --- |
 | `.cursor/review/reports/` | Rascunho do `/avaliar` — removido no `/finalizar` |
 | `.cursor/review/resultados/` | Pacote final após `/finalizar` |
-| `.cursor/review/decisions.jsonl` | staging de decisões (gitignored) |
+| `.cursor/review/decisions.jsonl` | staging local de decisões (gitignored) |
+| `.cursor/review/decisions-ingest.jsonl` | histórico versionado do ingest CI (github-pr-*) |
 | `.cursor/review/context.yaml` | exclusões, pending, rules e candidates (gitignored) |
 | `.cursor/review/exclusions.yaml` | exclusões versionadas para CI (export de context.yaml) |
 | `.cursor/review/convencoes.md` | padrão promovido — **versionado** em projetos com CI GitHub (`/avaliar` automático) |
