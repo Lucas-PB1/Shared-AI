@@ -2,10 +2,10 @@
 """Ingere decisões de review a partir de um PR mergeado (comentários /avaliar-inline).
 
 Heurísticas (sem LLM na v1):
-- Resposta humana no thread com padrão de rejeição → rejeitado / nao-aplicavel
-- Resposta humana ou thread resolvido + suggestion aplicada no merge → aceito
-- Para / De aplicados no merge (incl. remoção intra-PR) → aceito
-- Merge sem resposta, thread aberto e achado ainda presente → rejeitado (ignorado)
+- Resposta humana rejeitando o achado → rejeitado / nao-aplicavel → exclusions.yaml
+- Resposta humana sem objeção (incl. vazia ou neutra) → aceito → candidate → convencoes.md (≥2×)
+- Fix aplicado no merge (suggestion / De / intra-PR) sem reply → aceito
+- Merge sem reply e achado ainda presente → rejeitado → exclusions.yaml
 
 Depois: append decisions.jsonl → compactar → promover → export exclusions.yaml
 """
@@ -355,6 +355,7 @@ def classify_thread(
         "source": f"github-pr-{pr_number}",
     }
 
+    human_reason = ""
     for reply in human:
         text = reply.get("body") or ""
         if NAO_APLICAVEL_PATTERNS.search(text):
@@ -369,12 +370,16 @@ def classify_thread(
                 "decision": "rejeitado",
                 "reason": text.strip()[:200],
             }
-        if ACCEPT_PATTERNS.search(text):
-            return {
-                **base,
-                "decision": "aceito",
-                "reason": text.strip()[:200] or "confirmado no thread",
-            }
+        if text.strip() and not human_reason:
+            human_reason = text.strip()[:200]
+
+    # Qualquer reply humano que não rejeitou → aceito (comentário vazio = sem objeção)
+    if human:
+        return {
+            **base,
+            "decision": "aceito",
+            "reason": human_reason or "resposta humana no thread (sem objeção)",
+        }
 
     if not merged:
         return None
@@ -412,9 +417,6 @@ def classify_thread(
             "decision": "aceito",
             "reason": "thread resolvido sem objeção",
         }
-
-    if human:
-        return None
 
     return {
         **base,

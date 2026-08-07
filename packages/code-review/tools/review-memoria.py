@@ -255,13 +255,25 @@ def merge_history_into_context(
                 }
             )
         elif decision == "aceito":
+            rule = d["summary"]
+            reason = (d.get("reason") or "").strip()
+            if reason and not reason.startswith(
+                (
+                    "suggestion / Para",
+                    "código De removido",
+                    "indicador `",
+                    "thread resolvido",
+                    "merge sem resposta",
+                )
+            ):
+                rule = f"{d['summary']} — {reason[:100]}"
             if fid in cand_by_id:
                 cand_by_id[fid]["occurrences"] = cand_by_id[fid].get("occurrences", 1) + 1
             else:
                 cand_by_id[fid] = {
                     "id": fid,
                     "scope": scope,
-                    "rule": d["summary"],
+                    "rule": rule,
                     "decision": "aceito",
                     "occurrences": 1,
                     "promoted": False,

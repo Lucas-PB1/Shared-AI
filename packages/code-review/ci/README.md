@@ -46,11 +46,13 @@ git add .cursor/review/exclusions.yaml && git commit
 **Aprendizado automático pós-merge (CI):**
 
 1. Dev mergeia PR com comentários `avaliar-inline`
-2. Workflow `avaliar-pr-memoria` classifica cada thread:
-   - suggestion aplicada / thread resolvido / De removido intra-PR → **aceito** (candidate → `convencoes.md` após ≥2 ocorrências)
-   - resposta humana de rejeição → **rejeitado** → `exclusions.yaml`
-   - merge sem resposta e achado ainda presente → **rejeitado** (ignorado)
-3. Bot commita em `main` se `convencoes` ou `exclusions` mudarem
+2. Workflow `avaliar-pr-memoria` classifica cada thread (comentários de devs humanos no thread):
+   - resposta **rejeitando** o achado (`ignorar`, `false positive`, `não se aplica`, …) → **rejeitado** / **nao-aplicavel** → `exclusions.yaml`
+   - resposta **sem objeção** (positiva, neutra ou vazia) → **aceito** → candidate em `context.yaml`
+   - fix no merge (suggestion / De / intra-PR) sem reply → **aceito**
+   - merge sem reply e achado **ainda no código** → **rejeitado** → `exclusions.yaml`
+3. `aceito` vira bullet em `convencoes.md` após **≥2 ocorrências** do mesmo achado (ou `--all` no ingest)
+4. Bot abre PR com `convencoes.md` / `exclusions.yaml` se mudarem
 
 Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-ia apontando `--project` pro hub.
 
