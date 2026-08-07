@@ -67,7 +67,7 @@ jobs:
           fetch-depth: 0
 
       - name: Cache Cursor CLI
-        uses: actions/cache@1bd7470caa7a9a2ea7a5325c469eaa8543a1b2c8 # v4.3.0
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         id: cursor-cache
         with:
           path: ~/.cursor
@@ -104,13 +104,13 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Cache pip (semgrep)
-        uses: actions/cache@1bd7470caa7a9a2ea7a5325c469eaa8543a1b2c8 # v4.3.0
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/pip
           key: pip-semgrep-${{ runner.os }}-v1
 
       - name: Cache deps hostdime-ia
-        uses: actions/cache@1bd7470caa7a9a2ea7a5325c469eaa8543a1b2c8 # v4.3.0
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         id: ia-deps
         with:
           path: |
