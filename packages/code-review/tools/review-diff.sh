@@ -73,7 +73,7 @@ list_changed_files() {
   local files=""
 
   if files="$(git -C "$PROJECT" diff --name-only --diff-filter=ACMR "$base...$head" 2>/dev/null)"; then
-    printf '%s' "$files"
+    printf '%s\n' "$files"
     return 0
   fi
 
