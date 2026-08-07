@@ -286,7 +286,7 @@ resolve_de_start_line() {
   local file="$1"
   local hint_line="$2"
   local de_code="$3"
-  local first trimmed line_num
+  local trimmed line_num
   trimmed="$(printf '%s' "$de_code" | sed '/./,$!d' | head -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
   [[ -n "$trimmed" ]] || { printf '%s' "$hint_line"; return 0; }
 
@@ -306,6 +306,27 @@ resolve_de_start_line() {
   fi
 }
 
+file_snippet_at_range() {
+  local file="$1"
+  local start="$2"
+  local end="$3"
+  git -C "$PROJECT" show "${HEAD_SHA:-HEAD}:${file}" 2>/dev/null | sed -n "${start},${end}p"
+}
+
+normalize_code_snippet() {
+  local code="$1"
+  printf '%s' "$code" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed '/^[[:space:]]*$/d'
+}
+
+code_snippets_match() {
+  local expected="$1"
+  local actual="$2"
+  local ne na
+  ne="$(normalize_code_snippet "$expected")"
+  na="$(normalize_code_snippet "$actual")"
+  [[ "$ne" == "$na" ]]
+}
+
 extract_pt_summary() {
   local block="$1"
   printf '%s' "$block" | awk '
@@ -315,43 +336,99 @@ extract_pt_summary() {
   '
 }
 
-# Converte bloco De/Para em comentário com ```suggestion (aceite 1-clique no GitHub).
-build_inline_suggestion_body() {
-  local block="$1"
-  local de_code para_code title summary de_lines start_line end_line
+# Localiza o intervalo exato do De no arquivo (evita suggestion na linha errada).
+resolve_de_range_start() {
+  local file="$1"
+  local hint_line="$2"
+  local de_code="$3"
+  local tmp_file tmp_de
+  tmp_file="$(mktemp)"
+  tmp_de="$(mktemp)"
+  git -C "$PROJECT" show "${HEAD_SHA:-HEAD}:${file}" 2>/dev/null >"$tmp_file" || true
+  normalize_code_snippet "$de_code" >"$tmp_de"
+  awk -v hint="$hint_line" -v de_file="$tmp_de" '
+    BEGIN {
+      while ((getline line < de_file) > 0) {
+        sub(/^[ \t]+/, "", line)
+        gsub(/[ \t]+$/, "", line)
+        if (line == "") continue
+        n_de++
+        de[n_de] = line
+      }
+      close(de_file)
+      if (n_de == 0) { print hint; exit }
+    }
+    {
+      sub(/^[ \t]+/, "", $0)
+      gsub(/[ \t]+$/, "", $0)
+      file[NR] = $0
+      n_file = NR
+    }
+    END {
+      best = 0
+      best_dist = 1e9
+      for (i = 1; i <= n_file - n_de + 1; i++) {
+        ok = 1
+        for (j = 1; j <= n_de; j++) {
+          if (file[i + j - 1] != de[j]) { ok = 0; break }
+        }
+        if (!ok) continue
+        mid = i + int((n_de - 1) / 2)
+        d = mid - hint
+        if (d < 0) d = -d
+        if (d < best_dist) { best_dist = d; best = i }
+      }
+      if (best > 0) print best
+      else print hint
+    }
+  ' "$tmp_file"
+  rm -f "$tmp_file" "$tmp_de"
+}
+
+# Retorna 0 se suggestion válida; define SUGGESTION_BODY, SUGGESTION_START, SUGGESTION_END.
+prepare_github_suggestion() {
+  local file="$1"
+  local block="$2"
+  local de_code para_code title summary de_lines para_lines hint start end actual
+
+  SUGGESTION_BODY=""
+  SUGGESTION_START=""
+  SUGGESTION_END=""
 
   de_code="$(extract_section_code "$block" "De")"
   para_code="$(extract_section_code "$block" "Para")"
-  [[ -n "$de_code" ]] || return 1
-  [[ "$block" == *'**Para:**'* ]] || return 1
+  [[ -n "$de_code" && "$block" == *'**Para:**'* ]] || return 1
 
   de_lines="$(count_code_lines "$de_code")"
-  [[ "$de_lines" -gt 0 ]] || return 1
-  [[ "$de_lines" -le 20 ]] || return 1
+  para_lines="$(count_code_lines "$para_code")"
+  [[ "$de_lines" -ge 1 && "$de_lines" -le 10 ]] || return 1
+  [[ "$de_lines" -eq "$para_lines" ]] || return 1
 
   title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
   summary="$(extract_pt_summary "$block")"
+  hint=""
+  if [[ "$title" =~ ^####[[:space:]]+[^:]+:([0-9]+) ]]; then
+    hint="${BASH_REMATCH[1]}"
+  else
+    return 1
+  fi
+
+  start="$(resolve_de_range_start "$file" "$hint" "$de_code")"
+  end=$((start + de_lines - 1))
+  actual="$(file_snippet_at_range "$file" "$start" "$end")"
+  code_snippets_match "$de_code" "$actual" || return 1
 
   local body="$title"
   if [[ -n "$summary" ]]; then
     body+=$'\n\n'"${summary}"
   fi
   body+=$'\n\n'"\`\`\`suggestion"
-  if [[ -n "$para_code" ]]; then
-    body+=$'\n'"${para_code}"
-  fi
+  body+=$'\n'"${para_code}"
   body+=$'\n'"\`\`\`"
 
-  SUGGESTION_START_LINE=""
-  SUGGESTION_END_LINE=""
-  if [[ "$title" =~ ^####[[:space:]]+[^:]+:([0-9]+) ]]; then
-    start_line="${BASH_REMATCH[1]}"
-    end_line=$((start_line + de_lines - 1))
-    SUGGESTION_START_LINE="$start_line"
-    SUGGESTION_END_LINE="$end_line"
-  fi
-
-  printf '%s' "$body"
+  SUGGESTION_BODY="$body"
+  SUGGESTION_START="$start"
+  SUGGESTION_END="$end"
   return 0
 }
 
@@ -469,18 +546,10 @@ post_inline_findings() {
     gh_body="$block"
 
     if [[ "$use_suggestion" == "1" ]]; then
-      SUGGESTION_START_LINE=""
-      SUGGESTION_END_LINE=""
-      if suggested_body="$(build_inline_suggestion_body "$block")"; then
-        gh_body="$suggested_body"
-        if [[ -n "${SUGGESTION_START_LINE:-}" && -n "${SUGGESTION_END_LINE:-}" ]]; then
-          local de_code de_lines resolved_start
-          de_code="$(extract_section_code "$block" "De")"
-          de_lines="$(count_code_lines "$de_code")"
-          resolved_start="$(resolve_de_start_line "$file" "$SUGGESTION_START_LINE" "$de_code")"
-          start_line="$resolved_start"
-          end_line=$((resolved_start + de_lines - 1))
-        fi
+      if prepare_github_suggestion "$file" "$block"; then
+        gh_body="$SUGGESTION_BODY"
+        start_line="$SUGGESTION_START"
+        end_line="$SUGGESTION_END"
       fi
     fi
 
