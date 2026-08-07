@@ -83,7 +83,7 @@ Por arquivo, `review-skill-routing.mjs` injeta no prompt:
 | `packages/code-review/skills/review-inbox/` | Metodologia `/avaliar` |
 | Stack (tsx/ts) | Hints embutidos ou `~/.cursor/skills/` se existir localmente |
 
-Mapa de path → skill espelha `.cursor/rules/hostdime-skills-routing.mdc` (ex.: `*Fields.tsx` → `hostdime-module-fields`, `modules/Section*` → `hostdime-sections`).
+Mapa de path → skill espelha `.cursor/rules/hostdime-skills-routing.mdc` (ex.: `*Fields.tsx` → `hostdime-module-fields`, `modules/Section*` → `hostdime-sections`, `*.css` / `constants/layout.ts` → `hostdime-styling`).
 
 Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
 

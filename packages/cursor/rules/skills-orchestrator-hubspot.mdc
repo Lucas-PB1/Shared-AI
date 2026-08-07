@@ -55,7 +55,7 @@ Não repetir a pergunta na mesma sessão após resposta do usuário.
 | --- | --- |
 | Componentes CMS React (`.tsx`/`.jsx`) | `react`, `typescript` |
 | Testes de componente | `testing` |
-| Layout / CSS do tema | `css`, `tailwind` se no `package.json` |
+| Layout / CSS do tema | `css`, `tailwind` se no `package.json`; skill e convencoes versionadas no repo alvo |
 
 ## Composição
 

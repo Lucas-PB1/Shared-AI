@@ -2,7 +2,7 @@
 
 | Script | Uso |
 | --- | --- |
-| `~/.cursor/review-check.sh` | Análise estática de um arquivo |
+| `~/.cursor/review-check.sh` | Análise estática de um arquivo (Semgrep, PHPStan, ESLint, tsc) |
 | `~/.cursor/review-diff.sh` | Lista arquivos alterados revisáveis (`/avaliar-diff`) |
 | `~/.cursor/review-ci.sh` | Review estático em arquivos do diff (CI / local) |
 | `~/.cursor/review-github-pr.sh` | /avaliar automático no GitHub — estático + LLM |

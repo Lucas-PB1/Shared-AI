@@ -5,6 +5,7 @@ globs:
   - "**/hsproject.json"
   - "**/*.html"
   - "**/*.css"
+  - "**/constants/layout.ts"
 alwaysApply: false
 ---
 
@@ -14,3 +15,15 @@ alwaysApply: false
 - Componentes React do CMS: props tipadas, dados via HubSpot fields
 - Deploy/upload via `hubspot-cli` — não hardcodar portal ID ou tokens
 - Seguir layout de pastas do developer project existente (`src/`, módulos, temas)
+
+## Estilos (tema CMS)
+
+| Caso | Onde |
+| --- | --- |
+| Section / módulo padrão | `constants/layout.ts` (Tailwind) |
+| CSS global / crítico | folhas em `styles/` do tema |
+| CSS fora do caminho crítico | `@styles/*.css` + **island** que importa (P2) |
+| DOM legado / simulador grande | `modules/<Nome>/styles/*.css` |
+
+- Forms HubSpot embed: escopo por classe do módulo (ex. `.hostdime-*-form`); `!important` só contra CSS do embed
+- Convenções do **repo alvo**: `.cursor/skills/*/SKILL.md` (ex. styling) e `.cursor/review/convencoes.md` por escopo

@@ -54,7 +54,7 @@ Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `npm run mem
 
 | Camada | Escopo |
 | --- | --- |
-| Semgrep | PHP, JS/TS |
+| Semgrep | PHP, JS/TS (e demais linguagens com rules auto) |
 | PHP | `php -l` + PHPStan 6 |
 | JS | `node --check` + ESLint 9 |
 | TS | ESLint 9 + `tsc --strict` |

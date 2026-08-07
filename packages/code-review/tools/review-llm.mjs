@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { resolveContextForFile } from './review-skill-routing.mjs';
+import { resolveContextForFile, scopeMatchesFile } from './review-skill-routing.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,6 +35,8 @@ function inferStack(file) {
   if (file.endsWith('.jsx')) return 'JavaScript / React';
   if (/\.(js|mjs|cjs)$/.test(file)) return 'JavaScript';
   if (file.endsWith('.php')) return 'PHP';
+  if (/\.(css|scss)$/i.test(file)) return 'CSS';
+  if (file.includes('constants/layout.ts')) return 'Tailwind / layout.ts';
   return '—';
 }
 
@@ -54,13 +56,7 @@ function convencoesForFile(project, relFile) {
   for (const line of lines) {
     const scopeMatch = line.match(/^## Escopo: (.+)$/);
     if (scopeMatch) {
-      const scope = scopeMatch[1].trim();
-      inSection = false;
-      if (scope === '**/*' || scope === '*') inSection = true;
-      else if (scope.endsWith('/**')) {
-        const prefix = scope.slice(0, -3);
-        if (relFile.startsWith(prefix)) inSection = true;
-      } else if (relFile === scope) inSection = true;
+      inSection = scopeMatchesFile(scopeMatch[1].trim(), relFile);
       continue;
     }
     if (/^## /.test(line)) inSection = false;
@@ -102,12 +98,7 @@ function exclusionsForFile(project, relFile) {
 
   return items
     .filter((item) => /rejeitado|nao-aplicavel/.test(item.decision))
-    .filter((item) => {
-      const scope = item.scope;
-      if (scope === '**/*' || scope === '*') return true;
-      if (scope.endsWith('/**')) return relFile.startsWith(scope.slice(0, -3));
-      return relFile === scope;
-    })
+    .filter((item) => scopeMatchesFile(item.scope, relFile))
     .map((item) => `- [${item.decision}] ${item.reason}`)
     .join('\n');
 }

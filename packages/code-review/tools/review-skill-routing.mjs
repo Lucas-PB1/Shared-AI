@@ -23,6 +23,14 @@ const HOSTDIME_SKILL_ROUTES = [
       (/\/defaults\.ts$/i.test(f) && f.includes('/components/modules/')),
   },
   {
+    id: 'hostdime-styling',
+    priority: 12,
+    test: (f) =>
+      /\.(css|scss)$/i.test(f) ||
+      /\/constants\/layout\.ts$/i.test(f) ||
+      /\/styles\/[^/]+\.css$/i.test(f),
+  },
+  {
     id: 'hostdime-chrome',
     priority: 20,
     test: (f) =>
@@ -81,6 +89,31 @@ export function matchGlob(glob, filePath) {
     .replace(/\{\{GLOBSTAR\}\}/g, '.*');
 
   return new RegExp(`^${regexSource}$`).test(normalized);
+}
+
+/**
+ * Casa rótulo de escopo em convencoes.md / exclusions com path relativo do arquivo.
+ * @param {string} scopeLabel
+ * @param {string} filePath
+ */
+export function scopeMatchesFile(scopeLabel, filePath) {
+  const normalized = filePath.replace(/\\/g, '/');
+  const scope = scopeLabel.trim();
+  if (!scope) return false;
+
+  const parenGlob = scope.match(/\(\*\*\/[^)]+\)/);
+  if (parenGlob && matchGlob(parenGlob[0].slice(1, -1), normalized)) {
+    return true;
+  }
+
+  if (scope === '**/*' || scope === '*') return true;
+  if (scope.endsWith('/**')) {
+    return normalized.startsWith(scope.slice(0, -3));
+  }
+  if (matchGlob(scope, normalized)) return true;
+  if (normalized === scope || normalized.endsWith(`/${scope}`)) return true;
+
+  return normalized.includes(scope);
 }
 
 function stripFrontmatter(content) {
