@@ -22,12 +22,24 @@ Verdict:
 - **Ajustes necessários**: errors or relevant essential improvement
 - **Não recomendado**: ≥1 impeditivo or severe combination
 
+When the diff has changes, ALWAYS include `### Revisado (diff)` — one `#### filename:L — title` per added or modified line (from diff hunks), even if Veredito is OK. Use `**Em português:**` block only (no De/Para) when there is nothing to fix.
+
 Report format (exactly):
 
 ## `relative/path/to/file`
 
 **Stack:** <language / framework>
 **Veredito:** OK | Ajustes necessários | Não recomendado
+
+### Revisado (diff)
+
+#### filename:L — <short title>
+
+**Em português:**
+
+> <what changed on this line; OK or light note>
+
+---
 
 ### Impeditivo
 

@@ -64,6 +64,20 @@ file_diff_hunk() {
     || true
 }
 
+first_changed_line() {
+  local file="$1"
+  local base="${REVIEW_DIFF_BASE:-main}"
+  local head="${HEAD_SHA:-HEAD}"
+  local line
+  line="$(git -C "$PROJECT" diff -U0 "$base" "$head" -- "$file" 2>/dev/null \
+    | sed -n 's/^@@ .*+\([0-9][0-9]*\).*/\1/p' | head -1)"
+  if [[ -n "$line" ]]; then
+    printf '%s' "$line"
+    return 0
+  fi
+  printf '%s' "1"
+}
+
 llm_enabled() {
   [[ -n "${CURSOR_API_KEY:-}" || -n "${REVIEW_LLM_API_KEY:-}" ]] || return 1
   [[ "${REVIEW_AVALIAR_MODE:-both}" != "static" ]]
@@ -207,6 +221,7 @@ ${report}
 **Origem:** ${origin}
 *Review automático · hostdime-ia · \`${blob_sha:0:7}\`*
 <!-- avaliar-file:${file} -->
+<!-- avaliar-file-inline:${file} -->
 EOF
 }
 
@@ -259,6 +274,39 @@ EOF
       -F line="$line_no" \
       -f side="RIGHT" >/dev/null 2>&1 || true
   done < <(printf '%s\n' "$report")
+}
+
+find_inline_file_comment_id() {
+  local file="$1"
+  local marker="<!-- avaliar-file-inline:${file} -->"
+  gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate \
+    | jq -r --arg m "$marker" '.[] | select(.body | contains($m)) | .id' | head -1
+}
+
+upsert_file_inline_comment() {
+  local file="$1"
+  local body="$2"
+  local head="${HEAD_SHA:-HEAD}"
+  local line
+  line="$(first_changed_line "$file")"
+  local comment_id
+  comment_id="$(find_inline_file_comment_id "$file")"
+
+  if [[ -n "$comment_id" && "$comment_id" != "null" ]]; then
+    gh api --method PATCH "repos/${GITHUB_REPOSITORY}/pulls/comments/${comment_id}" \
+      -f body="$body" >/dev/null
+    echo "  ↻ inline no diff (linha ${line})"
+    return 0
+  fi
+
+  gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" \
+    -f body="$body" \
+    -f commit_id="$head" \
+    -f path="$file" \
+    -F line="$line" \
+    -f side="RIGHT" >/dev/null 2>&1 \
+    && echo "  ✓ inline no diff (linha ${line})" \
+    || echo "  ⚠ inline falhou — fallback issue comment" >&2
 }
 
 upsert_file_comment() {
@@ -426,7 +474,12 @@ main() {
     fi
 
     comment_body="$(wrap_pr_comment "$file" "$blob_sha" "$report_body" "$origin")"
-    upsert_file_comment "$file" "$comment_body"
+    if [[ "${REVIEW_AVALIAR_INLINE:-1}" == "1" ]] \
+      && upsert_file_inline_comment "$file" "$comment_body"; then
+      :
+    else
+      upsert_file_comment "$file" "$comment_body"
+    fi
     state_set_file_sha "$file" "$blob_sha"
     reviewed=$((reviewed + 1))
 
