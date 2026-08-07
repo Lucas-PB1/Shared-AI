@@ -79,12 +79,16 @@ jobs:
 
       - name: Instalar hostdime-ia e deps de review
         run: |
+          set -euo pipefail
           apt-get update -qq
           apt-get install -y -qq git php-cli php-xml composer python3-pip
           pip install --break-system-packages semgrep pyyaml 2>/dev/null || pip install semgrep pyyaml
           export HOSTDIME_IA_ROOT="/tmp/hostdime-ia"
           git clone --depth 1 --branch "$HOSTDIME_IA_REF" "$HOSTDIME_IA_REPO" "$HOSTDIME_IA_ROOT"
-          cd "$HOSTDIME_IA_ROOT" && npm ci && composer install --no-interaction --quiet
+          cd "$HOSTDIME_IA_ROOT"
+          # lockfiles não versionados no hostdime-ia (.gitignore)
+          npm install --no-fund --no-audit --ignore-scripts
+          composer install --no-interaction --quiet --no-ansi
           echo "HOSTDIME_IA_ROOT=$HOSTDIME_IA_ROOT" >> "$GITHUB_ENV"
 
       - name: Instalar deps do projeto
