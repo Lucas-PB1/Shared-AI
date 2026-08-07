@@ -288,21 +288,29 @@ post_inline_findings() {
   [[ "${REVIEW_AVALIAR_INLINE:-1}" == "1" ]] || { printf '0'; return 0; }
 
   awk '
+    BEGIN { sep = sprintf("%c", 30) }
     /^#### / {
-      if (block != "") print block
+      if (block != "") {
+        printf "%s%s", block, sep
+      }
       block = $0
       next
     }
     { block = (block == "" ? $0 : block ORS $0) }
-    END { if (block != "") print block }
+    END {
+      if (block != "") {
+        printf "%s%s", block, sep
+      }
+    }
   ' <<< "$report" >"$tmp_blocks"
 
   declare -A best_block
   declare -A best_score
+  local rs=$'\036'
 
-  while IFS= read -r block || [[ -n "$block" ]]; do
+  while IFS= read -r -d "$rs" block || [[ -n "${block:-}" ]]; do
     [[ -z "$block" ]] && continue
-    [[ "$block" =~ ^####[[:space:]]+[^:]+:([0-9]+)[[:space:]]—[[:space:]]+(.*)$ ]] || continue
+    [[ "$block" =~ ^####[[:space:]]+[^:]+:([0-9]+)[[:space:]][—-][[:space:]]+(.*)$ ]] || continue
     local line_no="${BASH_REMATCH[1]}"
     local score=0
     [[ "$block" == *'**De:**'* ]] && score=3
@@ -520,17 +528,12 @@ main() {
     fi
 
     if [[ "${inline_count:-0}" -eq 0 ]]; then
-      local comment_body
-      comment_body="$(wrap_pr_comment "$file" "$blob_sha" "$report_body" "$origin")"
-      if [[ "${REVIEW_AVALIAR_INLINE:-1}" == "1" ]]; then
-        local line
-        line="$(first_changed_line "$file")"
-        if upsert_inline_comment "$file" "$line" "$comment_body"; then
-          echo "  ✓ inline no diff (linha ${line})"
-        else
-          upsert_file_comment "$file" "$comment_body"
-        fi
+      # Relatório completo fica no artifact; não colar blob inteiro inline no diff.
+      if [[ -n "${report_file:-}" && -f "${report_file:-}" ]]; then
+        echo "  · sem inline acionável (relatório no artifact)"
       else
+        local comment_body
+        comment_body="$(wrap_pr_comment "$file" "$blob_sha" "$report_body" "$origin")"
         upsert_file_comment "$file" "$comment_body"
       fi
     fi
