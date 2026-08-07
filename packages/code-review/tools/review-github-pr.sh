@@ -336,6 +336,25 @@ extract_pt_summary() {
   '
 }
 
+# Comentário inline curto — título + resumo PT. De/Para/GitHub ficam só no artifact.
+build_inline_comment_body() {
+  local block="$1"
+  local title summary body
+
+  title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
+  [[ -n "$title" ]] || return 1
+  if [[ "$title" =~ ^####[[:space:]]+(.+)$ ]]; then
+    title="${BASH_REMATCH[1]}"
+  fi
+
+  summary="$(extract_pt_summary "$block")"
+  body="$title"
+  if [[ -n "$summary" ]]; then
+    body+=$'\n\n'"${summary}"
+  fi
+  printf '%s' "$body"
+}
+
 # Localiza o intervalo exato do De no arquivo (evita suggestion na linha errada).
 resolve_de_range_start() {
   local file="$1"
@@ -418,10 +437,9 @@ prepare_github_suggestion() {
   actual="$(file_snippet_at_range "$file" "$start" "$end")"
   code_snippets_match "$de_code" "$actual" || return 1
 
-  local body="$title"
-  if [[ -n "$summary" ]]; then
-    body+=$'\n\n'"${summary}"
-  fi
+  local body
+  body="$(build_inline_comment_body "$block")"
+  [[ -n "$body" ]] || return 1
   body+=$'\n\n'"\`\`\`suggestion"
   body+=$'\n'"${para_code}"
   body+=$'\n'"\`\`\`"
@@ -543,14 +561,14 @@ post_inline_findings() {
     block="${best_block[$line_no]}"
     start_line="${best_start[$line_no]:-$line_no}"
     end_line="$start_line"
-    gh_body="$block"
 
-    if [[ "$use_suggestion" == "1" ]]; then
-      if prepare_github_suggestion "$file" "$block"; then
-        gh_body="$SUGGESTION_BODY"
-        start_line="$SUGGESTION_START"
-        end_line="$SUGGESTION_END"
-      fi
+    gh_body="$(build_inline_comment_body "$block")"
+    [[ -n "$gh_body" ]] || continue
+
+    if [[ "$use_suggestion" == "1" ]] && prepare_github_suggestion "$file" "$block"; then
+      gh_body="$SUGGESTION_BODY"
+      start_line="$SUGGESTION_START"
+      end_line="$SUGGESTION_END"
     fi
 
     if upsert_inline_comment "$file" "$end_line" "$gh_body" "$start_line"; then
