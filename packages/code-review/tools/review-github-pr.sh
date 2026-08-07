@@ -672,7 +672,9 @@ post_summary() {
 
   local reviewed=0 skipped=0 failed=0 inline_this_run=0 blocking_this_run=0
   local files_section="" merge_section=""
-  local line action file verdict inline_count blocking
+  local line action file verdict inline_count blocking priority sort_file
+  sort_file="$(mktemp)"
+  trap 'rm -f "$sort_file"' RETURN
 
   if [[ -f "$files_log" ]]; then
     while IFS=$'\t' read -r action file verdict inline_count blocking; do
@@ -685,23 +687,33 @@ post_summary() {
           if verdict_is_failure "$verdict"; then
             failed=$((failed + 1))
           fi
+          priority=3
           local status_icon="✅ revisado"
-          if [[ "${inline_count:-0}" -gt 0 ]]; then
+          if [[ "${blocking:-0}" -gt 0 ]]; then
+            priority=1
+            status_icon="🛑 impeditivo"
+          elif [[ "${inline_count:-0}" -gt 0 ]]; then
+            priority=2
             status_icon="💬 ${inline_count} comentário(s) inline"
           elif verdict_is_failure "$verdict"; then
+            priority=2
             status_icon="⚠️ achado (sem inline acionável)"
           fi
-          if [[ "${blocking:-0}" -gt 0 ]]; then
-            status_icon="🛑 impeditivo"
-          fi
-          files_section+=$'| `'"${file}"$'` | '"${status_icon}"$' | '"${verdict:-—}"$' |\n'
+          printf '%s\t%s\t%s\n' "$priority" "$file" \
+            "| \`${file}\` | ${status_icon} | ${verdict:-—} |" >>"$sort_file"
           ;;
         skip)
           skipped=$((skipped + 1))
-          files_section+=$'| `'"${file}"$'` | ⏭ pulado (já revisado neste head) | — |\n'
+          printf '4\t%s\t%s\n' "$file" \
+            "| \`${file}\` | ⏭ pulado (já revisado neste head) | — |" >>"$sort_file"
           ;;
       esac
     done <"$files_log"
+  fi
+
+  if [[ -s "$sort_file" ]]; then
+    files_section="$(sort -t $'\t' -k1,1n -k2,2 "$sort_file" | cut -f3-)"
+    files_section+=$'\n'
   fi
 
   local resultado=""
