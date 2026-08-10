@@ -31,7 +31,8 @@ Itens **abertos**. Arquitetura e store: [docs/README.md](docs/README.md).
 
 - [ ] Testes bats para novos perfis e detect-stack em monorepos
 - [ ] Smoke: todo perfil tem `SKILLS-ROUTING.md` + `*-project.mdc`
-- [ ] Ops: projeto Supabase cloud + secrets nos repos (`SUPABASE_*`, `REVIEW_PROJECT_SLUG`)
+- [x] Ops: cloud `toekmpljxeulcquqhkxt` — schema + dados alinhados ao local; monorepo `.env` com `SUPABASE_URL` + service_role
+- [ ] Ops: secrets `SUPABASE_*` / `REVIEW_PROJECT_SLUG` nos repos cliente (CI)
 
 ## Docs vivas
 

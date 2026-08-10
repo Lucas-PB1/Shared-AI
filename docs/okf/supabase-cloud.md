@@ -3,28 +3,61 @@ type: Playbook
 title: Supabase cloud (HostDime)
 description: Go-live do store hospedado e secrets nos repos cliente.
 tags: [store, supabase, cloud, playbook]
-timestamp: 2026-08-10T16:00:00Z
+timestamp: 2026-08-10T20:10:00Z
 ---
 
-## Contexto
+## Projeto
 
-Projeto Supabase da org HostDime. Contrato: [Review store](review-store.md). Dev local primeiro: [Supabase local](supabase-local.md).
+| Campo | Valor |
+| --- | --- |
+| **Ref** | `toekmpljxeulcquqhkxt` |
+| **API URL** | `https://toekmpljxeulcquqhkxt.supabase.co` |
+| **Dashboard** | [Project → toekmpljxeulcquqhkxt](https://supabase.com/dashboard/project/toekmpljxeulcquqhkxt) |
+| **Studio / Table Editor** | [Editor](https://supabase.com/dashboard/project/toekmpljxeulcquqhkxt/editor) |
+| **API keys** | [Settings → API](https://supabase.com/dashboard/project/toekmpljxeulcquqhkxt/settings/api) |
 
-## Checklist
+Dev local opcional: [Supabase local](supabase-local.md). Contrato: [Review store](review-store.md).
 
-1. Criar projeto Supabase (região adequada).
-2. Aplicar migrations (`supabase db push` ou SQL Editor).
-3. Seed: row em `projects` por repo (`REVIEW_PROJECT_SLUG`).
-4. Auth: `profiles` + `project_members`.
-5. Secrets:
+## Estado
+
+| Item | Status |
+| --- | --- |
+| Schema (migrations + evolve) | aplicado no cloud |
+| Dados do review store | sincronizados com o Docker local (fonte inicial: local → remote) |
+| Monorepo `.env` | aponta para este projeto cloud |
+| Secrets GitHub (repos cliente) | pendente por repositório |
+
+## Checklist (go-live / re-sync)
+
+1. Conta com acesso ao projeto (org HostDime / GitHub).
+2. Monorepo `.env`:
+   - `SUPABASE_URL=https://toekmpljxeulcquqhkxt.supabase.co`
+   - `SUPABASE_SERVICE_ROLE_KEY=` (Settings → API → **service_role** legada ou secret key)
+3. Schema (se DB vazio):
+   - **CLI** (conta com privilege): `npm run supabase:link` → `npm run supabase:db-push`
+   - **ou SQL Editor:** migrations na ordem, depois seed se precisar
+4. Smoke: `npm run review:store-smoke`
+5. Secrets nos **repos cliente** (GitHub):
 
    | Onde | Chave |
    | --- | --- |
-   | GitHub (repos cliente) | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (**obrigatórios**) |
+   | GitHub secrets | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (**obrigatórios**) |
    | Variable | `REVIEW_PROJECT_SLUG` (ex. `hostdime-hub`) |
-   | Dev `.env` | mesma URL + service role (tooling) |
+   | Dev `.env` monorepo | mesma URL + service role |
 
 6. Service role **só** em CI/tooling — nunca no browser público.
+
+## CLI
+
+```bash
+# login com a conta que tem acesso ao projeto HostDime
+npx supabase login
+
+npm run supabase:link      # --project-ref toekmpljxeulcquqhkxt
+npm run supabase:db-push   # aplica migrations remotas
+```
+
+Se o CLI retornar *access-control* / *privileges*, a sessão atual é de **outra conta** (ex. pessoal). Faça login na org HostDime ou aplique SQL pelo dashboard.
 
 ## Drivers
 

@@ -8,7 +8,7 @@ timestamp: 2026-08-10T16:00:00Z
 
 ## Contexto
 
-Ambiente de **desenvolvimento** do store. Não é produção; sem dados de clientes no git.
+Ambiente de **desenvolvimento** do store (Docker). Ops/cloud HostDime: [Supabase cloud](supabase-cloud.md) (`toekmpljxeulcquqhkxt`). Sem dados de clientes no git.
 
 ## Pré-requisitos
 
