@@ -1,24 +1,29 @@
 /**
- * Fatia ingest — decisões a partir de threads de PR (regras puras + upsert).
+ * Fatia ingest — decisões a partir de threads de PR.
  */
 
 export {
-  classifyThread,
   extractCodeIndicators,
   extractDeParaFromBody,
   extractSummary,
-  fixAppliedInPr,
+  parseRepo,
+  snippetInFile,
+} from "./extract.js";
+
+export {
   gitLogCommits,
   gitRevParse,
   gitShow,
-  parseRepo,
   resolvePrCommitRange,
   resolveProjectPath,
   snippetEverInCommitRange,
-  snippetInFile,
-  upsertPrDecisions,
   type ListCommitsFn,
   type ShowFileFn,
-} from "./from-pr.js";
+} from "./git.js";
+
+export { classifyThread } from "./classify.js";
+export { fixAppliedInPr } from "./fix.js";
+
+export { upsertPrDecisions } from "./decisions.js";
 
 export { normalizeSnippet } from "../shared/index.js";

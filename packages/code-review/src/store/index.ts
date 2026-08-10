@@ -1,5 +1,5 @@
 /**
- * Fatia store — API pública (port + adapter Supabase + dual-write U1 + publish U2 + memory U3).
+ * Fatia store — API pública.
  */
 
 export type {
@@ -24,27 +24,37 @@ export {
 
 export {
   STORE_VERDICTS,
-  dualWriteDecisions,
   isStoreConfigured,
   isStoreRequired,
-  logDualWriteResult,
-  logPublishResult,
   openStore,
-  publishRun,
+} from "./open.js";
+
+export {
+  dualWriteDecisions,
+  logDualWriteResult,
   type DualWriteResult,
-  type PublishRunResult,
 } from "./dual-write.js";
 
 export {
-  fetchStoreMemory,
+  logPublishResult,
+  publishRun,
+  type PublishRunResult,
+} from "./publish.js";
+
+export {
   formatConventionsMd,
   formatExclusionsYaml,
   mergeTextLayers,
   parseExclusionsYaml,
-  pullMemoryToProject,
-  pushExclusionsFromProject,
-  storeMemoryForFile,
   type ParsedExclusionYaml,
   type StoreConvention,
   type StoreExclusion,
-} from "./memory.js";
+} from "./memory-format.js";
+
+export {
+  fetchStoreMemory,
+  pullMemoryToProject,
+  pushExclusionsFromProject,
+} from "./memory-sync.js";
+
+export { storeMemoryForFile } from "./memory-for-file.js";

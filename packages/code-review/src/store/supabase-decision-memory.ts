@@ -1,0 +1,166 @@
+/**
+ * Decisions + exclusions/conventions no store (PostgREST).
+ */
+
+import { StoreError } from "./config.js";
+import type {
+  ConventionFields,
+  CreateDecisionFields,
+  ExclusionFields,
+  ListDecisionsOpts,
+} from "./port.js";
+import type { SupabaseRest } from "./supabase-rest.js";
+import { restGetProjectId } from "./supabase-runs.js";
+
+export async function restCreateDecision(
+  rest: SupabaseRest,
+  projectId: string,
+  fields: CreateDecisionFields
+): Promise<Record<string, unknown>> {
+  const payload = {
+    project_id: projectId,
+    run_id: fields.runId ?? null,
+    finding_key: fields.findingKey,
+    verdict: fields.verdict,
+    reason: fields.reason ?? null,
+    decided_by: fields.decidedBy ?? null,
+    source: fields.source ?? null,
+    file_path: fields.filePath ?? null,
+    summary: fields.summary ?? null,
+    schema_version: fields.schemaVersion ?? "1",
+    meta: fields.meta ?? {},
+  };
+  const url = `${rest.config.restBase}/decisions`;
+  const rows = (await rest.request(
+    "POST",
+    url,
+    rest.headers({ prefer: "return=representation" }),
+    payload
+  )) as Array<Record<string, unknown>> | null;
+  if (!rows?.length) throw new StoreError("createDecision: resposta vazia");
+  return rows[0];
+}
+
+export async function restListDecisions(
+  rest: SupabaseRest,
+  projectId: string,
+  opts: ListDecisionsOpts = {}
+): Promise<Array<Record<string, unknown>>> {
+  const limit = opts.limit ?? 100;
+  const q = new URLSearchParams({
+    project_id: `eq.${projectId}`,
+    select: "*",
+    order: "finalized_at.desc",
+    limit: String(limit),
+  });
+  if (opts.findingKey) {
+    q.set("finding_key", `eq.${opts.findingKey}`);
+  }
+  const url = `${rest.config.restBase}/decisions?${q}`;
+  const rows = (await rest.request("GET", url, rest.headers())) as
+    | Array<Record<string, unknown>>
+    | null;
+  return rows ?? [];
+}
+
+export async function restListExclusions(
+  rest: SupabaseRest,
+  projectId: string,
+  opts: { activeOnly?: boolean; limit?: number } = {}
+): Promise<Array<Record<string, unknown>>> {
+  const limit = opts.limit ?? 500;
+  const q = new URLSearchParams({
+    project_id: `eq.${projectId}`,
+    select: "*",
+    order: "updated_at.desc",
+    limit: String(limit),
+  });
+  if (opts.activeOnly !== false) {
+    q.set("active", "eq.true");
+  }
+  const url = `${rest.config.restBase}/exclusions?${q}`;
+  const rows = (await rest.request("GET", url, rest.headers())) as
+    | Array<Record<string, unknown>>
+    | null;
+  return rows ?? [];
+}
+
+export async function restListConventions(
+  rest: SupabaseRest,
+  projectId: string,
+  opts: { limit?: number } = {}
+): Promise<Array<Record<string, unknown>>> {
+  const limit = opts.limit ?? 500;
+  const q = new URLSearchParams({
+    project_id: `eq.${projectId}`,
+    select: "*",
+    order: "updated_at.desc",
+    limit: String(limit),
+  });
+  const url = `${rest.config.restBase}/conventions?${q}`;
+  const rows = (await rest.request("GET", url, rest.headers())) as
+    | Array<Record<string, unknown>>
+    | null;
+  return rows ?? [];
+}
+
+export async function restUpsertExclusion(
+  rest: SupabaseRest,
+  projectId: string,
+  fields: ExclusionFields
+): Promise<Record<string, unknown>> {
+  const payload = {
+    project_id: projectId,
+    finding_key: fields.findingKey,
+    reason: fields.reason ?? "",
+    scope_glob: fields.scopeGlob ?? "**/*",
+    active: fields.active ?? true,
+    updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+  };
+  const url = `${rest.config.restBase}/exclusions?on_conflict=project_id,finding_key,scope_glob`;
+  const rows = (await rest.request(
+    "POST",
+    url,
+    rest.headers({
+      prefer: "resolution=merge-duplicates,return=representation",
+    }),
+    payload
+  )) as Array<Record<string, unknown>> | null;
+  if (!rows?.length) throw new StoreError("upsertExclusion: resposta vazia");
+  return rows[0];
+}
+
+export async function restUpsertConvention(
+  rest: SupabaseRest,
+  projectId: string,
+  fields: ConventionFields
+): Promise<Record<string, unknown>> {
+  const payload = {
+    project_id: projectId,
+    scope_glob: fields.scopeGlob ?? "**/*",
+    body: fields.body,
+    source: fields.source ?? null,
+    updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+  };
+  const url = `${rest.config.restBase}/conventions`;
+  const rows = (await rest.request(
+    "POST",
+    url,
+    rest.headers({ prefer: "return=representation" }),
+    payload
+  )) as Array<Record<string, unknown>> | null;
+  if (!rows?.length) throw new StoreError("upsertConvention: resposta vazia");
+  return rows[0];
+}
+
+export async function restListMemory(
+  rest: SupabaseRest,
+  projectSlug?: string
+): Promise<{
+  projectId: string;
+  decisions: Array<Record<string, unknown>>;
+}> {
+  const projectId = await restGetProjectId(rest, projectSlug);
+  const decisions = await restListDecisions(rest, projectId, { limit: 500 });
+  return { projectId, decisions };
+}

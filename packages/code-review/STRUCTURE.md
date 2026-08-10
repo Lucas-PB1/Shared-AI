@@ -11,19 +11,14 @@ packages/code-review/
 ├── src/
 │   ├── shared/
 │   ├── memory/
-│   ├── ingest/
+│   ├── ingest/            # extract, git, fix, classify, decisions
 │   ├── report/
-│   ├── store/
-│   │   ├── index.ts
-│   │   ├── port.ts
-│   │   ├── config.ts
-│   │   ├── supabase-client.ts
-│   │   └── dual-write.ts
-│   ├── skill-routing/   # path → skills/rules (CI + LLM)
-│   └── llm/             # providers + prompt /avaliar
-├── tests/
-│   ├── memory/ ingest/ report/ store/ skill-routing/ llm/
-└── tools/               # bash wrappers + static check (eslint-inbox.mjs)
+│   ├── store/             # open, dual-write, publish, memory-*, supabase-*
+│   ├── skill-routing/
+│   └── llm/
+├── tools/
+│   ├── github-pr/         # módulos bash do CI /avaliar (soft ≤200L)
+│   └── review-github-pr.sh
 ```
 
 ## Princípios
