@@ -1,5 +1,5 @@
 /**
- * Publica review_run + findings (U2 — driver CI/local).
+ * Publica review_run + findings (sempre hard — store obrigatório).
  */
 
 import { StoreError } from "./config.js";
@@ -8,7 +8,7 @@ import type {
   CreateRunFields,
   ReviewStorePort,
 } from "./port.js";
-import { isStoreRequired, openStore } from "./open.js";
+import { STORE_REQUIRED_MSG, openStore } from "./open.js";
 
 export type PublishRunResult = {
   attempted: boolean;
@@ -34,15 +34,11 @@ export async function publishRun(
       : opts.port;
 
   if (!port) {
-    if (isStoreRequired(env)) {
-      return {
-        attempted: true,
-        findings: 0,
-        error:
-          "REVIEW_STORE_REQUIRED=1 mas store não configurado (SUPABASE_URL/chave)",
-      };
-    }
-    return { attempted: false, findings: 0 };
+    return {
+      attempted: true,
+      findings: 0,
+      error: STORE_REQUIRED_MSG,
+    };
   }
 
   try {
@@ -84,17 +80,8 @@ export function logPublishResult(
   label: string,
   result: PublishRunResult
 ): void {
-  if (!result.attempted && !isStoreRequired()) return;
   if (result.error) {
-    console.error(
-      `${label}: publish falhou${
-        isStoreRequired() ? " (required)" : " (soft)"
-      }: ${result.error}`
-    );
-    return;
-  }
-  if (!result.attempted) {
-    console.error(`${label}: publish skip (store offline)`);
+    console.error(`${label}: publish falhou: ${result.error}`);
     return;
   }
   console.error(

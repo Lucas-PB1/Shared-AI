@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * U3 — envia exclusions.yaml local → store (slim, sem snippets).
+ * Store obrigatório.
  *
  * Uso: review-memory-push.ts [project] [--slug SLUG]
  */
@@ -51,10 +52,6 @@ async function main(): Promise<number> {
       2
     )
   );
-  if (!result.attempted) {
-    console.error("review-memory-push: store offline — skip");
-    return 0;
-  }
   if (result.error) {
     console.error(`review-memory-push: ${result.error}`);
     return 1;

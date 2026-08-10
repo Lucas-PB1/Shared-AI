@@ -26,7 +26,7 @@ packages/code-review/
 | Princípio | No código |
 | --- | --- |
 | **Modular Slices** | import via `index` / `shared` |
-| **Store** | port → supabase-client; dual-write soft se env configurado |
+| **Store** | port → supabase-client; **sempre hard** (sem offline) |
 | **Dependência** | bin/ingest → store; store **não** importa memory (só shapes) |
 
 ## Scripts
@@ -44,4 +44,4 @@ npm run lint:ts
 ### Store env
 
 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `REVIEW_PROJECT_SLUG`  
-Hard: `REVIEW_STORE_REQUIRED=1` (U4). Ver [docs/supabase-cloud.md](../../docs/supabase-cloud.md).
+Store sempre obrigatório. Ver [docs/supabase-cloud.md](../../docs/supabase-cloud.md).

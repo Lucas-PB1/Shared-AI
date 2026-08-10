@@ -7,7 +7,7 @@ import path from "node:path";
 import { reviewDir } from "../memory/paths.js";
 import type { LoadConfigOpts } from "./config.js";
 import type { ReviewStorePort } from "./port.js";
-import { openStore } from "./open.js";
+import { STORE_REQUIRED_MSG, openStore } from "./open.js";
 import {
   formatConventionsMd,
   formatExclusionsYaml,
@@ -36,7 +36,12 @@ export async function fetchStoreMemory(
       ? openStore({ env: opts.env, projectSlug: opts.projectSlug })
       : opts.port;
   if (!port) {
-    return { attempted: false, exclusions: [], conventions: [] };
+    return {
+      attempted: true,
+      exclusions: [],
+      conventions: [],
+      error: STORE_REQUIRED_MSG,
+    };
   }
   try {
     const projectId = await port.getProjectId(opts.projectSlug);
@@ -80,9 +85,6 @@ export async function pullMemoryToProject(
     env: opts.env,
     projectSlug: opts.projectSlug,
   });
-  if (!mem.attempted) {
-    return { attempted: false, exclusionCount: 0, conventionCount: 0 };
-  }
   if (mem.error) {
     return {
       attempted: true,
@@ -121,7 +123,7 @@ export async function pushExclusionsFromProject(
       ? openStore({ env: opts.env, projectSlug: opts.projectSlug })
       : opts.port;
   if (!port) {
-    return { attempted: false, written: 0 };
+    return { attempted: true, written: 0, error: STORE_REQUIRED_MSG };
   }
 
   const yamlPath =

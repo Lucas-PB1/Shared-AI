@@ -1,8 +1,8 @@
 /**
- * Abertura da porta store + flags soft/hard (U1/U4).
+ * Abertura da porta store — sempre obrigatório (sem modo offline).
  */
 
-import { loadConfig, type LoadConfigOpts } from "./config.js";
+import { StoreError, loadConfig, type LoadConfigOpts } from "./config.js";
 import type { ReviewStorePort } from "./port.js";
 import { ReviewStore } from "./supabase-client.js";
 
@@ -12,6 +12,9 @@ export const STORE_VERDICTS = new Set([
   "rejeitado",
   "nao-aplicavel",
 ]);
+
+export const STORE_REQUIRED_MSG =
+  "Store obrigatório: defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (ou SUPABASE_KEY)";
 
 export function isStoreConfigured(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env
@@ -26,19 +29,19 @@ export function isStoreConfigured(
   return Boolean(url && key);
 }
 
-/** Hard: exige store se REVIEW_STORE_REQUIRED=1. */
+/**
+ * Store sempre exigido. Flag REVIEW_STORE_REQUIRED mantida só por compat
+ * (qualquer valor desabilitador é ignorado).
+ */
 export function isStoreRequired(
-  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env
+  _env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env
 ): boolean {
-  const flag = String(env.REVIEW_STORE_REQUIRED ?? "")
-    .trim()
-    .toLowerCase();
-  return flag === "1" || flag === "true" || flag === "yes";
+  return true;
 }
 
 /**
- * Abre porta Supabase ou `null` se offline / não configurado.
- * Nunca lança — loadConfig failures → null.
+ * Abre porta Supabase ou `null` se env ausente (testes / probes).
+ * Fluxos oficiais usam `requireStore`.
  */
 export function openStore(opts: LoadConfigOpts = {}): ReviewStorePort | null {
   const env = opts.env ?? process.env;
@@ -47,5 +50,21 @@ export function openStore(opts: LoadConfigOpts = {}): ReviewStorePort | null {
     return new ReviewStore(loadConfig(opts));
   } catch {
     return null;
+  }
+}
+
+/** Abre o store ou lança `StoreError`. */
+export function requireStore(opts: LoadConfigOpts = {}): ReviewStorePort {
+  const env = opts.env ?? process.env;
+  if (!isStoreConfigured(env)) {
+    throw new StoreError(STORE_REQUIRED_MSG);
+  }
+  try {
+    return new ReviewStore(loadConfig(opts));
+  } catch (err) {
+    if (err instanceof StoreError) throw err;
+    throw new StoreError(
+      err instanceof Error ? err.message : String(err)
+    );
   }
 }

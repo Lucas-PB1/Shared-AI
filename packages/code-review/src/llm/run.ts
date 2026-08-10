@@ -53,16 +53,12 @@ export async function runLlmReview(args: LlmCliArgs): Promise<string> {
   const stack = inferStack(args.file);
   const staticOut = readOptional(args.staticFile);
   const diff = readOptional(args.diffFile);
+  // Cache local (se houver) + store obrigatório
   let convencoes = convencoesForFile(args.project, args.file);
   let exclusions = exclusionsForFile(args.project, args.file);
-  // U3: merge live store (soft se offline)
-  try {
-    const storeLayer = await storeMemoryForFile(args.file);
-    convencoes = mergeTextLayers(convencoes, storeLayer.conventions);
-    exclusions = mergeTextLayers(exclusions, storeLayer.exclusions);
-  } catch {
-    /* offline / network — arquivos locais bastam */
-  }
+  const storeLayer = await storeMemoryForFile(args.file);
+  convencoes = mergeTextLayers(convencoes, storeLayer.conventions);
+  exclusions = mergeTextLayers(exclusions, storeLayer.exclusions);
   const codeReviewRoot = process.env.HOSTDIME_IA_ROOT
     ? path.join(process.env.HOSTDIME_IA_ROOT, "packages/code-review")
     : PACKAGE_ROOT;

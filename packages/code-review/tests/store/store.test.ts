@@ -105,10 +105,9 @@ describe("isStoreConfigured / openStore / isStoreRequired", () => {
     );
   });
 
-  it("required flag", () => {
-    assert.equal(isStoreRequired({}), false);
-    assert.equal(isStoreRequired({ REVIEW_STORE_REQUIRED: "1" }), true);
-    assert.equal(isStoreRequired({ REVIEW_STORE_REQUIRED: "true" }), true);
+  it("always required (no offline)", () => {
+    assert.equal(isStoreRequired({}), true);
+    assert.equal(isStoreRequired({ REVIEW_STORE_REQUIRED: "0" }), true);
   });
 });
 
@@ -175,23 +174,14 @@ function mockPort(calls: string[]): ReviewStorePort {
 }
 
 describe("dualWriteDecisions", () => {
-  it("skips when no store", async () => {
+  it("errors when no store", async () => {
     const r = await dualWriteDecisions(
       [{ finding_id: "x", decision: "aceito" }],
       { port: null }
     );
-    assert.equal(r.attempted, false);
-    assert.equal(r.written, 0);
-    assert.equal(r.skipped, 1);
-  });
-
-  it("required without store errors", async () => {
-    const r = await dualWriteDecisions(
-      [{ finding_id: "x", decision: "aceito" }],
-      { port: null, env: { REVIEW_STORE_REQUIRED: "1" } }
-    );
     assert.equal(r.attempted, true);
-    assert.match(String(r.error), /REVIEW_STORE_REQUIRED/);
+    assert.equal(r.written, 0);
+    assert.match(String(r.error), /Store obrigatório|SUPABASE_URL/);
   });
 
   it("writes allowed verdicts via port", async () => {
@@ -233,7 +223,7 @@ describe("dualWriteDecisions", () => {
     assert.ok(calls.includes("completeRun:run-1"));
   });
 
-  it("soft-fails on port error", async () => {
+  it("returns error on port failure", async () => {
     const port: ReviewStorePort = {
       ...mockPort([]),
       async getProjectId() {
@@ -250,13 +240,14 @@ describe("dualWriteDecisions", () => {
 });
 
 describe("publishRun", () => {
-  it("skips when no store", async () => {
+  it("errors when no store", async () => {
     const r = await publishRun(
       [{ findingKey: "a", summary: "A" }],
       { port: null }
     );
-    assert.equal(r.attempted, false);
+    assert.equal(r.attempted, true);
     assert.equal(r.findings, 0);
+    assert.match(String(r.error), /Store obrigatório|SUPABASE_URL/);
   });
 
   it("writes findings", async () => {

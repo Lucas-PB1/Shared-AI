@@ -22,16 +22,10 @@ Copie `github-avaliar-pr.yml` para `.github/workflows/avaliar-pr.yml`.
 
 Copie `github-avaliar-pr-memoria.yml` para `.github/workflows/avaliar-pr-memoria.yml` — dispara no **merge** do PR e atualiza `convencoes.md` / `exclusions.yaml` a partir dos threads do `/avaliar`.
 
-**Versionar no repo alvo:**
+**Memória = store (obrigatório):**  
+`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` + `REVIEW_PROJECT_SLUG` — pull/publish/ingest no CI. Jobs **falham** sem secrets. Sem fallback offline.
 
-| Arquivo | Motivo |
-| --- | --- |
-| `.cursor/review/convencoes.md` | Convenções por escopo (LLM + referência) |
-| `.cursor/review/exclusions.yaml` | Achados rejeitados / não aplicáveis (CI não repete) |
-| `.cursor/review/decisions-ingest.jsonl` | Histórico acumulado de decisões do ingest pós-merge (CI) |
-| `.cursor/review/.memoria-version` | Schema v2 (`2`) |
-
-Manter **gitignored**: `context.yaml`, `decisions.jsonl` (staging local), `reports/` (CI), `resultados/`.
+Cache efêmero no workspace (não versionar): `exclusions.yaml` / `convencoes-store.md` gerados pelo pull; `reports/` artifact.
 
 **Promover memória local → CI:**
 
@@ -65,12 +59,9 @@ Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-
 | `REVIEW_LLM_API_KEY` | Secret | Fallback | OpenAI/Anthropic direto (se não usar Cursor). Sem este **nem** `CURSOR_API_KEY`, o workflow roda só a **Fase 1 (estático)** |
 | `REVIEW_LLM_MODEL` | Variable | Não | Modelo do `agent` (ex. `gpt-5`) ou OpenAI |
 | `REVIEW_LLM_PROVIDER` | Variable | Não | `cursor` (default), `openai`, `anthropic` |
-| `SUPABASE_URL` | Secret | Não* | Store review (U2/U3). Ausente = só arquivos |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secret | Não* | CI publish/pull; só no pipeline |
-| `REVIEW_PROJECT_SLUG` | Variable | Não | slug em `projects` (default: nome do repo) |
-| `REVIEW_STORE_REQUIRED` | Variable | Não | `true` = hard fail se store down (U4) |
-
-\*Opcionais; sem eles o workflow roda review sem store (soft).
+| `SUPABASE_URL` | Secret | **Sim** | Store review |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret | **Sim** | CI publish/pull |
+| `REVIEW_PROJECT_SLUG` | Variable | Não | slug em `projects` (ex. tema HubSpot: `hostdime-hub`; default: nome do repo) |
 
 ### Store (U2–U4)
 

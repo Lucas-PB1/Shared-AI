@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * U2 — publica review_run + findings a partir de relatórios /avaliar.
- * Soft se store offline; hard se REVIEW_STORE_REQUIRED=1.
+ * Store obrigatório.
  *
  * Uso:
  *   review-store-publish.ts --project PATH [--reports DIR] [--pr N] [--sha SHA]
@@ -147,8 +147,8 @@ async function main(): Promise<number> {
     )
   );
 
-  if (!result.attempted) return 0;
-  return result.error ? 1 : 0;
+  if (result.error) return 1;
+  return 0;
 }
 
 main().then(

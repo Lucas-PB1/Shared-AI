@@ -197,6 +197,10 @@ async function cmdIngest(
     decidedBy: "review-ingest-pr",
   });
   logDualWriteResult("review-ingest-pr", dual);
+  if (dual.error) {
+    console.error("Ingest: falha ao gravar no store — abortando");
+    return 1;
+  }
 
   const allDecisions = readDecisions(decisionsPath);
   const context = buildContext(
@@ -205,15 +209,12 @@ async function cmdIngest(
     allDecisions
   );
   writeContext(rd, context);
-  console.log("context.yaml atualizado");
+  console.log("context.yaml atualizado (cache local)");
 
   cmdPromover(project, true, promoteAll);
 
   runExportExclusions(project);
-  console.log("exclusions.yaml exportado");
-  console.log(
-    "\nPróximo: commit .cursor/review/decisions-ingest.jsonl + convencoes.md + exclusions.yaml"
-  );
+  console.log("exclusions.yaml exportado (cache local; fonte de verdade = store)");
   return 0;
 }
 

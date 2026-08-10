@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * U3 — puxa exclusions/conventions do store → cache local (.cursor/review/).
- * Soft se store offline (exit 0).
+ * Store obrigatório.
  *
  * Uso: review-memory-pull.ts [project] [--slug SLUG]
  */
@@ -55,10 +55,6 @@ async function main(): Promise<number> {
       2
     )
   );
-  if (!result.attempted) {
-    console.error("review-memory-pull: store offline — skip");
-    return 0;
-  }
   if (result.error) {
     console.error(`review-memory-pull: ${result.error}`);
     return 1;

@@ -1,7 +1,11 @@
-# Supabase cloud (HostDime) — U4
+# Supabase cloud (HostDime)
 
 Setup do **review store** em projeto Supabase Hospedado (não local Docker).  
 Schema e código: monorepo `hostdime-ia`. **Dados de review e secrets de produção não vão no git.**
+
+## Contrato
+
+**Store sempre obrigatório.** Pull, publish, dual-write, LLM memory e `/finalizar` falham sem `SUPABASE_URL` + chave. Não há modo offline.
 
 ## Checklist de go-live
 
@@ -14,42 +18,32 @@ Schema e código: monorepo `hostdime-ia`. **Dados de review e secrets de produç
 5. Secrets:
    | Onde | Chave |
    | --- | --- |
-   | GitHub Actions (repos alvo) | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
-   | Variable | `REVIEW_PROJECT_SLUG`, opcional `REVIEW_STORE_REQUIRED=true` |
-   | Dev local `.env` (gitignored) | mesma URL + **service role só se política permitir**; preferir JWT de membro no futuro |
+   | GitHub Actions (repos alvo) | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (**obrigatórios**) |
+   | Variable | `REVIEW_PROJECT_SLUG` |
+   | Dev local `.env` (gitignored) | mesma URL + service role (tooling) |
 6. **Service role** só em CI/tooling controlado — nunca em app pública do browser.
-7. Hard unification (opcional por repo): `REVIEW_STORE_REQUIRED=true`  
-   - dual-write / publish falham o job se store down  
-   - default soft: arquivo local + skip store se offline
 
 ## Multi-usuário e RLS
 
 - Policies em `authenticated`: somente membros de `project_members`.
-- `service_role`: bypass (CI + smoke).
-- Dashboard mínimo v1: **Supabase Studio** filtrando por `project_id` / `slug`. Página interna HostDime fica fora do monorepo.
+- `service_role`: bypass (CI + tooling).
+- Dashboard mínimo v1: **Supabase Studio** filtrando por `project_id` / `slug`.
 
-## Drivers (já no monorepo)
+## Drivers
 
 | Comando | Papel |
 | --- | --- |
-| `npm run review:memory-pull` | exclusions/conventions → `.cursor/review/` |
+| `npm run review:memory-pull` | exclusions/conventions → cache local |
 | `npm run review:store-publish` | CI run + findings |
-| `npm run review:dual-write` | decisões jsonl → store |
-| `npm run review:memory-push` | exclusions.yaml slim → store |
+| `npm run review:dual-write` | decisões → store |
+| `npm run review:memory-push` | cache exclusions slim → store |
 
-Workflow template: `packages/code-review/ci/github-avaliar-pr.yml` (pull → /avaliar → publish).
-
-## Hard vs soft
-
-| Modo | Quando | Comportamento |
-| --- | --- | --- |
-| Soft (default) | sem `REVIEW_STORE_REQUIRED` | review e finalize funcionam offline |
-| Hard | `REVIEW_STORE_REQUIRED=1` | write store é obrigatório se o fluxo o invoca |
+Workflow: `packages/code-review/ci/github-avaliar-pr.yml` (pull → /avaliar → publish).
 
 ## Privacidade
 
 - Snippets em `findings` / `decisions` meta **só no DB privado**.
-- Export versionável no git do **cliente**: `exclusions.yaml` slim (finding_key + reason + scope).
+- Cache local em `.cursor/review/` é efêmero (gitignored nos repos alinados a store-only).
 - Nunca commitar dump de produção nem service keys no hostdime-ia.
 
 Ver também: [supabase-local.md](supabase-local.md), [PLANO-REVIEW-UNIFICADO.md](PLANO-REVIEW-UNIFICADO.md).

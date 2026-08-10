@@ -1,12 +1,12 @@
 /**
- * Dual-write decisões locais → store (U1 soft / U4 hard opcional).
+ * Dual-write decisões locais → store (sempre hard).
  */
 
 import { StoreError } from "./config.js";
 import type { CreateRunFields, ReviewStorePort } from "./port.js";
 import {
+  STORE_REQUIRED_MSG,
   STORE_VERDICTS,
-  isStoreRequired,
   openStore,
 } from "./open.js";
 
@@ -45,19 +45,11 @@ export async function dualWriteDecisions(
       : opts.port;
 
   if (!port) {
-    if (isStoreRequired(env)) {
-      return {
-        attempted: true,
-        written: 0,
-        skipped: decisions.length,
-        error:
-          "REVIEW_STORE_REQUIRED=1 mas store não configurado (SUPABASE_URL/chave)",
-      };
-    }
     return {
-      attempted: false,
+      attempted: true,
       written: 0,
       skipped: decisions.length,
+      error: STORE_REQUIRED_MSG,
     };
   }
 
@@ -136,16 +128,10 @@ export function logDualWriteResult(
   label: string,
   result: DualWriteResult
 ): void {
-  if (!result.attempted && !isStoreRequired()) return;
   if (result.error) {
-    console.error(
-      `${label}: store dual-write falhou${
-        isStoreRequired() ? " (required)" : " (arquivo local OK)"
-      }: ${result.error}`
-    );
+    console.error(`${label}: store dual-write falhou: ${result.error}`);
     return;
   }
-  if (!result.attempted) return;
   console.error(
     `${label}: store dual-write ok written=${result.written} skipped=${result.skipped}` +
       (result.runId ? ` run=${result.runId}` : "")

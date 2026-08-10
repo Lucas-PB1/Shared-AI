@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 /**
- * Dual-write de decisões locais → store (U1 soft).
+ * Dual-write de decisões locais → store (obrigatório).
  * Uso após /finalizar (append em decisions.jsonl) ou reprocessamento.
- *
- * Offline se SUPABASE_URL/chave ausentes (exit 0, attempted=false).
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -90,8 +88,6 @@ async function main(): Promise<number> {
       2
     )
   );
-  // Offline sem store = sucesso (soft). Erro de rede = 1.
-  if (!result.attempted) return 0;
   return result.error ? 1 : 0;
 }
 

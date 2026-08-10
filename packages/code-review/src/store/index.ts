@@ -23,10 +23,12 @@ export {
 } from "./config.js";
 
 export {
+  STORE_REQUIRED_MSG,
   STORE_VERDICTS,
   isStoreConfigured,
   isStoreRequired,
   openStore,
+  requireStore,
 } from "./open.js";
 
 export {

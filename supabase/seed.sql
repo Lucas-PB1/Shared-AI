@@ -4,6 +4,9 @@
 INSERT INTO public.projects (slug, name, github_owner, github_repo)
 VALUES
   ('hostdime-ia', 'HostDime IA (local)', 'HostDimeBR', 'hostdime-ia'),
+  -- Tema HubSpot (hsproject name=hostdime; repo GitHub=hostdime-hub)
+  ('hostdime-hub', 'HostDime tema HubSpot', 'HostDimeBR', 'hostdime-hub'),
+  ('hostdime', 'HostDime tema (alias hsproject)', 'HostDimeBR', 'hostdime-hub'),
   ('demo-app', 'Demo App', 'hostdime', 'demo-app')
 ON CONFLICT (slug) DO NOTHING;
 
