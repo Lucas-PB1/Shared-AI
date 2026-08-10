@@ -608,6 +608,60 @@ test_lint_python_tools() {
   assert "lint python ok" grep -q 'py_compile: OK' <<<"$out"
 }
 
+test_pre_commit_skip_and_clean() {
+  project="$(hostdime_make_git_project)"
+  hostdime_mock_semgrep
+  printf 'init\n' >"$project/README.md"
+  git -C "$project" add README.md
+  git -C "$project" commit -q -m "init"
+
+  out="$(
+    cd "$project" && HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" HOSTDIME_SKIP_PRE_COMMIT=1 \
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-pre-commit.sh" 2>&1
+  )"
+  st=$?
+  assert "pre-commit skip env" test "$st" -eq 0
+  assert "pre-commit skip msg" grep -q 'skip' <<<"$out"
+
+  out="$(
+    cd "$project" && HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-pre-commit.sh" 2>&1
+  )"
+  st=$?
+  assert "pre-commit sem stage" test "$st" -eq 0
+  assert "pre-commit nada no stage" grep -q 'nada no stage' <<<"$out"
+
+  mkdir -p "$project/src"
+  cp "$HOSTDIME_IA_ROOT/tests/fixtures/review/sample-ok.mjs" "$project/src/ok.mjs"
+  git -C "$project" add src/ok.mjs
+  out="$(
+    cd "$project" && HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-pre-commit.sh" 2>&1
+  )"
+  st=$?
+  assert "pre-commit clean js" test "$st" -eq 0
+  assert "pre-commit OK" grep -q 'pre-commit: OK' <<<"$out"
+}
+
+test_install_pre_commit_hook() {
+  project="$(hostdime_make_git_project)"
+  printf 'x\n' >"$project/README.md"
+  git -C "$project" add README.md
+  git -C "$project" commit -q -m "init"
+
+  out="$(
+    HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/install-pre-commit.sh" "$project" 2>&1
+  )"
+  st=$?
+  git_dir="$(git -C "$project" rev-parse --git-dir)"
+  [[ "$git_dir" != /* ]] && git_dir="$project/$git_dir"
+  assert "install exit 0" test "$st" -eq 0
+  assert "hook exists" test -x "$git_dir/hooks/pre-commit"
+  assert "hook marker" grep -q 'hostdime-ia pre-commit' "$git_dir/hooks/pre-commit"
+  assert "install msg" grep -q 'pre-commit instalado' <<<"$out"
+}
+
 echo "HostDime IA — testes (runner embutido)"
 
 run_test "link symlinks" test_link_symlinks
@@ -648,6 +702,8 @@ run_test "check-inbox clean js" test_check_inbox_clean_js
 run_test "export exclusions" test_export_exclusions
 run_test "smoke ingest python" test_smoke_ingest_python
 run_test "lint python tools" test_lint_python_tools
+run_test "pre-commit skip and clean" test_pre_commit_skip_and_clean
+run_test "install pre-commit hook" test_install_pre_commit_hook
 
 echo ""
 echo "Resumo: $pass ok, $fail falha(s)"

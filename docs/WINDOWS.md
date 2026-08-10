@@ -172,3 +172,16 @@ npm run agent -- -p --force "fix lint"
 ```
 
 Antes de executar, relinka rules/commands (como o hook `sessionStart`).
+
+## Pre-commit
+
+O hook git (`review-pre-commit.sh`) é **bash**. No Windows:
+
+- use **Git Bash** ou **WSL** para instalar/rodar o hook, **ou**
+- rode `npm run review:ci` no CI e confie no pipeline
+- pule localmente: `$env:HOSTDIME_SKIP_PRE_COMMIT=1` (ou `HOSTDIME_SKIP_PRE_COMMIT=1` no Bash)
+
+```bash
+# Git Bash / WSL
+HOSTDIME_IA_ROOT=/c/path/hostdime-ia npm run hooks:pre-commit -- /c/path/projeto
+```

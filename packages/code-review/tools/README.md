@@ -4,7 +4,9 @@
 | --- | --- |
 | `~/.cursor/review-check.sh` | Análise estática de um arquivo (Semgrep, PHPStan, ESLint, tsc) |
 | `~/.cursor/review-diff.sh` | Lista arquivos alterados revisáveis (`/avaliar-diff`) |
-| `~/.cursor/review-ci.sh` | Review estático em arquivos do diff (CI / local) |
+| `review-ci.sh` | Review estático em arquivos do diff (CI / local) |
+| `review-pre-commit.sh` | Review estático só nos **staged** (git hook — sem LLM) |
+| `install-pre-commit.sh` | Instala `.git/hooks/pre-commit` no projeto |
 | `~/.cursor/review-github-pr.sh` | /avaliar automático no GitHub — estático + LLM |
 | `review-llm.mjs` | Gera relatório /avaliar via LLM |
 | `review-skill-routing.mjs` | Resolve skills/rules por path do arquivo |
@@ -34,6 +36,30 @@ npm run test:review-unit
 ```
 
 Deps Node/PHP ficam na **raiz do hostdime-ia** — um único `npm run setup`.
+
+## Pre-commit (sem LLM)
+
+Alinha o hook local ao gate estático do CI (`check-inbox` + opcional ShellCheck).
+
+```bash
+# no projeto alvo (com code-review instalado na máquina)
+cd /caminho/do/projeto
+HOSTDIME_IA_ROOT=/caminho/hostdime-ia npm --prefix "$HOSTDIME_IA_ROOT" run hooks:pre-commit -- "$(pwd)"
+
+# ou na raiz do hostdime-ia
+npm run hooks:pre-commit -- /caminho/do/projeto
+npm run hooks:pre-commit -- .          # no próprio hostdime-ia
+```
+
+| Ação | Como |
+| --- | --- |
+| Rodar manual | `npm run pre-commit` (no hostdime-ia) ou o script com stage |
+| Pular um commit | `HOSTDIME_SKIP_PRE_COMMIT=1 git commit ...` |
+| Limite de arquivos | `HOSTDIME_PRE_COMMIT_MAX_FILES=40` (default) |
+| Sem shellcheck | `HOSTDIME_PRE_COMMIT_SHELLCHECK=0` |
+| Remover hook | `rm .git/hooks/pre-commit` |
+
+Hook anterior (se não era hostdime) fica em `pre-commit.local` e é encadeado.
 
 ```bash
 ~/.cursor/review-check.sh src/Foo.php
