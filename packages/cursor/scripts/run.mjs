@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Dispatcher cross-platform: win32 → PowerShell, linux/darwin → bash.
+ * Dispatcher Windows/Linux: win32 → PowerShell, linux → bash.
+ * Outros SOs não são suportados.
  * Uso: node packages/cursor/scripts/run.mjs <comando> [args...]
  */
 import { spawnSync } from 'node:child_process';
@@ -9,7 +10,17 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const isWin = process.platform === 'win32';
+const platform = process.platform;
+const isWin = platform === 'win32';
+const isLinux = platform === 'linux';
+
+if (!isWin && !isLinux) {
+  console.error(
+    `HostDime IA: plataforma não suportada (${platform}). Use Windows ou Linux.`
+  );
+  process.exit(1);
+}
+
 const scriptsDir = __dirname;
 const ps1Dir = join(scriptsDir, 'ps1');
 

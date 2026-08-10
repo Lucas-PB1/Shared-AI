@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 # Estado e instalação do MCP HubSpot (HubSpotDev) em ~/.cursor/mcp.json
 
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
+
+hubspot_mcp_ts() {
+  local root
+  root="$(hostdime_resolve_root 2>/dev/null || true)"
+  if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/hubspot-mcp.ts" ]]; then
+    printf '%s/packages/cursor/scripts/lib/hubspot-mcp.ts' "$root"
+    return 0
+  fi
+  return 1
+}
+
 hubspot_mcp_state_file() {
   local cursor_dir="${CURSOR_USER_DIR:-$HOME/.cursor}"
   printf '%s/hostdime-hubspot-mcp.state' "$cursor_dir"
@@ -30,25 +43,10 @@ hubspot_mcp_write_status() {
 }
 
 hubspot_mcp_is_configured() {
-  local mcp_file="$1"
+  local mcp_file="$1" ts
   [[ -f "$mcp_file" ]] || return 1
-  python3 - "$mcp_file" <<'PY'
-import json
-import sys
-
-path = sys.argv[1]
-try:
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
-except (OSError, json.JSONDecodeError):
-    sys.exit(1)
-
-servers = data.get("mcpServers") or {}
-for key in servers:
-    if key.lower() in {"hubspotdev", "hubspot"}:
-        sys.exit(0)
-sys.exit(1)
-PY
+  ts="$(hubspot_mcp_ts)" || return 1
+  hostdime_tsx "$ts" configured "$mcp_file"
 }
 
 hubspot_mcp_installed() {
@@ -64,54 +62,16 @@ hubspot_mcp_installed() {
 }
 
 hubspot_mcp_merge_config() {
-  local mcp_file="$1"
-  python3 - "$mcp_file" <<'PY'
-import json
-import os
-import sys
-
-path = sys.argv[1]
-entry = {
-    "HubSpotDev": {
-        "command": "npx",
-        "args": [
-            "-y",
-            "-p",
-            "@hubspot/cli",
-            "hs",
-            "mcp",
-            "start",
-            "--ai-agent",
-            "cursor",
-        ],
-        "env": {"HUBSPOT_MCP_STANDALONE": "true"},
-    }
-}
-
-data = {"mcpServers": {}}
-if os.path.isfile(path):
-    with open(path, encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError as exc:
-            print(f"Erro: {path} não é JSON válido ({exc})", file=sys.stderr)
-            sys.exit(1)
-
-servers = data.setdefault("mcpServers", {})
-for key in list(servers):
-    if key.lower() in {"hubspotdev", "hubspot"}:
-        del servers[key]
-servers.update(entry)
-
-os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-with open(path, "w", encoding="utf-8") as f:
-    json.dump(data, f, indent=2)
-    f.write("\n")
-PY
+  local mcp_file="$1" ts
+  ts="$(hubspot_mcp_ts)" || {
+    echo "Erro: hubspot-mcp.ts não encontrado" >&2
+    return 1
+  }
+  hostdime_tsx "$ts" merge "$mcp_file"
 }
 
 hubspot_mcp_install() {
-  local mcp_file changed=0
+  local mcp_file
   mcp_file="$(hubspot_mcp_cursor_config)"
   if hubspot_mcp_installed; then
     hubspot_mcp_write_status "installed"

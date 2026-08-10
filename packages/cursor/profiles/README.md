@@ -16,7 +16,7 @@ npm run onboard                              # wizard interativo (escolhe perfil
 | `python` | `pyproject.toml`, `requirements.txt`, `setup.py` |
 | `zend-laminas` | `composer.json` → `laminas/*`, `zendframework/*` |
 
-Detecção automática: `packages/cursor/scripts/lib/detect-stack.py` (usado por `/onboard`).
+Detecção automática: `packages/cursor/scripts/lib/detect-stack.ts` (usado por `/onboard`).
 
 Cada perfil cria **somente se não existir**:
 

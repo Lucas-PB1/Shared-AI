@@ -48,7 +48,7 @@ Cobertura extra em `run-embedded.sh` (e nos `*.bats` equivalentes quando existir
 | cursor-cli | merge `cli-config`, dry-run install |
 | agent | dry-run com args de projeto |
 | sync-inbox | scan e summary/cards |
-| memoria | migrar v2 / restore (sem legacy) |
+| memoria | init / backup / restore |
 | review smoke | diff/ci vazio e com arquivo, check-inbox, export exclusions, ingest, py_compile |
 
 ### Fixtures
@@ -62,12 +62,12 @@ Cobertura extra em `run-embedded.sh` (e nos `*.bats` equivalentes quando existir
 
 ```bash
 npm run lint:shell    # ShellCheck (skip suave se não instalado)
-npm run lint:python   # py_compile dos tools Python
+npm run lint:ts       # tsc --noEmit packages/code-review
 ```
 
 ## Requisitos
 
-- Bash, git, Python 3, PyYAML (export exclusions: `pip install pyyaml` se faltar)
+- Bash, git, Node 20+, tsx (devDependency da raiz)
 - Node ≥ 20 (scripts npm do clone; ESLint no smoke JS)
 - Opcional: [bats](https://github.com/bats-core/bats-core), [shellcheck](https://www.shellcheck.net/)
 
@@ -76,11 +76,11 @@ npm run lint:python   # py_compile dos tools Python
 sudo apt install bats shellcheck
 npm run test
 npm run lint:shell
-npm run lint:python
+npm run lint:ts
 ```
 
 ## Higiene
 
 - Não commitar `node_modules/`, `vendor/`, `__pycache__/`
 - Locks da raiz (`package-lock.json`, `composer.lock`) **são versionados**
-- Smokes de review **não** chamam API LLM nem `gh` (ingest via fixture Python)
+- Smokes de review **não** chamam API LLM nem `gh` (ingest via unit TS / fixture)

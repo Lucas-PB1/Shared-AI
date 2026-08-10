@@ -54,7 +54,7 @@ describe('buildUserPrompt', () => {
       diff: '+const x = 1',
       staticOut: '',
       convencoes: '- Use strict',
-      exclusions: '- [rejeitado] legacy',
+      exclusions: '- [rejeitado] accepted-pattern',
       skillsContext: 'skill text',
       skillIds: ['typescript'],
       ruleIds: [],
@@ -62,7 +62,7 @@ describe('buildUserPrompt', () => {
     assert.ok(text.includes('File: src/a.ts'));
     assert.ok(text.includes('Skills: typescript'));
     assert.ok(text.includes('skill text'));
-    assert.ok(text.includes('legacy'));
+    assert.ok(text.includes('accepted-pattern'));
     assert.ok(text.includes('const x = 1'));
   });
 });

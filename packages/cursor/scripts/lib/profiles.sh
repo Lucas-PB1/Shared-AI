@@ -39,7 +39,9 @@ profiles_usage_line() {
 
 detect_project_profile() {
   local project="$1"
-  local script="${BASH_SOURCE[0]%/*}/detect-stack.py"
+  local script="${BASH_SOURCE[0]%/*}/detect-stack.ts"
   [[ -d "$project" ]] || return 0
-  python3 "$script" "$project" 2>/dev/null || true
+  # shellcheck disable=SC1091
+  source "${BASH_SOURCE[0]%/*}/hostdime-env.sh"
+  hostdime_tsx "$script" "$project" 2>/dev/null || true
 }

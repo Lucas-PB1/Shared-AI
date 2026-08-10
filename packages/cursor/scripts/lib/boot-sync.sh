@@ -154,48 +154,10 @@ X-GNOME-Autostart-enabled=true
 EOF
 }
 
-boot_sync_uninstall_launchd() {
-  local plist="$HOME/Library/LaunchAgents/com.hostdime.hostdime-ia.boot-sync.plist"
-  launchctl bootout "gui/$(id -u)" "$plist" 2>/dev/null || true
-  rm -f "$plist"
-}
-
-boot_sync_install_launchd() {
-  local script plist_dir plist
-  script="$(boot_sync_startup_script)"
-  plist_dir="$HOME/Library/LaunchAgents"
-  plist="$plist_dir/com.hostdime.hostdime-ia.boot-sync.plist"
-  mkdir -p "$plist_dir"
-  cat >"$plist" <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key>
-  <string>com.hostdime.hostdime-ia.boot-sync</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>$script</string>
-  </array>
-  <key>RunAtLoad</key>
-  <true/>
-  <key>StandardOutPath</key>
-  <string>$(boot_sync_log_file)</string>
-  <key>StandardErrorPath</key>
-  <string>$(boot_sync_log_file)</string>
-</dict>
-</plist>
-EOF
-  launchctl bootstrap "gui/$(id -u)" "$plist" 2>/dev/null || launchctl load "$plist" 2>/dev/null || true
-}
-
 boot_sync_install_hook() {
   boot_sync_install_startup_script || return 1
 
   case "$(uname -s)" in
-    Darwin)
-      boot_sync_install_launchd
-      ;;
     Linux)
       if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
         boot_sync_install_systemd
@@ -204,7 +166,9 @@ boot_sync_install_hook() {
       fi
       ;;
     *)
-      boot_sync_install_desktop
+      echo "Erro: boot-sync bash só é suportado em Linux (detectado: $(uname -s))." >&2
+      echo "No Windows use: npm run boot-sync (PowerShell / Task Scheduler)." >&2
+      return 1
       ;;
   esac
 }
@@ -212,8 +176,17 @@ boot_sync_install_hook() {
 boot_sync_uninstall_hook() {
   boot_sync_uninstall_systemd
   boot_sync_uninstall_desktop
-  boot_sync_uninstall_launchd
   rm -f "$(boot_sync_startup_script)"
+}
+
+boot_sync_hook_kind() {
+  local desktop unit
+  desktop="${XDG_CONFIG_HOME:-$HOME/.config}/autostart/hostdime-ia-boot-sync.desktop"
+  unit="$HOME/.config/systemd/user/hostdime-ia-boot-sync.service"
+
+  [[ -f "$unit" ]] && { printf '%s' "systemd user"; return; }
+  [[ -f "$desktop" ]] && { printf '%s' "autostart desktop"; return; }
+  printf '%s' "não instalado"
 }
 
 boot_sync_enable() {
@@ -227,18 +200,6 @@ boot_sync_disable() {
   boot_sync_write_state "off" "1"
   boot_sync_uninstall_hook
   echo "Boot sync: OFF"
-}
-
-boot_sync_hook_kind() {
-  local plist desktop unit
-  plist="$HOME/Library/LaunchAgents/com.hostdime.hostdime-ia.boot-sync.plist"
-  desktop="${XDG_CONFIG_HOME:-$HOME/.config}/autostart/hostdime-ia-boot-sync.desktop"
-  unit="$HOME/.config/systemd/user/hostdime-ia-boot-sync.service"
-
-  [[ -f "$plist" ]] && { printf '%s' "launchd"; return; }
-  [[ -f "$unit" ]] && { printf '%s' "systemd user"; return; }
-  [[ -f "$desktop" ]] && { printf '%s' "autostart desktop"; return; }
-  printf '%s' "não instalado"
 }
 
 boot_sync_status() {

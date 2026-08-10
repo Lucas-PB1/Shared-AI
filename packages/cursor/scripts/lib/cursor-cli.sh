@@ -148,32 +148,34 @@ cursor_cli_template_file() {
   return 1
 }
 
-cursor_cli_merge_py() {
+cursor_cli_merge_ts() {
   local root="${HOSTDIME_IA_ROOT:-}"
   if [[ -z "$root" ]]; then
     local env_file="${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
     [[ -f "$env_file" ]] && source "$env_file"
     root="${HOSTDIME_IA_ROOT:-}"
   fi
-  if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/merge-cursor-cli-config.py" ]]; then
-    printf '%s/packages/cursor/scripts/lib/merge-cursor-cli-config.py' "$root"
+  if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/merge-cursor-cli-config.ts" ]]; then
+    printf '%s/packages/cursor/scripts/lib/merge-cursor-cli-config.ts' "$root"
     return 0
   fi
   return 1
 }
 
 cursor_cli_configure_auto() {
-  local template py config result
+  local template ts config result
   config="$(cursor_cli_config_file)"
   template="$(cursor_cli_template_file)" || {
     echo "Erro: template cli-config.auto.json não encontrado (HOSTDIME_IA_ROOT?)" >&2
     return 1
   }
-  py="$(cursor_cli_merge_py)" || {
-    echo "Erro: merge-cursor-cli-config.py não encontrado" >&2
+  ts="$(cursor_cli_merge_ts)" || {
+    echo "Erro: merge-cursor-cli-config.ts não encontrado" >&2
     return 1
   }
-  result="$(python3 "$py" "$config" "$template")"
+  # shellcheck disable=SC1091
+  source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
+  result="$(hostdime_tsx "$ts" "$config" "$template")"
   cursor_cli_write_status "configured" "auto"
   printf '%s\n' "$result"
 }
@@ -221,16 +223,15 @@ cursor_cli_status_report() {
     [[ -n "$auth_line" ]] && echo "  auth:" && echo "$auth_line" | sed 's/^/    /'
   fi
   if [[ -f "$config" ]]; then
-    approval="$(python3 - "$config" <<'PY'
-import json, sys
-try:
-    with open(sys.argv[1], encoding="utf-8") as f:
-        data = json.load(f)
-    print(data.get("approvalMode", "(unset)"))
-except Exception:
-    print("(erro ao ler)")
-PY
-)"
+    approval="$(node --input-type=module -e '
+import { readFileSync } from "node:fs";
+try {
+  const data = JSON.parse(readFileSync(process.argv[1], "utf-8"));
+  process.stdout.write(data.approvalMode ?? "(unset)");
+} catch {
+  process.stdout.write("(erro ao ler)");
+}
+' "$config")"
     echo "  cli-config: $config"
     echo "  approvalMode: $approval"
   else

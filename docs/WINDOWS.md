@@ -1,6 +1,8 @@
 # HostDime IA no Windows
 
-Suporte nativo via **PowerShell** (sem Git Bash ou WSL). Linux e macOS continuam usando os scripts bash originais.
+Suporte nativo via **PowerShell** (sem Git Bash ou WSL). No **Linux**, os scripts bash originais.
+
+Plataformas suportadas: **Windows** e **Linux** apenas.
 
 ## Pré-requisitos
 
@@ -9,7 +11,6 @@ Suporte nativo via **PowerShell** (sem Git Bash ou WSL). Linux e macOS continuam
 | Windows | 10+ | sim |
 | PowerShell | 5.1+ (já incluído) | sim |
 | Node.js | 20+ | sim |
-| Python | 3.x | sim (merge de `hooks.json`) |
 | Git | qualquer recente | recomendado |
 | PHP / Composer / Semgrep | — | só para `setup:code-review` |
 
@@ -127,7 +128,7 @@ O watch de histórico é **por projeto**, não global. Após `/historico setup`,
 
 - `historico-stop.ps1` — hook `stop` no Windows
 - `historico-stop.sh` — Unix
-- `history-watch-match.py` — matcher de escopo
+- `history-watch-match.ts` — matcher de escopo
 
 Merge em `.cursor/hooks.json` do projeto:
 

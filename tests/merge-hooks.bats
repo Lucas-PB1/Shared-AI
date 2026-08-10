@@ -20,10 +20,10 @@ teardown() {
 }
 JSON
 
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-hooks-json.py"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-hooks-json.ts"
   example="$HOSTDIME_IA_ROOT/packages/cursor/scripts/hooks/hooks.json.example"
 
-  run python3 "$py" "$hooks" "$example"
+  run hostdime_tsx "$ts" "$hooks" "$example"
   [ "$status" -eq 0 ]
   [ "$output" = "merged" ]
 
@@ -33,10 +33,10 @@ JSON
 
 @test "merge-hooks é idempotente" {
   hooks="$CURSOR_USER_DIR/hooks.json"
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-hooks-json.py"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-hooks-json.ts"
   example="$HOSTDIME_IA_ROOT/packages/cursor/scripts/hooks/hooks.json.example"
 
-  python3 "$py" "$hooks" "$example" >/dev/null
-  run python3 "$py" "$hooks" "$example"
+  hostdime_tsx "$ts" "$hooks" "$example" >/dev/null
+  run hostdime_tsx "$ts" "$hooks" "$example"
   [ "$output" = "ok" ]
 }

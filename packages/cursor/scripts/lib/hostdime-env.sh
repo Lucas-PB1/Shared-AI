@@ -76,3 +76,27 @@ hostdime_installed_version() {
   source "$env_file"
   printf '%s' "${HOSTDIME_IA_VERSION:-?}"
 }
+
+hostdime_tsx_bin() {
+  local root tsx
+  root="$(hostdime_resolve_root)" || return 1
+  tsx="$root/node_modules/.bin/tsx"
+  if [[ -x "$tsx" || -f "$tsx" ]]; then
+    printf '%s' "$tsx"
+    return 0
+  fi
+  if command -v tsx >/dev/null 2>&1; then
+    command -v tsx
+    return 0
+  fi
+  return 1
+}
+
+hostdime_tsx() {
+  local bin
+  bin="$(hostdime_tsx_bin)" || {
+    echo "Erro: tsx não encontrado (npm install na raiz do monorepo)" >&2
+    return 1
+  }
+  "$bin" "$@"
+}

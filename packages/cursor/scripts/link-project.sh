@@ -54,9 +54,10 @@ mkdir -p "$REVIEW_DIR"/{inbox,reports,resultados}
 
 touch "$REVIEW_DIR/inbox/.gitkeep" "$REVIEW_DIR/reports/.gitkeep" 2>/dev/null || true
 
-MEMORIA_PY="$HOSTDIME_IA_ROOT/packages/code-review/tools/review-memoria.py"
-if [[ -f "$MEMORIA_PY" ]]; then
-  python3 "$MEMORIA_PY" migrar --write "$TARGET" >/dev/null || true
+MEMORIA_TS="$HOSTDIME_IA_ROOT/packages/code-review/bin/review-memoria.ts"
+TSX_BIN="$HOSTDIME_IA_ROOT/node_modules/.bin/tsx"
+if [[ -f "$MEMORIA_TS" && -x "$TSX_BIN" ]]; then
+  "$TSX_BIN" "$MEMORIA_TS" migrar --write "$TARGET" >/dev/null || true
 else
   # Fallback mínimo sem CLI
   echo "2" >"$REVIEW_DIR/.memoria-version"
@@ -66,8 +67,8 @@ else
     cp "$CONV_TEMPLATE" "$REVIEW_DIR/convencoes.md"
   fi
 fi
-# Nunca deixar v1/legacy no projeto
-rm -f "$REVIEW_DIR/memoria.md" "$REVIEW_DIR/memoria.legacy.md" "$REVIEW_DIR/context.json"
+# Nunca deixar artefatos inválidos de memória no projeto
+rm -f "$REVIEW_DIR/memoria.md" "$REVIEW_DIR/context.json"
 
 # Garantir ausência de espelhos: orquestrador + commands só em ~/.cursor/
 [[ -n "$RULES_DIR" ]] && remove_project_orchestrator_rule_symlinks "$RULES_DIR"

@@ -4,6 +4,9 @@
 set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./_tsx.sh
+source "$TOOLS_DIR/_tsx.sh"
+
 PROJECT="."
 WRITE=""
 
@@ -25,7 +28,13 @@ if [[ -z "$REPO" ]]; then
   REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)"
 fi
 
-ARGS=(python3 "$TOOLS_DIR/review-ingest-pr-decisions.py" "$PR_NUMBER" --project "$PROJECT")
+ARGS=(
+  "$HOSTDIME_TSX"
+  "$HOSTDIME_IA_ROOT/packages/code-review/bin/review-ingest-pr-decisions.ts"
+  "$PR_NUMBER"
+  --project
+  "$PROJECT"
+)
 [[ -n "$REPO" ]] && ARGS+=(--repo "$REPO")
 [[ -n "$WRITE" ]] && ARGS+=("$WRITE")
 [[ "${REVIEW_INGEST_PROMOTE_ALL:-}" == "1" ]] && ARGS+=(--all)

@@ -1,7 +1,13 @@
 # Ferramentas de review
 
-| Script | Uso |
+Layout e política de linguagem: [../STRUCTURE.md](../STRUCTURE.md).
+
+| Entrada | Uso |
 | --- | --- |
+| `bin/review-store-smoke.ts` | Smoke do store Supabase (Node/tsx) |
+| `bin/review-pr-report.ts` | Helpers puros do review-github-pr |
+| `bin/review-memoria.ts` | CLI memória v2 |
+| `bin/review-ingest-pr-decisions.ts` | Ingest pós-merge (gh) → memória v2 |
 | `~/.cursor/review-check.sh` | Análise estática de um arquivo (Semgrep, PHPStan, ESLint, tsc) |
 | `~/.cursor/review-diff.sh` | Lista arquivos alterados revisáveis (`/avaliar-diff`) |
 | `review-ci.sh` | Review estático em arquivos do diff (CI / local) |
@@ -11,29 +17,38 @@
 | `review-llm.mjs` | Gera relatório /avaliar via LLM |
 | `review-skill-routing.mjs` | Resolve skills/rules por path do arquivo |
 | `review-export-exclusions.sh` | Exporta exclusions.yaml do context.yaml |
-| `review-ingest-pr-decisions.py` | CLI ingest pós-merge (gh) → memória v2 |
-| `review-memoria.py` | CLI memória v2 (migrar / compactar / promover / finding-id) |
 | `~/.cursor/review-finalizar.sh` | Empacota resultado (`/finalizar`) |
 
-## Libs puras (`lib/`)
+## Código TypeScript (`src/` + `bin/`)
 
 | Módulo | Responsabilidade |
 | --- | --- |
-| `lib/finding_ids.py` | `slugify`, `extract_finding_theme`, `stable_finding_id` |
-| `lib/ingest_decisions.py` | Regras de classify, parsers De/Para, `upsert_pr_decisions` |
-| `lib/pr_report.py` | Veredito, prioridade da tabela do resumo PR, markers, snippets |
-| `lib/memoria_core.py` | Escopos, convencoes, merge de decisões → context |
-| `review-pr-report.py` | CLI fina sobre `lib/pr_report` (chamada pelo shell) |
+| `src/finding-ids.ts` | `slugify`, `extractFindingTheme`, `stableFindingId` |
+| `src/pr-report.ts` | Veredito, resumo PR, markers, snippets |
+| `src/memoria-core.ts` | Escopos, convenções, merge de decisões (puro) |
+| `src/memoria.ts` | YAML/I/O e comandos da CLI de memória |
+| `src/ingest-decisions.ts` | Classificação de threads, git helpers, upsert |
+| `src/store/` | Cliente REST Supabase (`ReviewStore`, `loadConfig`) |
 
-Import: colocar `packages/code-review/tools` no `sys.path` (os CLIs já fazem isso).
-
-## Testes unitários (sem rede / sem `gh`)
+## Testes unitários
 
 ```bash
 npm run test:review-unit
-# python: ingest, pr_report, memoria_core
-# node:   skill-routing, llm helpers
+# tsx:  packages/code-review/tests/*.test.ts
+# node: tools/tests/*.mjs (LLM / skill routing)
+npm run lint:ts
 ```
+
+### Store unificado (Supabase local)
+
+```bash
+npm run supabase:start
+# export SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (status)
+npm run review:store-smoke
+```
+
+Plano: [docs/PLANO-REVIEW-UNIFICADO.md](../../../docs/PLANO-REVIEW-UNIFICADO.md).  
+Local: [docs/supabase-local.md](../../../docs/supabase-local.md).
 
 Deps Node/PHP ficam na **raiz do hostdime-ia** — um único `npm run setup`.
 

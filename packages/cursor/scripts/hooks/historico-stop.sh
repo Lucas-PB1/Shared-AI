@@ -7,7 +7,7 @@ WATCHES=".cursor/history/watches.json"
 [[ -f "$WATCHES" ]] || exit 0
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MATCHER="$SCRIPT_DIR/history-watch-match.py"
+MATCHER="$SCRIPT_DIR/history-watch-match.ts"
 
 if [[ ! -f "$MATCHER" ]]; then
   HOSTDIME_ROOT="${HOSTDIME_IA_ROOT:-}"
@@ -17,7 +17,7 @@ if [[ ! -f "$MATCHER" ]]; then
     HOSTDIME_ROOT="${HOSTDIME_IA_ROOT:-}"
   fi
   if [[ -n "$HOSTDIME_ROOT" ]]; then
-    MATCHER="$HOSTDIME_ROOT/packages/cursor/scripts/lib/history-watch-match.py"
+    MATCHER="$HOSTDIME_ROOT/packages/cursor/scripts/lib/history-watch-match.ts"
   fi
 fi
 
@@ -25,4 +25,7 @@ if [[ ! -f "$MATCHER" ]]; then
   exit 0
 fi
 
-exec python3 "$MATCHER" stop
+# shellcheck disable=SC1091
+source "$(dirname "$MATCHER")/hostdime-env.sh"
+
+exec hostdime_tsx "$MATCHER" stop

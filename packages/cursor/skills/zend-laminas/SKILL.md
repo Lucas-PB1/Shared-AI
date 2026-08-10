@@ -2,7 +2,7 @@
 name: zend-laminas
 description: >-
   Orienta Zend Framework / Laminas: MVC, módulos, ServiceManager e forms.
-  Use ao manter apps Laminas ou Zend legado, módulos MVC ou quando o usuário
+  Use ao manter apps Laminas ou Zend Framework clássico, módulos MVC ou quando o usuário
   mencionar laminas, zendframework, ServiceManager ou Module.php.
 ---
 

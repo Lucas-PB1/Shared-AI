@@ -33,5 +33,5 @@
 ## Evitar
 
 - HTTP servindo conteúdo sensível sem redirect
-- Protocolos/ciphers legados habilitados
+- Protocolos/ciphers fracos ou obsoletos habilitados
 - HSTS agressivo antes de garantir HTTPS estável (preload é difícil de reverter)

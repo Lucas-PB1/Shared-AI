@@ -19,7 +19,7 @@ Empacota o resultado quando o usuário **finalizou** o review (ex.: `/finalizar`
 
 ### Memória v2 (obrigatório)
 
-Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `npm run memoria -- migrar --write` antes de finalizar. **Não** criar nem atualizar `memoria.md`.
+Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `npm run memoria -- init --write` antes de finalizar.
 
 - **Append** em `.cursor/review/decisions.jsonl` (uma linha JSON por achado).
 - **Não** atualizar `context.yaml` nem `convencoes.md`.
@@ -31,7 +31,7 @@ Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `npm run mem
 | Origem do arquivo | O que remove |
 | --- | --- |
 | **Arquivo do repo** (fluxo normal) | Só o relatório em `reports/` |
-| **Inbox** (legado, se usado) | Relatório + arquivo do inbox |
+| **Inbox** (fluxo via inbox) | Relatório + arquivo do inbox |
 
 O **arquivo avaliado no projeto nunca é deletado** — apenas copiado para `resultados/codigo/`.
 

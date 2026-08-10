@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
-# Unit tests do code-review (Python + Node), sem rede.
+# Unit tests do code-review (TypeScript / node — sem Python).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-py_tests=(
-  packages/code-review/tools/tests/test_ingest_and_ids.py
-  packages/code-review/tools/tests/test_pr_report.py
-  packages/code-review/tools/tests/test_memoria_core.py
+TSX="${ROOT}/node_modules/.bin/tsx"
+if [[ ! -x "$TSX" ]]; then
+  echo "Erro: tsx não encontrado (npm install na raiz)." >&2
+  exit 1
+fi
+
+ts_tests=(
+  packages/code-review/tests/finding-ids-and-ingest.test.ts
+  packages/code-review/tests/pr-report.test.ts
+  packages/code-review/tests/memoria-core.test.ts
+  packages/code-review/tests/store.test.ts
 )
 
 node_tests=(
@@ -16,9 +23,9 @@ node_tests=(
   packages/code-review/tools/tests/test_llm_helpers.mjs
 )
 
-for t in "${py_tests[@]}"; do
-  echo "=== python3 $t ==="
-  python3 "$t"
+for t in "${ts_tests[@]}"; do
+  echo "=== tsx --test $t ==="
+  "$TSX" --test "$t"
 done
 
 for t in "${node_tests[@]}"; do

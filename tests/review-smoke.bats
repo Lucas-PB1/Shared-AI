@@ -69,17 +69,18 @@ teardown() {
   run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-export-exclusions.sh" "$project"
   [ "$status" -eq 0 ]
   [ -f "$project/.cursor/review/exclusions.yaml" ]
-  grep -q 'legacy-repo-pattern' "$project/.cursor/review/exclusions.yaml"
+  grep -q 'accepted-repo-pattern' "$project/.cursor/review/exclusions.yaml"
   ! grep -q 'still-pending' "$project/.cursor/review/exclusions.yaml"
 }
 
-@test "smoke ingest python sem gh" {
-  run python3 "$HOSTDIME_IA_ROOT/tests/smoke_review_ingest.py"
+@test "smoke ingest sem gh" {
+  run "$HOSTDIME_IA_ROOT/node_modules/.bin/tsx" "$HOSTDIME_IA_ROOT/tests/smoke_review_ingest.ts"
   [ "$status" -eq 0 ]
   [[ "$output" == *"smoke_review_ingest: OK"* ]]
 }
 
-@test "lint python tools py_compile" {
-  run bash "$HOSTDIME_IA_ROOT/tests/lint-python.sh"
+@test "lint ts tsc noEmit" {
+  run bash "$HOSTDIME_IA_ROOT/tests/lint-ts.sh"
   [ "$status" -eq 0 ]
+  [[ "$output" == *"tsc: OK"* ]]
 }

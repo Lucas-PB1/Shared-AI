@@ -68,9 +68,10 @@ foreach ($keep in @(
     if (-not (Test-Path $keep)) { New-Item -ItemType File -Path $keep -Force | Out-Null }
 }
 
-$memoriaPy = Join-Path $root 'packages/code-review/tools/review-memoria.py'
-if (Test-Path $memoriaPy) {
-    & python3 $memoriaPy migrar --write $Target 2>$null | Out-Null
+$memoriaTs = Join-Path $root 'packages/code-review/bin/review-memoria.ts'
+$tsxBin = Join-Path $root 'node_modules/.bin/tsx'
+if ((Test-Path $memoriaTs) -and (Test-Path $tsxBin)) {
+    & $tsxBin $memoriaTs migrar --write $Target 2>$null | Out-Null
 } else {
     Set-Content -Path (Join-Path $reviewDir '.memoria-version') -Value "2`n" -NoNewline
     $decisions = Join-Path $reviewDir 'decisions.jsonl'
@@ -81,8 +82,8 @@ if (Test-Path $memoriaPy) {
         Copy-Item $convTpl $convDest
     }
 }
-foreach ($legacy in @('memoria.md', 'memoria.legacy.md', 'context.json')) {
-    $p = Join-Path $reviewDir $legacy
+foreach ($stale in @('memoria.md', 'context.json')) {
+    $p = Join-Path $reviewDir $stale
     if (Test-Path $p) { Remove-Item -LiteralPath $p -Force }
 }
 

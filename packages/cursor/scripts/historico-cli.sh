@@ -3,8 +3,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB="$SCRIPT_DIR/lib/history-watch-match.py"
-MERGE="$SCRIPT_DIR/lib/merge-historico-hooks.py"
+LIB="$SCRIPT_DIR/lib/history-watch-match.ts"
+MERGE="$SCRIPT_DIR/lib/merge-historico-hooks.ts"
+
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/lib/hostdime-env.sh"
 
 usage() {
   cat <<'EOF'
@@ -61,27 +64,27 @@ case "$cmd" in
   scope-match)
     scope_file="${scope_file:?Informe o arquivo}"
     project="$(cd "$project" && pwd)"
-    python3 "$LIB" scope-match "$project" "$scope_file"
+    hostdime_tsx "$LIB" scope-match "$project" "$scope_file"
     ;;
   pending)
     project="$(cd "$project" && pwd)"
-    python3 "$LIB" pending "${extra_args[@]}" "$project"
+    hostdime_tsx "$LIB" pending "${extra_args[@]}" "$project"
     ;;
   catch-up)
     project="$(cd "$project" && pwd)"
-    python3 "$LIB" catch-up "${extra_args[@]}" "$project"
+    hostdime_tsx "$LIB" catch-up "${extra_args[@]}" "$project"
     ;;
   draft)
     watch_id="${watch_id:?Informe o id do watch}"
     project="$(cd "$project" && pwd)"
-    python3 "$LIB" draft "$watch_id" "${extra_args[@]}" "$project"
+    hostdime_tsx "$LIB" draft "$watch_id" "${extra_args[@]}" "$project"
     ;;
   status | validate | merge-hooks)
     project="$(cd "$project" && pwd)"
     case "$cmd" in
-      status) python3 "$LIB" status "$project" ;;
-      validate) python3 "$LIB" validate "$project" ;;
-      merge-hooks) python3 "$MERGE" "$project/.cursor/hooks.json" "$project" ;;
+      status) hostdime_tsx "$LIB" status "$project" ;;
+      validate) hostdime_tsx "$LIB" validate "$project" ;;
+      merge-hooks) hostdime_tsx "$MERGE" "$project/.cursor/hooks.json" "$project" ;;
     esac
     ;;
   -h | --help | help | '')

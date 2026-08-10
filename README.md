@@ -62,19 +62,31 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run pre-commit` | Projeto | Review estático nos **arquivos do stage** (sem LLM) |
 | `npm run hooks:pre-commit -- [dir]` | Projeto | Instala `.git/hooks/pre-commit` |
 | `npm run lint:shell` | Dev | ShellCheck nos `*.sh` versionados (skip se não instalado) |
-| `npm run lint:python` | Dev | `py_compile` dos tools Python de code-review |
+| `npm run lint:ts` | Dev | `tsc --noEmit` em `packages/code-review` |
 | `npm run test` | Dev | Suite de testes (`tests/`; bats se disponível, senão runner embutido) |
 
-## Windows
+## Plataformas
 
-Suporte nativo via PowerShell — sem WSL ou Git Bash para install, sync, bootstrap e hooks. Veja [docs/WINDOWS.md](docs/WINDOWS.md).
+| OS | Runtime |
+| --- | --- |
+| **Windows** | PowerShell nativo (sem WSL/Git Bash para install/sync/bootstrap) |
+| **Linux** | Bash |
+
+macOS e outros SOs **não são suportados**. O dispatcher recusa plataformas diferentes de `win32` e `linux`.
+
+Windows: [docs/WINDOWS.md](docs/WINDOWS.md).
 
 ```powershell
 npm run setup:skills
 npm run bootstrap -- C:\caminho\do\seu\projeto
 ```
 
-Linux e macOS usam os mesmos comandos npm; o dispatcher (`run.mjs`) roteia para bash ou PowerShell conforme o OS.
+Linux:
+
+```bash
+npm run setup:skills
+npm run bootstrap -- /caminho/do/seu/projeto
+```
 
 ### Sync ao iniciar o computador
 
@@ -87,7 +99,7 @@ npm run boot-sync -- status  # estado + log
 npm run boot-sync -- run     # testar agora
 ```
 
-Log: `~/.cursor/hostdime-ia/boot-sync.log` — agendamento via systemd (Linux), LaunchAgent (macOS) ou Task Scheduler (Windows).
+Log: `~/.cursor/hostdime-ia/boot-sync.log` — agendamento via **systemd** (Linux) ou **Task Scheduler** (Windows).
 
 ## Atualização
 
@@ -120,14 +132,17 @@ hostdime-ia/
 ├── package-lock.json     # versionado (npm ci)
 ├── composer.lock         # versionado (PHPStan do review-check)
 ├── docs/
-│   ├── PLANO-SAUDE.md    # plano de hardening por fases
+│   ├── PLANO-SAUDE.md              # plano de hardening por fases
+│   ├── PLANO-REVIEW-UNIFICADO.md   # store Supabase local→cloud
+│   ├── supabase-local.md           # Docker + smoke do store
 │   └── WINDOWS.md
+├── supabase/                       # migrations + seed (sem dados de clientes)
 ├── tests/
 └── packages/
     ├── cursor/
     └── code-review/
 ```
 
-Plano de saúde (fases e preparações): [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md).
+Plano de saúde: [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md). Review unificado: [docs/PLANO-REVIEW-UNIFICADO.md](docs/PLANO-REVIEW-UNIFICADO.md).
 
 MIT — [LICENSE](LICENSE).

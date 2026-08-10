@@ -8,7 +8,7 @@ description: >-
 
 ## Quando usar
 
-- Configurar ESLint flat ou legacy
+- Configurar ESLint flat config ou `.eslintrc`
 - Regras e plugins
 - Integração React/TS
 

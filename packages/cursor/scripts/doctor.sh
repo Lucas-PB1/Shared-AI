@@ -56,27 +56,25 @@ check_node_major() {
 
 hooks_has_session_start() {
   local hooks_file="$1"
-  python3 - "$hooks_file" <<'PY'
-import json
-import sys
-
-path = sys.argv[1]
-try:
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
-except (OSError, json.JSONDecodeError):
-    sys.exit(1)
-
-hooks = data.get("hooks") or {}
-session = hooks.get("sessionStart") or []
-for entry in session:
-    if not isinstance(entry, dict):
-        continue
-    cmd = entry.get("command", "")
-    if "ensure-project-cursor" in cmd or "ensure-project-rules" in cmd:
-        sys.exit(0)
-sys.exit(2)
-PY
+  node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const path = process.argv[1];
+let data;
+try {
+  data = JSON.parse(readFileSync(path, "utf-8"));
+} catch {
+  process.exit(1);
+}
+const session = data?.hooks?.sessionStart ?? [];
+for (const entry of session) {
+  if (!entry || typeof entry !== "object") continue;
+  const cmd = entry.command ?? "";
+  if (typeof cmd === "string" && (cmd.includes("ensure-project-cursor") || cmd.includes("ensure-project-rules"))) {
+    process.exit(0);
+  }
+}
+process.exit(2);
+' "$hooks_file"
 }
 
 count_user_symlink_issues() {
@@ -157,7 +155,11 @@ check_cmd "npm" npm
 check_cmd "PHP" php
 check_cmd "Composer" composer
 check_cmd "Semgrep" semgrep
-check_cmd "Python 3 (hooks JSON)" python3
+if hostdime_tsx_bin >/dev/null 2>&1; then
+  ok "tsx/Node (hooks JSON)"
+else
+  fail "tsx/Node — rode: npm install (tsx para scripts/hooks JSON)"
+fi
 
 section "Dependências do clone"
 if [[ -n "$root" && -d "$root" ]]; then

@@ -18,15 +18,15 @@ sync_inbox_startup_script() {
   printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia-startup-sync-inbox.sh"
 }
 
-sync_inbox_scan_py() {
+sync_inbox_scan_ts() {
   local root="${HOSTDIME_IA_ROOT:-}"
   if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
     # shellcheck disable=SC1090
     source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
     root="${HOSTDIME_IA_ROOT:-}"
   fi
-  if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/scan-sync-inbox.py" ]]; then
-    printf '%s/packages/cursor/scripts/lib/scan-sync-inbox.py' "$root"
+  if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/scan-sync-inbox.ts" ]]; then
+    printf '%s/packages/cursor/scripts/lib/scan-sync-inbox.ts' "$root"
     return 0
   fi
   return 1
@@ -75,12 +75,14 @@ sync_inbox_log() {
 }
 
 sync_inbox_scan() {
-  local py
-  py="$(sync_inbox_scan_py)" || {
-    echo "Erro: scan-sync-inbox.py não encontrado" >&2
+  local ts
+  ts="$(sync_inbox_scan_ts)" || {
+    echo "Erro: scan-sync-inbox.ts não encontrado" >&2
     return 1
   }
-  python3 "$py" >/dev/null
+  # shellcheck disable=SC1091
+  source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
+  hostdime_tsx "$ts" >/dev/null
   sync_inbox_log "scan ok ($(sync_inbox_inbox_file))"
 }
 
@@ -92,20 +94,37 @@ sync_inbox_wants_gui() {
   [[ "${SYNC_INBOX_GUI:-}" == "1" ]] && sync_inbox_can_gui
 }
 
+sync_inbox_query_ts() {
+  local root="${HOSTDIME_IA_ROOT:-}"
+  if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
+    # shellcheck disable=SC1090
+    source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
+    root="${HOSTDIME_IA_ROOT:-}"
+  fi
+  if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/sync-inbox-query.ts" ]]; then
+    printf '%s/packages/cursor/scripts/lib/sync-inbox-query.ts' "$root"
+    return 0
+  fi
+  return 1
+}
+
+sync_inbox_query() {
+  local ts
+  ts="$(sync_inbox_query_ts)" || {
+    echo "Erro: sync-inbox-query.ts não encontrado" >&2
+    return 1
+  }
+  # shellcheck disable=SC1091
+  source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
+  hostdime_tsx "$ts" "$@"
+}
+
 sync_inbox_progress_emit() {
   printf '%s\n# %s\n' "$1" "$2"
 }
 
 sync_inbox_item_count() {
-  python3 - "$1" <<'PY'
-import json, sys
-from pathlib import Path
-p = Path(sys.argv[1])
-if not p.is_file():
-    print(0)
-else:
-    print(len(json.loads(p.read_text(encoding="utf-8")).get("items") or []))
-PY
+  sync_inbox_query count "$1"
 }
 
 sync_inbox_run_with_progress() {
@@ -146,29 +165,7 @@ sync_inbox_show_empty_gui() {
 }
 
 sync_inbox_format_report() {
-  python3 - "$(sync_inbox_inbox_file)" <<'PY'
-import json, sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-if not path.is_file():
-    print("Nenhum projeto com alterações não commitadas.")
-    sys.exit(0)
-data = json.loads(path.read_text(encoding="utf-8"))
-items = data.get("items") or []
-if not items:
-    print("Nenhum projeto com alterações não commitadas.")
-    sys.exit(0)
-print(f"O que retomar — {len(items)} projeto(s)\n")
-for i, it in enumerate(items, 1):
-    summary = it.get("summary") or it.get("objective", "")
-    detail = it.get("detail") or ""
-    print(f"{i}. {it['name']}")
-    print(f"   → {summary}")
-    if detail:
-        print(f"   ({detail})")
-    print()
-PY
+  sync_inbox_query format "$(sync_inbox_inbox_file)"
 }
 
 sync_inbox_open_cursor() {
@@ -181,15 +178,15 @@ sync_inbox_open_cursor() {
   return 1
 }
 
-sync_inbox_cards_py() {
+sync_inbox_cards_ts() {
   local root="${HOSTDIME_IA_ROOT:-}"
   if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
     # shellcheck disable=SC1090
     source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
     root="${HOSTDIME_IA_ROOT:-}"
   fi
-  if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/sync-inbox-cards.py" ]]; then
-    printf '%s/packages/cursor/scripts/lib/sync-inbox-cards.py' "$root"
+  if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/sync-inbox-cards.ts" ]]; then
+    printf '%s/packages/cursor/scripts/lib/sync-inbox-cards.ts' "$root"
     return 0
   fi
   return 1
@@ -197,58 +194,21 @@ sync_inbox_cards_py() {
 
 sync_inbox_pick_gui_zenity() {
   local inbox="$1"
-  python3 - "$inbox" <<'PY'
-import json
-import subprocess
-import sys
-from pathlib import Path
-
-inbox = Path(sys.argv[1])
-data = json.loads(inbox.read_text(encoding="utf-8"))
-items = data.get("items") or []
-if not items:
-    sys.exit(0)
-
-rows = []
-for it in items:
-    summary = it.get("summary") or it.get("objective", "")
-    detail = it.get("detail") or f"{it.get('branch', '')} · {it.get('changedCount', 0)} arq."
-    card = summary
-    if detail:
-        card += f"\n{detail}"
-    rows.append((it["name"], card[:320], it["path"]))
-
-cmd = [
-    "zenity", "--list",
-    "--title=HostDime — O que retomar?",
-    "--text=Escolha o projeto para continuar no Cursor:",
-    "--column=Projeto",
-    "--column=Resumo",
-    "--column=Path",
-    "--hide-column=3",
-    "--width=720",
-    "--height=480",
-]
-for name, card, path in rows:
-    cmd.extend([name, card, path])
-
-proc = subprocess.run(cmd, capture_output=True, text=True)
-if proc.returncode != 0 or not proc.stdout.strip():
-    sys.exit(0)
-print(proc.stdout.strip().split("\t")[-1])
-PY
+  sync_inbox_query pick-zenity "$inbox"
 }
 
 sync_inbox_pick_gui() {
-  local inbox="$1" cards_py path
+  local inbox="$1" cards_ts path
   inbox="${1:-$(sync_inbox_inbox_file)}"
-  cards_py="$(sync_inbox_cards_py)" || cards_py=""
+  cards_ts="$(sync_inbox_cards_ts)" || cards_ts=""
 
-  if [[ -n "$cards_py" ]]; then
+  if [[ -n "$cards_ts" ]]; then
     local rc=0
-    path="$(python3 "$cards_py" "$inbox" 2>/dev/null)" || rc=$?
+    # shellcheck disable=SC1091
+    source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
+    path="$(hostdime_tsx "$cards_ts" "$inbox" 2>/dev/null)" || rc=$?
     if [[ "$rc" -eq 2 ]]; then
-      sync_inbox_log "cards GTK indisponível — fallback zenity"
+      sync_inbox_log "cards GUI indisponível — fallback zenity"
     elif [[ -n "$path" ]]; then
       sync_inbox_open_cursor "$path"
       sync_inbox_log "aberto via cards: $path"
@@ -273,25 +233,7 @@ sync_inbox_notify_pending() {
   local inbox="$2"
   command -v notify-send >/dev/null 2>&1 || return 0
   local body
-  body="$(python3 - "$inbox" <<'PY'
-import json, sys
-from pathlib import Path
-p = Path(sys.argv[1])
-if not p.is_file():
-    print("")
-    raise SystemExit
-items = json.loads(p.read_text(encoding="utf-8")).get("items") or []
-lines = []
-for it in items[:3]:
-    summary = it.get("summary") or it.get("objective", "")
-    if len(summary) > 70:
-        summary = summary[:69] + "…"
-    lines.append(f"• {it['name']}: {summary}")
-if len(items) > 3:
-    lines.append(f"… +{len(items) - 3} projeto(s)")
-print("\n".join(lines))
-PY
-)"
+  body="$(sync_inbox_query notify-body "$inbox")"
   if [[ -n "$body" ]]; then
     notify-send "HostDime — O que retomar?" "$body" 2>/dev/null || true
   else
@@ -304,17 +246,7 @@ sync_inbox_interactive_pick() {
   local inbox count choice
   inbox="$(sync_inbox_inbox_file)"
 
-  count="$(python3 - "$inbox" <<'PY'
-import json, sys
-from pathlib import Path
-p = Path(sys.argv[1])
-if not p.is_file():
-    print(0)
-    raise SystemExit
-data = json.loads(p.read_text(encoding="utf-8"))
-print(len(data.get("items") or []))
-PY
-)"
+  count="$(sync_inbox_query count "$inbox")"
   [[ "$count" -gt 0 ]] || {
     if sync_inbox_can_gui && [[ "${SYNC_INBOX_PROGRESS_DONE:-}" == "1" || ! -t 0 ]]; then
       sync_inbox_show_empty_gui
@@ -342,17 +274,7 @@ PY
   fi
 
   local path
-  path="$(python3 - "$inbox" "$choice" <<'PY'
-import json, sys
-from pathlib import Path
-p = Path(sys.argv[1])
-idx = int(sys.argv[2]) - 1
-data = json.loads(p.read_text(encoding="utf-8"))
-items = data.get("items") or []
-if 0 <= idx < len(items):
-    print(items[idx]["path"])
-PY
-)"
+  path="$(sync_inbox_query path "$inbox" "$choice")"
   [[ -n "$path" ]] || {
     echo "Opção inválida"
     return 1
@@ -480,7 +402,8 @@ sync_inbox_install_hook() {
       sync_inbox_install_desktop
       ;;
     *)
-      sync_inbox_install_desktop
+      echo "Erro: sync-inbox bash só é suportado em Linux (detectado: $(uname -s))." >&2
+      return 1
       ;;
   esac
 }

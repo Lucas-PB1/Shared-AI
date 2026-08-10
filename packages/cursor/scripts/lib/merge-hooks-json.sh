@@ -9,17 +9,19 @@ merge_hostdime_hooks_json() {
   local cursor_dir="${CURSOR_USER_DIR:-$HOME/.cursor}"
   local hooks_file="$cursor_dir/hooks.json"
   local example="$cursor_pkg/scripts/hooks/hooks.json.example"
-  local merge_py="$cursor_pkg/scripts/lib/merge-hooks-json.py"
+  local merge_ts="$cursor_pkg/scripts/lib/merge-hooks-json.ts"
   local result rc=0
 
-  if [[ ! -f "$merge_py" ]]; then
-    echo "Erro: merge-hooks-json.py não encontrado" >&2
+  if [[ ! -f "$merge_ts" ]]; then
+    echo "Erro: merge-hooks-json.ts não encontrado" >&2
     return 1
   fi
 
   mkdir -p "$cursor_dir/hooks"
 
-  result="$(python3 "$merge_py" "$hooks_file" "$example")" || rc=$?
+  # shellcheck disable=SC1091
+  source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
+  result="$(hostdime_tsx "$merge_ts" "$hooks_file" "$example")" || rc=$?
   if [[ "$rc" -ne 0 ]]; then
     echo "✗ hooks.json — merge falhou" >&2
     return 1

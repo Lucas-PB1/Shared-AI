@@ -11,7 +11,7 @@ Comentários **por arquivo** no pull request — **estático + LLM** no formato 
 | Roteamento skills | `packages/code-review/tools/review-skill-routing.mjs` |
 | Prompt | `packages/code-review/templates/avaliar-llm-system.md` |
 | Export exclusões | `packages/code-review/tools/review-export-exclusions.sh` |
-| Ingest pós-merge | `packages/code-review/tools/review-ingest-pr-decisions.py` |
+| Ingest pós-merge | `packages/code-review/bin/review-ingest-pr-decisions.ts` (via `tools/review-ingest-pr-decisions.sh`) |
 | Template workflow | `packages/code-review/ci/github-avaliar-pr.yml` |
 | Template memória | `packages/code-review/ci/github-avaliar-pr-memoria.yml` |
 | Exemplo ativo | `hostdime-hub` → `.github/workflows/avaliar-pr.yml` |

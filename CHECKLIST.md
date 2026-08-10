@@ -38,6 +38,17 @@ Melhorias priorizadas do pacote. Atualize ao concluir itens ou repriorizar.
 Ver [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md).
 
 - [x] **Fase 1 — Fundação** — locks versionados, CI `npm ci`, docs de testes e onboarding
-- [x] **Fase 2 — Defesa** — smoke review-diff/ci/inbox/export/ingest; `lint:shell` / `lint:python`
-- [x] **Fase 3** — libs puras (ingest, ids, pr_report, memoria_core) + unit Python/Node (routing/LLM)
+- [x] **Fase 2 — Defesa** — smoke review-diff/ci/inbox/export/ingest; `lint:shell` / `lint:ts`
+- [x] **Fase 3** — domínio review em TypeScript (`src/` + `bin/`) + unit Node
 - [x] **Fase 4 (parcial)** — pre-commit estático sem LLM (`hooks:pre-commit` / `review-pre-commit`)
+
+## Plan — Review unificado (Supabase)
+
+Ver [docs/PLANO-REVIEW-UNIFICADO.md](docs/PLANO-REVIEW-UNIFICADO.md) e [docs/supabase-local.md](docs/supabase-local.md).
+
+- [x] **U0 (parcial)** — Supabase local Docker, migration, plano, store + smoke TypeScript
+- [x] **Python → TypeScript** — code-review + helpers cursor (tsx); zero runtime Python no monorepo
+- [ ] **U1** — dual-write finalize/ingest → `decisions` / `review_runs` (TS)
+- [ ] **U2** — publish no CI (GitHub secrets + step)
+- [ ] **U3** — memória/exclusões lidas do store + export slim
+- [ ] **U4** — projeto Supabase cloud HostDime + auth multi-user

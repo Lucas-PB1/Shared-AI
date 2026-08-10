@@ -12,7 +12,7 @@ teardown() {
 @test "detect-stack identifica next" {
   project="$(hostdime_make_project)"
   echo '{"dependencies":{"next":"14.0.0"}}' >"$project/package.json"
-  run python3 "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.py" "$project"
+  run hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.ts" "$project"
   [ "$status" -eq 0 ]
   [ "$output" = "next" ]
 }
@@ -20,7 +20,7 @@ teardown() {
 @test "detect-stack identifica python" {
   project="$(hostdime_make_project)"
   touch "$project/pyproject.toml"
-  run python3 "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.py" "$project"
+  run hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.ts" "$project"
   [ "$status" -eq 0 ]
   [ "$output" = "python" ]
 }
@@ -28,7 +28,7 @@ teardown() {
 @test "detect-stack identifica zend-laminas" {
   project="$(hostdime_make_project)"
   echo '{"require":{"laminas/laminas-mvc":"^3.0"}}' >"$project/composer.json"
-  run python3 "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.py" "$project"
+  run hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.ts" "$project"
   [ "$status" -eq 0 ]
   [ "$output" = "zend-laminas" ]
 }

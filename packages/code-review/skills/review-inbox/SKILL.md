@@ -28,7 +28,7 @@ Commands universais em `~/.cursor/commands/` (global; setup/sync).
 | `.cursor/review/exclusions.yaml` | exclusões versionadas para CI (export de context.yaml) |
 | `.cursor/review/convencoes.md` | padrão promovido — **versionado** em projetos com CI GitHub (`/avaliar` automático) |
 
-Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`). Commands hostdime **não** são espelhados no projeto. Memória **só v2** — sem `memoria.md` / legacy.
+Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`). Commands hostdime **não** são espelhados no projeto. Memória: `decisions.jsonl` + `context.yaml` + `convencoes.md`.
 
 ## Fluxo
 

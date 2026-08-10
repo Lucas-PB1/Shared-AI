@@ -69,3 +69,7 @@ hostdime_count_command_symlinks() {
   local project="$1"
   find "$project/.cursor/commands" -maxdepth 1 -name '*.md' -type l 2>/dev/null | wc -l
 }
+
+hostdime_tsx() {
+  "$HOSTDIME_IA_ROOT/node_modules/.bin/tsx" "$@"
+}

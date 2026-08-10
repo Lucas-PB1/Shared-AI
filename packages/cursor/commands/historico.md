@@ -46,7 +46,7 @@ projeto/
 │   ├── hooks/
 │   │   ├── historico-stop.sh      # Unix (copiar do pacote)
 │   │   ├── historico-stop.ps1       # Windows (copiar do pacote)
-│   │   ├── history-watch-match.py # helper (copiar do pacote)
+│   │   ├── history-watch-match.ts # helper (copiar do pacote)
 │   │   └── hooks.json             # merge hook stop (projeto)
 │   └── commands/
 │       └── historico.md             # em ~/.cursor/commands/ (global)
@@ -62,7 +62,7 @@ Templates do pacote hostdime-ia (`$HOSTDIME_IA_ROOT` ou clone):
 | Rule | `packages/cursor/templates/history-watch-rule.mdc` |
 | Hook stop sh | `packages/cursor/scripts/hooks/historico-stop.sh` |
 | Hook stop ps1 | `packages/cursor/scripts/hooks/historico-stop.ps1` |
-| Matcher | `packages/cursor/scripts/lib/history-watch-match.py` |
+| Matcher | `packages/cursor/scripts/lib/history-watch-match.ts` |
 
 ### 1. `watches.json`
 
@@ -115,11 +115,11 @@ A partir de `packages/cursor/templates/history-watch-rule.mdc`, substituir:
 1. Copiar para `.cursor/hooks/`:
    - `historico-stop.sh` + `chmod +x`
    - `historico-stop.ps1`
-   - `history-watch-match.py`
+   - `history-watch-match.ts`
 2. Merge idempotente em `.cursor/hooks.json`:
 
 ```bash
-python3 "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-historico-hooks.py" \
+"$HOSTDIME_IA_ROOT/node_modules/.bin/tsx" "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-historico-hooks.ts" \
   "$PROJECT/.cursor/hooks.json"
 ```
 

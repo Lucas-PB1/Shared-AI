@@ -4,10 +4,13 @@
 set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PR_REPORT_PY="$TOOLS_DIR/review-pr-report.py"
+PKG_ROOT="$(cd "$TOOLS_DIR/.." && pwd)"
+# shellcheck source=./_tsx.sh
+source "$TOOLS_DIR/_tsx.sh"
+PR_REPORT_TS="$PKG_ROOT/bin/review-pr-report.ts"
 
 pr_report() {
-  python3 "$PR_REPORT_PY" "$@"
+  "$HOSTDIME_TSX" "$PR_REPORT_TS" "$@"
 }
 
 resolve_hostdime_ia_root() {
@@ -308,22 +311,14 @@ find_inline_comment_id() {
   local file="$1"
   local start_line="$2"
   local title="${3:-}"
-  local fid marker marker_legacy comment_id
+  local fid comment_id
 
-  if [[ -n "$title" ]]; then
-    fid="$(compute_finding_id "$title")"
-    comment_id="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate \
-      | jq -r --arg f "$file" --arg fid ":fid:${fid} -->" '
-        .[] | select(.path == $f and (.body | contains($fid))) | .id' | head -1)"
-    if [[ -n "$comment_id" && "$comment_id" != "null" ]]; then
-      printf '%s' "$comment_id"
-      return 0
-    fi
-  fi
-
-  marker_legacy="<!-- avaliar-inline:${file}:${start_line} -->"
+  [[ -n "$title" ]] || return 0
+  fid="$(compute_finding_id "$title")"
+  [[ -n "$fid" ]] || return 0
   comment_id="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate \
-    | jq -r --arg m "$marker_legacy" '.[] | select(.body | contains($m)) | .id' | head -1)"
+    | jq -r --arg f "$file" --arg fid ":fid:${fid} -->" '
+      .[] | select(.path == $f and (.body | contains($fid))) | .id' | head -1)"
   printf '%s' "$comment_id"
 }
 
@@ -520,11 +515,8 @@ upsert_inline_comment() {
   local head="${HEAD_SHA:-HEAD}"
   local marker comment_id full_body="$body"
 
-  if [[ -n "$title" ]]; then
-    marker="$(build_inline_marker "$file" "$start_line" "$title")"
-  else
-    marker="<!-- avaliar-inline:${file}:${start_line} -->"
-  fi
+  [[ -n "$title" ]] || return 1
+  marker="$(build_inline_marker "$file" "$start_line" "$title")"
 
   if [[ "$full_body" != *"$marker"* ]]; then
     full_body="${full_body}"$'\n\n'"${marker}"
@@ -613,14 +605,8 @@ post_inline_findings() {
     [[ -z "$comment_id" ]] && continue
     local stale=1
     for line_no in "${!best_block[@]}"; do
-      local start_key="${best_start[$line_no]:-$line_no}"
       local fid="${best_fid[$line_no]:-}"
       if [[ -n "$fid" && "$body" == *":fid:${fid} -->"* ]]; then
-        stale=0
-        break
-      fi
-      if [[ "$body" == *"<!-- avaliar-inline:${file}:${start_key} -->"* ]] \
-        || [[ "$body" == *"<!-- avaliar-inline:${file}:${start_key}:fid:"* ]]; then
         stale=0
         break
       fi
@@ -698,13 +684,15 @@ post_summary() {
   if [[ -f "$files_log" ]]; then
     table_json="$(pr_report format-files-table <"$files_log")"
     eval "$(
-      printf '%s' "$table_json" | python3 -c '
-import json,sys,shlex
-d=json.load(sys.stdin)
-print("files_section="+shlex.quote(d.get("table","")))
-s=d.get("stats") or {}
-for k in ("reviewed","skipped","failed","inline_this_run","blocking_this_run"):
-    print(f"{k}={int(s.get(k,0))}")
+      printf '%s' "$table_json" | node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const d = JSON.parse(readFileSync(0, "utf8"));
+const q = (s) => "'"'"'" + String(s).replace(/'"'"'/g, "'"'"'\\\\'"'"''"'"'") + "'"'"'";
+process.stdout.write("files_section=" + q(d.table || "") + "\n");
+const s = d.stats || {};
+for (const k of ["reviewed", "skipped", "failed", "inline_this_run", "blocking_this_run"]) {
+  process.stdout.write(k + "=" + Number(s[k] || 0) + "\n");
+}
 '
     )"
   fi

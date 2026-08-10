@@ -6,7 +6,7 @@
 
 HOSTDIME_GITIGNORE_MARKER='# hostdime-ia: cursor gerenciado localmente (npm run bootstrap)'
 
-# Linhas órfãs — dual-link e artefatos de memória legacy (não devem permanecer)
+# Linhas órfãs a scrubar do .gitignore (comandos/rules espelhados no projeto — não reinstalar)
 HOSTDIME_GITIGNORE_ORPHANS=(
   '.cursor/rules/skills-orchestrator-*.mdc'
   '.cursor/commands/avaliar.md'
@@ -21,7 +21,6 @@ HOSTDIME_GITIGNORE_ORPHANS=(
   '.cursor/commands/onboard.md'
   '.cursor/commands/migrar-cursor.md'
   '.cursor/review/memoria.md'
-  '.cursor/review/memoria.legacy.md'
   '.cursor/review/context.json'
 )
 

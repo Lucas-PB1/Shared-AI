@@ -9,25 +9,26 @@ ENV_SCRIPT="${HOME}/.cursor/hostdime-env.sh"
 
 read_json_field() {
   local field="$1"
-  python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-value = data
-for part in '''${field}'''.split('.'):
-    if not part:
-        continue
-    if isinstance(value, list) and part.isdigit():
-        index = int(part)
-        value = value[index] if 0 <= index < len(value) else None
-    elif isinstance(value, dict):
-        value = value.get(part)
-    else:
-        value = None
-        break
-if value is None:
-    sys.exit(1)
-print(value)
-" <<<"$INPUT" 2>/dev/null
+  node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const field = process.argv[1];
+const data = JSON.parse(readFileSync(0, "utf-8"));
+let value = data;
+for (const part of field.split(".")) {
+  if (!part) continue;
+  if (Array.isArray(value) && /^\d+$/.test(part)) {
+    const i = Number(part);
+    value = i >= 0 && i < value.length ? value[i] : null;
+  } else if (value && typeof value === "object") {
+    value = value[part];
+  } else {
+    value = null;
+    break;
+  }
+}
+if (value == null) process.exit(1);
+process.stdout.write(String(value));
+' "$field" <<<"$INPUT" 2>/dev/null
 }
 
 ROOT="${CURSOR_PROJECT_DIR:-}"
