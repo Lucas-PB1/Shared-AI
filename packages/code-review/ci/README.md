@@ -62,7 +62,7 @@ Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-
 | Nome | Tipo | Obrigatório | Descrição |
 | --- | --- | --- | --- |
 | **`CURSOR_API_KEY`** | Secret | **Sim (recomendado)** | [Cursor Dashboard → Integrations / API Keys](https://cursor.com/dashboard) |
-| `REVIEW_LLM_API_KEY` | Secret | Fallback | OpenAI/Anthropic direto (se não usar Cursor) |
+| `REVIEW_LLM_API_KEY` | Secret | Fallback | OpenAI/Anthropic direto (se não usar Cursor). Sem este **nem** `CURSOR_API_KEY`, o workflow roda só a **Fase 1 (estático)** |
 | `REVIEW_LLM_MODEL` | Variable | Não | Modelo do `agent` (ex. `gpt-5`) ou OpenAI |
 | `REVIEW_LLM_PROVIDER` | Variable | Não | `cursor` (default), `openai`, `anthropic` |
 | `REVIEW_SKILL_STACK` | Variable | Não | `false` desliga hints react/typescript no CI |
@@ -71,7 +71,12 @@ Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-
 ```bash
 gh secret set CURSOR_API_KEY --repo HostDimeBR/hostdime-hub
 # colar a key gerada em https://cursor.com/dashboard
+
+# Opcional — provider HTTP direto (sem Cursor agent)
+gh secret set REVIEW_LLM_API_KEY --repo HostDimeBR/hostdime-hub
 ```
+
+**Resumo:** LLM no PR precisa de `CURSOR_API_KEY` **ou** `REVIEW_LLM_API_KEY`. Ambos ausentes = somente Semgrep/ESLint/PHPStan/`tsc` (sem custo de modelo).
 
 ### Roteamento de skills (CI)
 

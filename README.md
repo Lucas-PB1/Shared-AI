@@ -1,6 +1,18 @@
 # HostDime IA
 
-Dois pacotes, oito comandos npm:
+Dois pacotes e uma família de comandos npm para skills/rules do Cursor e code-review.
+
+## Onboarding: só skills vs skills + code-review
+
+| Modo | Quando usar | Comandos |
+| --- | --- | --- |
+| **Só skills** | Orquestrador, skills e rules — sem `/avaliar` | `npm run setup:skills` → `npm run bootstrap -- <repo>` |
+| **Skills + code-review** | Setup completo (recomendado) | `npm run onboard` **ou** `setup:skills` + `setup:code-review` + `bootstrap` |
+| **Só code-review** | Máquina já tem skills; falta inbox/review | `npm run setup:code-review` → `npm run bootstrap -- <repo>` |
+
+`setup:code-review` instala deps (`npm`/`composer`) e commands `/avaliar`, `/avaliar-diff`, `/finalizar`, etc. Sem ele, o bootstrap ainda cria `.cursor/review/`, mas as ferramentas e commands globais do review podem faltar — use `npm run doctor`.
+
+Wizard (setup + perfil + bootstrap + extras):
 
 ```bash
 git clone https://github.com/hostdime/hostdime-ia.git
@@ -8,13 +20,22 @@ cd hostdime-ia
 npm run onboard
 ```
 
-Ou passo a passo manual:
+Passo a passo manual (skills + code-review):
 
 ```bash
 git clone https://github.com/hostdime/hostdime-ia.git
 cd hostdime-ia
 npm run setup:skills
 npm run setup:code-review
+npm run bootstrap -- /caminho/do/seu/projeto
+```
+
+Só skills:
+
+```bash
+git clone https://github.com/hostdime/hostdime-ia.git
+cd hostdime-ia
+npm run setup:skills
 npm run bootstrap -- /caminho/do/seu/projeto
 ```
 
@@ -38,7 +59,9 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run onboard` | Máquina + projeto | Wizard: setup, perfil, bootstrap, extras |
 | `npm run health` | Máquina | Saúde dos projetos registrados (symlinks, git, review) |
 | `npm run review:ci -- [base]` | Projeto | Mesmo review-check do `/avaliar` nos arquivos do diff |
-| `npm run test` | Dev | Testes bats (scripts bash) |
+| `npm run lint:shell` | Dev | ShellCheck nos `*.sh` versionados (skip se não instalado) |
+| `npm run lint:python` | Dev | `py_compile` dos tools Python de code-review |
+| `npm run test` | Dev | Suite de testes (`tests/`; bats se disponível, senão runner embutido) |
 
 ## Windows
 
@@ -89,12 +112,20 @@ O `bootstrap` também atualiza o `.gitignore` do projeto com symlinks e conteúd
 
 ```
 hostdime-ia/
-├── CHECKLIST.md      # backlog de melhorias
+├── CHECKLIST.md          # backlog de melhorias
 ├── VERSION
 ├── package.json
+├── package-lock.json     # versionado (npm ci)
+├── composer.lock         # versionado (PHPStan do review-check)
+├── docs/
+│   ├── PLANO-SAUDE.md    # plano de hardening por fases
+│   └── WINDOWS.md
+├── tests/
 └── packages/
     ├── cursor/
     └── code-review/
 ```
+
+Plano de saúde (fases e preparações): [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md).
 
 MIT — [LICENSE](LICENSE).

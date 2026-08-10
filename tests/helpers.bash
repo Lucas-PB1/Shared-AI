@@ -35,6 +35,31 @@ hostdime_make_project() {
   printf '%s' "$dir"
 }
 
+# Projeto git real (branch main) para smoke de review-diff / review-ci.
+hostdime_make_git_project() {
+  local dir="${1:-$TEST_TMP/review-project}"
+  mkdir -p "$dir"
+  git -C "$dir" init -q
+  git -C "$dir" config user.email "test@hostdime.local"
+  git -C "$dir" config user.name "HostDime Test"
+  # default branch main (git 2.28+); fallback se config ignorada
+  git -C "$dir" checkout -b main >/dev/null 2>&1 || true
+  mkdir -p "$dir/.cursor/review/inbox" "$dir/.cursor/review/reports"
+  printf '%s' "$dir"
+}
+
+# Semgrep mock (exit 0) — evita rede / config auto nos smokes do check-inbox.
+hostdime_mock_semgrep() {
+  mkdir -p "$TEST_TMP/bin"
+  cat >"$TEST_TMP/bin/semgrep" <<'EOF'
+#!/bin/sh
+# mock: semgrep --config auto não roda em smoke offline
+exit 0
+EOF
+  chmod +x "$TEST_TMP/bin/semgrep"
+  export PATH="$TEST_TMP/bin:$PATH"
+}
+
 hostdime_count_orchestrator_symlinks() {
   local project="$1"
   find "$project/.cursor/rules" -maxdepth 1 -name 'skills-orchestrator-*.mdc' -type l 2>/dev/null | wc -l

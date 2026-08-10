@@ -16,6 +16,9 @@ fi
 
 if [[ -n "${CI_PROJECT_DIR:-}" && -d "$CI_PROJECT_DIR/.git" ]]; then
   export CURSOR_PROJECT_DIR="$CI_PROJECT_DIR"
+elif [[ -n "${CURSOR_PROJECT_DIR:-}" && -d "${CURSOR_PROJECT_DIR}/.git" ]]; then
+  # honra projeto já definido (smoke / scripts que apontam o fixture)
+  :
 elif git rev-parse --show-toplevel >/dev/null 2>&1; then
   export CURSOR_PROJECT_DIR="$(git rev-parse --show-toplevel)"
 else

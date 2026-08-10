@@ -30,5 +30,12 @@ Melhorias priorizadas do pacote. Atualize ao concluir itens ou repriorizar.
 ## Manutenção contínua
 
 - [ ] Testes bats para novos perfis e detect-stack em monorepos
-- [ ] Documentar onboarding “só skills” vs “skills + code-review” no README
+- [x] Documentar onboarding “só skills” vs “skills + code-review” no README
 - [ ] Smoke test: todo perfil tem `SKILLS-ROUTING.md` + `*-project.mdc`
+
+## Plano de saúde
+
+Ver [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md).
+
+- [x] **Fase 1 — Fundação** — locks versionados, CI `npm ci`, docs de testes e onboarding
+- [x] **Fase 2 — Defesa** — smoke review-diff/ci/inbox/export/ingest; `lint:shell` / `lint:python`
