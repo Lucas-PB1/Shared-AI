@@ -90,9 +90,9 @@ EOF
     "$project/.cursor/commands/avaliar.md"
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/ensure-project-gitignore.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/ensure-project-gitignore.sh"
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/link-from-repo.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/link-from-repo.sh"
   export HOSTDIME_IA_ROOT
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
 
@@ -137,7 +137,7 @@ test_link_preserves_real_command() {
 
 test_bootstrap_profile() {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=laravel "$project" >/dev/null
   assert "SKILLS-ROUTING" test -f "$project/.cursor/SKILLS-ROUTING.md"
   assert "laravel-project.mdc" test -f "$project/.cursor/rules/laravel-project.mdc"
@@ -146,7 +146,7 @@ test_bootstrap_profile() {
 
 test_bootstrap_invalid_profile() {
   project="$(hostdime_make_project)"
-  if bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  if bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=invalid "$project" >/dev/null 2>&1; then
     assert "perfil inválido falha" false
   else
@@ -157,9 +157,9 @@ test_bootstrap_invalid_profile() {
 
 test_detach() {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=react "$project" >/dev/null
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/detach-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/detach-project.sh" \
     --keep-registry "$project" >/dev/null
   assert "symlinks rules removidos" test "$(hostdime_count_orchestrator_symlinks "$project")" -eq 0
   assert "symlinks commands removidos" test "$(hostdime_count_command_symlinks "$project")" -eq 0
@@ -168,8 +168,8 @@ test_detach() {
 
 test_detach_registry() {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" "$project" >/dev/null
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/detach-project.sh" "$project" >/dev/null
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" "$project" >/dev/null
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/detach-project.sh" "$project" >/dev/null
   if grep -qF "$project" "$CURSOR_USER_DIR/hostdime-ia/projects.json"; then
     assert "desregistrado" false
   else
@@ -182,7 +182,7 @@ test_merge_hooks() {
   cat >"$hooks" <<'JSON'
 {"version":1,"hooks":{"beforeSubmitPrompt":[{"command":"./custom.sh"}]}}
 JSON
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/merge-hooks-json.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/ts/merge-hooks-json.ts"
   example="$HOSTDIME_IA_ROOT/packages/cursor/scripts/hooks/hooks.json.example"
   result="$(hostdime_tsx "$ts" "$hooks" "$example")"
   assert "merge ok" test "$result" = "merged"
@@ -194,19 +194,19 @@ JSON
 
 test_hubspot_mcp_install() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot/hubspot-mcp.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot/sh/hubspot-mcp.sh"
   mcp_file="$CURSOR_USER_DIR/mcp.json"
   printf '{"mcpServers":{"other":{"command":"echo"}}}\n' >"$mcp_file"
-  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-hubspot-mcp.sh" >/dev/null
+  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/install-hubspot-mcp.sh" >/dev/null
   assert "HubSpotDev no mcp.json" grep -q HubSpotDev "$mcp_file"
   assert "status installed" test "$(hubspot_mcp_read_status)" = "installed"
-  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-hubspot-mcp.sh" --decline >/dev/null
+  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/install-hubspot-mcp.sh" --decline >/dev/null
   assert "status declined" test "$(hubspot_mcp_read_status)" = "declined"
 }
 
 test_hubspot_mcp_detect() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot/hubspot-mcp.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot/sh/hubspot-mcp.sh"
   printf '{"mcpServers":{"HubSpotDev":{"command":"npx"}}}\n' >"$CURSOR_USER_DIR/mcp.json"
   assert "mcp instalado" hubspot_mcp_installed
 }
@@ -222,7 +222,7 @@ test_finalizar_inbox() {
 ## `.cursor/review/inbox/sample.php`
 **Veredito:** OK
 MD
-  bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/finalizar-review.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/finalizar-review.sh" \
     "$inbox/sample.php" >/dev/null
   assert "inbox limpo" test ! -f "$inbox/sample.php"
   assert "relatorio empacotado" test -f "$project/.cursor/review/resultados/2026-06-30_review-sample/relatorio.md"
@@ -239,7 +239,7 @@ test_finalizar_repo() {
 ## `app/Sample.php`
 **Veredito:** OK
 MD
-  bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/finalizar-review.sh" "$src" >/dev/null
+  bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/finalizar-review.sh" "$src" >/dev/null
   assert "arquivo repo preservado" test -f "$src"
   assert "report removido" test ! -f "$reports/2026-06-30_app-Sample.md"
   assert "resultado criado" test -f "$project/.cursor/review/resultados/2026-06-30_app-Sample/relatorio.md"
@@ -247,7 +247,7 @@ MD
 
 test_boot_sync_toggle() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/boot-sync.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/boot-sync.sh"
   boot_sync_disable
   assert "off após disable" test "$(boot_sync_read_mode)" = "off"
   boot_sync_write_state "on" "1"
@@ -258,7 +258,7 @@ test_boot_sync_toggle() {
 
 test_boot_sync_unset() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/boot-sync.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/boot-sync.sh"
   rm -f "$(boot_sync_state_file)"
   assert "unset sem state" test "$(boot_sync_read_mode)" = "unset"
   if boot_sync_was_asked; then
@@ -270,7 +270,7 @@ test_boot_sync_unset() {
 
 test_boot_sync_prompt_skip() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/boot-sync.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/boot-sync.sh"
   export HOSTDIME_BOOT_SYNC_PROMPT=skip
   rm -f "$(boot_sync_state_file)"
   boot_sync_prompt_if_needed
@@ -377,7 +377,7 @@ test_cursor_cli_merge_config() {
   project="$(hostdime_make_project)"
   config="$project/cli-config.json"
   tpl="$HOSTDIME_IA_ROOT/packages/cursor/templates/cli-config.auto.json"
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/merge-cursor-cli-config.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/ts/merge-cursor-cli-config.ts"
   result="$(hostdime_tsx "$ts" "$config" "$tpl")"
   assert "cli config created" test "$result" = "created"
   assert "approval unrestricted" grep -q '"approvalMode": "unrestricted"' "$config"
@@ -393,7 +393,7 @@ test_cursor_cli_merge_config() {
 
 test_cursor_cli_dry_run() {
   export HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT"
-  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-cursor-cli.sh" install --dry-run 2>&1)"
+  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/install-cursor-cli.sh" install --dry-run 2>&1)"
   assert "dry-run install" grep -q 'dry-run' <<<"$out"
   if grep -q 'cursor.com/install' <<<"$out" || grep -q 'já instalado' <<<"$out"; then
     assert "dry-run install step" true
@@ -405,7 +405,7 @@ test_cursor_cli_dry_run() {
 test_agent_wrapper_dry_run() {
   project="$(hostdime_make_project)"
   mkdir -p "$project/.cursor/rules"
-  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/agent-cli.sh" --dry-run --project="$project" "fix lint" 2>&1)"
+  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/agent-cli.sh" --dry-run --project="$project" "fix lint" 2>&1)"
   assert "agent dry-run project" grep -qF "$project" <<<"$out"
   assert "agent dry-run args" grep -q 'fix lint' <<<"$out"
   assert "agent dry-run approve mcps" grep -q 'approve-mcps' <<<"$out"
@@ -422,33 +422,33 @@ test_sync_inbox_scan() {
   git -C "$project" commit -q -m "initial"
   echo "wip" >>"$project/README.md"
   printf '{"projects":[{"path":"%s"}]}' "$project" >"$CURSOR_USER_DIR/hostdime-ia/projects.json"
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox/scan-sync-inbox.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox/ts/scan-sync-inbox.ts"
   out="$(hostdime_tsx "$ts")"
   assert "sync-inbox scan hit" grep -q '"changedCount"' <<<"$out"
   assert "sync-inbox scan project" grep -qF "$project" <<<"$out"
   assert "sync-inbox summary field" grep -q '"summary"' <<<"$out"
-  assert "sync-inbox cards script" test -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox/sync-inbox-cards.ts"
+  assert "sync-inbox cards script" test -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox/ts/sync-inbox-cards.ts"
 }
 
 test_profiles_detect_and_bootstrap() {
   project="$(hostdime_make_project)"
   echo '{"dependencies":{"next":"14.0.0"}}' >"$project/package.json"
-  out="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/detect-stack.ts" "$project")"
+  out="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/ts/detect-stack.ts" "$project")"
   assert "detect next" test "$out" = "next"
 
   project2="$(hostdime_make_project)-py"
   mkdir -p "$project2/.git"
   touch "$project2/pyproject.toml"
-  out2="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/detect-stack.ts" "$project2")"
+  out2="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/ts/detect-stack.ts" "$project2")"
   assert "detect python" test "$out2" = "python"
 
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=next "$project" >/dev/null
   assert "next SKILLS-ROUTING" test -f "$project/.cursor/SKILLS-ROUTING.md"
   assert "next-project.mdc" test -f "$project/.cursor/rules/next-project.mdc"
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/profiles.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/sh/profiles.sh"
   list="$(profiles_list)"
   assert "profiles_list next" grep -q next <<<"$list"
   assert "profiles_list python" grep -q python <<<"$list"
@@ -458,7 +458,7 @@ test_profiles_detect_and_bootstrap() {
 test_onboard_noninteractive() {
   project="$(hostdime_make_project)"
   echo '{"dependencies":{"next":"14.0.0"}}' >"$project/package.json"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/onboard.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/onboard.sh" \
     --project="$project" \
     --profile=next \
     --yes \
@@ -484,11 +484,11 @@ test_memoria_init_backup_restore() {
 
 test_health_multi_project() {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=python "$project" >/dev/null
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/health-check.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/health-check.sh"
   out="$(health_check_project "$project" 2>&1 || true)"
   assert "health python label" grep -q 'perfil: python' <<<"$out"
   assert "health rules ok" grep -q 'rules do projeto ok' <<<"$out"
@@ -505,13 +505,13 @@ test_review_diff_and_ci_empty() {
 
   export CURSOR_PROJECT_DIR="$project"
   mapfile -t files < <(
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD 2>/dev/null || true
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-diff.sh" HEAD 2>/dev/null || true
   )
   assert "diff vazio em HEAD" test "${#files[@]}" -eq 0
 
   out="$(
     HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-ci.sh" HEAD 2>&1
   )"
   status=$?
   assert "review-ci exit 0 sem arquivos" test "$status" -eq 0
@@ -531,13 +531,13 @@ test_review_diff_and_ci_with_file() {
 
   export CURSOR_PROJECT_DIR="$project"
   diff_out="$(
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD~1 2>/dev/null
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-diff.sh" HEAD~1 2>/dev/null
   )"
   assert "diff lista ok.mjs" grep -qx 'src/ok.mjs' <<<"$diff_out"
 
   out="$(
     HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD~1 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-ci.sh" HEAD~1 2>&1
   )"
   status=$?
   assert "review-ci com arquivo limpo" test "$status" -eq 0
@@ -554,7 +554,7 @@ test_check_inbox_clean_js() {
   out="$(
     HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
       REVIEW_CHECK_CI=1 \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/check-inbox.sh" "$project/src/ok.mjs" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/check-inbox.sh" "$project/src/ok.mjs" 2>&1
   )"
   status=$?
   assert "check-inbox exit 0" test "$status" -eq 0
@@ -568,7 +568,7 @@ test_export_exclusions() {
     "$project/.cursor/review/context.yaml"
 
   out="$(
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-export-exclusions.sh" "$project" 2>&1
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-export-exclusions.sh" "$project" 2>&1
   )"
   status=$?
   assert "export exit 0" test "$status" -eq 0
@@ -605,7 +605,7 @@ test_pre_commit_skip_and_clean() {
 
   out="$(
     cd "$project" && HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" HOSTDIME_SKIP_PRE_COMMIT=1 \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-pre-commit.sh" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-pre-commit.sh" 2>&1
   )"
   st=$?
   assert "pre-commit skip env" test "$st" -eq 0
@@ -613,7 +613,7 @@ test_pre_commit_skip_and_clean() {
 
   out="$(
     cd "$project" && HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-pre-commit.sh" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-pre-commit.sh" 2>&1
   )"
   st=$?
   assert "pre-commit sem stage" test "$st" -eq 0
@@ -624,7 +624,7 @@ test_pre_commit_skip_and_clean() {
   git -C "$project" add src/ok.mjs
   out="$(
     cd "$project" && HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-pre-commit.sh" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-pre-commit.sh" 2>&1
   )"
   st=$?
   assert "pre-commit clean js" test "$st" -eq 0
@@ -639,7 +639,7 @@ test_install_pre_commit_hook() {
 
   out="$(
     HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/install-pre-commit.sh" "$project" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/install-pre-commit.sh" "$project" 2>&1
   )"
   st=$?
   git_dir="$(git -C "$project" rev-parse --git-dir)"

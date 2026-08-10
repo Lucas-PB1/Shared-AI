@@ -19,7 +19,7 @@ function Merge-HostdimeHooksJson {
     $cursorDir = if ($env:CURSOR_USER_DIR) { $env:CURSOR_USER_DIR } else { Join-Path $env:USERPROFILE '.cursor' }
     $hooksFile = Join-Path $cursorDir 'hooks.json'
     $example = Join-Path $CursorPkg 'scripts/hooks/hooks.json.example'
-    $mergeTs = Join-Path $CursorPkg 'scripts/lib/install/merge-hooks-json.ts'
+    $mergeTs = Join-Path $CursorPkg 'scripts/lib/install/ts/merge-hooks-json.ts'
 
     if (-not (Test-Path $mergeTs)) {
         Write-Error 'merge-hooks-json.ts não encontrado'

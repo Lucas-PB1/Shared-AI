@@ -16,12 +16,12 @@ teardown() {
   git -C "$project" commit -q -m "init non-reviewable"
 
   export CURSOR_PROJECT_DIR="$project"
-  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD
+  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-diff.sh" HEAD
   [ "$status" -eq 0 ]
   [[ -z "${output//$'\n'/}" ]] || [[ "$output" != *".js"* && "$output" != *".mjs"* ]]
 
   run env HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-ci.sh" HEAD
   [ "$status" -eq 0 ]
   [[ "$output" == *"Nenhum arquivo revisável"* ]]
 }
@@ -38,12 +38,12 @@ teardown() {
   git -C "$project" commit -q -m "add reviewable js"
 
   export CURSOR_PROJECT_DIR="$project"
-  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD~1
+  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-diff.sh" HEAD~1
   [ "$status" -eq 0 ]
   [[ "$output" == *"src/ok.mjs"* ]]
 
   run env HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD~1
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-ci.sh" HEAD~1
   [ "$status" -eq 0 ]
   [[ "$output" == *"CI review: OK"* ]]
 }
@@ -56,7 +56,7 @@ teardown() {
   export CURSOR_PROJECT_DIR="$project"
 
   run env HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" REVIEW_CHECK_CI=1 \
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/check-inbox.sh" "$project/src/ok.mjs"
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/check-inbox.sh" "$project/src/ok.mjs"
   [ "$status" -eq 0 ]
 }
 
@@ -66,7 +66,7 @@ teardown() {
   cp "$HOSTDIME_IA_ROOT/tests/fixtures/review/context.yaml" \
     "$project/.cursor/review/context.yaml"
 
-  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-export-exclusions.sh" "$project"
+  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-export-exclusions.sh" "$project"
   [ "$status" -eq 0 ]
   [ -f "$project/.cursor/review/exclusions.yaml" ]
   grep -q 'accepted-repo-pattern' "$project/.cursor/review/exclusions.yaml"

@@ -149,7 +149,7 @@ jobs:
           REVIEW_PROJECT_SLUG: ${{ vars.REVIEW_PROJECT_SLUG || github.event.repository.name }}
           REVIEW_STORE_REQUIRED: ${{ vars.REVIEW_STORE_REQUIRED || 'false' }}
         run: |
-          bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-memory-pull.sh" \
+          bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-memory-pull.sh" \
             --project "${{ github.workspace }}"
 
       - name: /avaliar — estático + LLM + comentários no PR
@@ -168,7 +168,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           REVIEW_PROJECT_SLUG: ${{ vars.REVIEW_PROJECT_SLUG || github.event.repository.name }}
-        run: bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-github-pr.sh"
+        run: bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-github-pr.sh"
 
       - name: Publish run to store (U2)
         if: always()
@@ -182,7 +182,7 @@ jobs:
           HEAD_SHA: ${{ steps.pr.outputs.head }}
           GITHUB_REF_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
-          bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-store-publish.sh" \
+          bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-store-publish.sh" \
             --project "${{ github.workspace }}" \
             --pr "${{ steps.pr.outputs.number }}" \
             --sha "${{ steps.pr.outputs.head }}" \

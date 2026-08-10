@@ -15,12 +15,12 @@ hostdime_test_setup() {
   mkdir -p "$CURSOR_USER_DIR"
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/hostdime-env.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/hostdime-env.sh"
   hostdime_write_env "$HOSTDIME_IA_ROOT"
 
   # Orquestrador global (espelha setup:skills) — isolado em CURSOR_USER_DIR
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/install-packages.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/install-packages.sh"
   install_skills_package "$HOSTDIME_IA_ROOT" >/dev/null
   install_code_review_package "$HOSTDIME_IA_ROOT" >/dev/null
 }

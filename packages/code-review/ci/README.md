@@ -6,11 +6,11 @@ Comentários **por arquivo** no pull request — **estático + LLM** no formato 
 
 | Artefato | Onde |
 | --- | --- |
-| Orquestrador | `packages/code-review/tools/review-github-pr.sh` |
+| Orquestrador | `packages/code-review/tools/sh/review-github-pr.sh` |
 | LLM | `packages/code-review/bin/review-llm.ts` (`src/llm/`) |
 | Roteamento skills | `packages/code-review/src/skill-routing/` |
 | Prompt | `packages/code-review/templates/avaliar-llm-system.md` |
-| Export exclusões | `packages/code-review/tools/review-export-exclusions.sh` |
+| Export exclusões | `packages/code-review/tools/sh/review-export-exclusions.sh` |
 | Ingest pós-merge | `packages/code-review/bin/review-ingest-pr-decisions.ts` (via `tools/review-ingest-pr-decisions.sh`) |
 | Template workflow | `packages/code-review/ci/github-avaliar-pr.yml` |
 | Template memória | `packages/code-review/ci/github-avaliar-pr-memoria.yml` |
@@ -162,7 +162,7 @@ HOSTDIME_IA_ROOT=/caminho/hostdime-ia npm run review:github-pr
 Testar só LLM de um arquivo:
 
 ```bash
-REVIEW_LLM_API_KEY=sk-... bash packages/code-review/tools/review-llm.sh \
+REVIEW_LLM_API_KEY=sk-... bash packages/code-review/tools/sh/review-llm.sh \
   --project /caminho/projeto --file src/Foo.tsx
 ```
 

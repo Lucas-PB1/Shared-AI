@@ -28,7 +28,7 @@ PHP
 **Veredito:** OK
 MD
 
-  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/finalizar-review.sh" \
+  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/finalizar-review.sh" \
     "$inbox/sample.php"
   [ "$status" -eq 0 ]
 
@@ -53,7 +53,7 @@ MD
 **Veredito:** OK
 MD
 
-  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/finalizar-review.sh" "$src"
+  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/finalizar-review.sh" "$src"
   [ "$status" -eq 0 ]
 
   [[ -f "$src" ]]

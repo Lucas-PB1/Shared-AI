@@ -57,7 +57,7 @@ function Install-SkillsPackage {
     Write-Host '→ scripts de automação'
     Copy-HostdimeScript (Join-Path $ps1Dir 'Link-Project.ps1') (Join-Path $cursorDir 'Link-Project.ps1')
     Copy-HostdimeScript (Join-Path $ps1Dir 'Link-Project.ps1') (Join-Path $cursorDir 'Link-Project-Rules.ps1')
-    Copy-HostdimeScript (Join-Path $cursorPkg 'scripts/hooks/ensure-project-cursor.ps1') (Join-Path $cursorDir 'hooks/ensure-project-cursor.ps1')
+    Copy-HostdimeScript (Join-Path $cursorPkg 'scripts/hooks/ps1/ensure-project-cursor.ps1') (Join-Path $cursorDir 'hooks/ensure-project-cursor.ps1')
     Copy-HostdimeScript (Join-Path $cursorDir 'hooks/ensure-project-cursor.ps1') (Join-Path $cursorDir 'hooks/ensure-project-rules.ps1')
     Copy-HostdimeScript (Join-Path $ps1Dir 'lib/Projects-Registry.ps1') (Join-Path $cursorDir 'hostdime-projects-registry.ps1')
     Copy-HostdimeScript (Join-Path $ps1Dir 'lib/Hostdime-Env.ps1') (Join-Path $cursorDir 'hostdime-env.ps1')
@@ -104,10 +104,10 @@ function Install-CodeReviewPackage {
     Link-File -Src (Join-Path $reviewPkg 'commands/avaliar-diff.md') -DestDir (Join-Path $cursorDir 'commands')
 
     Write-Host '→ ferramentas review'
-    Copy-HostdimeScript (Join-Path $reviewPkg 'tools/check-inbox.sh') (Join-Path $cursorDir 'review-check.sh')
-    Copy-HostdimeScript (Join-Path $reviewPkg 'tools/finalizar-review.sh') (Join-Path $cursorDir 'review-finalizar.sh')
-    Copy-HostdimeScript (Join-Path $reviewPkg 'tools/review-diff.sh') (Join-Path $cursorDir 'review-diff.sh')
-    Copy-HostdimeScript (Join-Path $reviewPkg 'tools/review-ci.sh') (Join-Path $cursorDir 'review-ci.sh')
+    Copy-HostdimeScript (Join-Path $reviewPkg 'tools/sh/check-inbox.sh') (Join-Path $cursorDir 'review-check.sh')
+    Copy-HostdimeScript (Join-Path $reviewPkg 'tools/sh/finalizar-review.sh') (Join-Path $cursorDir 'review-finalizar.sh')
+    Copy-HostdimeScript (Join-Path $reviewPkg 'tools/sh/review-diff.sh') (Join-Path $cursorDir 'review-diff.sh')
+    Copy-HostdimeScript (Join-Path $reviewPkg 'tools/sh/review-ci.sh') (Join-Path $cursorDir 'review-ci.sh')
 
     if (Test-Path (Get-HostdimeEnvFile)) {
         Update-HostdimeSyncTime

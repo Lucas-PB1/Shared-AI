@@ -8,7 +8,7 @@ MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 
 # shellcheck disable=SC1091
-source "$MONOREPO_ROOT/packages/cursor/scripts/lib/install/install-packages.sh"
+source "$MONOREPO_ROOT/packages/cursor/scripts/lib/install/sh/install-packages.sh"
 
 echo "Code review — instalando em $CURSOR_DIR"
 echo ""

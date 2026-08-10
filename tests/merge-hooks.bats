@@ -20,7 +20,7 @@ teardown() {
 }
 JSON
 
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/merge-hooks-json.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/ts/merge-hooks-json.ts"
   example="$HOSTDIME_IA_ROOT/packages/cursor/scripts/hooks/hooks.json.example"
 
   run hostdime_tsx "$ts" "$hooks" "$example"
@@ -33,7 +33,7 @@ JSON
 
 @test "merge-hooks é idempotente" {
   hooks="$CURSOR_USER_DIR/hooks.json"
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/merge-hooks-json.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/ts/merge-hooks-json.ts"
   example="$HOSTDIME_IA_ROOT/packages/cursor/scripts/hooks/hooks.json.example"
 
   hostdime_tsx "$ts" "$hooks" "$example" >/dev/null

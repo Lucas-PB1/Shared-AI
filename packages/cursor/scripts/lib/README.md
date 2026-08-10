@@ -1,17 +1,16 @@
-# Cursor scripts `lib/` — Modular Slices
+# scripts/lib — fatias do motor Cursor
 
-Helpers do pacote **cursor** por capacidade (não por extensão).
+Cada fatura agrupa por linguagem quando há mais de um tipo de arquivo:
 
-```text
-lib/
-├── shared/       # json-io, hooks-platform, cli-entry
-├── history/      # history-watch-match, merge-historico-hooks
-├── sync-inbox/   # scan/cards/query + sync-inbox.sh
-├── hubspot/      # hubspot-mcp
-├── profiles/     # detect-stack, profiles.sh, apply-bootstrap-profile
-└── install/      # env, registry, link, gitignore, hooks merge, health, cursor-cli, boot-sync
-```
+| Fatia | Layout |
+| --- | --- |
+| `install/` | `sh/`, `ts/`, `conf/` |
+| `hubspot/` | `sh/`, `ts/` |
+| `profiles/` | `sh/`, `ts/` |
+| `sync-inbox/` | `sh/`, `ts/` |
+| `history/` | só TypeScript (flat) |
+| `shared/` | só TypeScript (flat) |
 
-Entry points públicos (`install.sh`, `run.mjs`, commands npm) **não mudam** — só os paths internos da lib.
-
-Ver [docs/PLANO-MODULAR-SLICES.md](../../../docs/PLANO-MODULAR-SLICES.md) (fase S5).
+Entry shell do monorepo: `packages/cursor/scripts/sh/*`.
+Dispatcher: `packages/cursor/scripts/mjs/run.mjs`.
+PowerShell: `packages/cursor/scripts/ps1/`.

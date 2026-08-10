@@ -48,7 +48,7 @@ function Get-HostdimeTsx {
 
 function Get-DetectedProfile {
     param([Parameter(Mandatory)][string]$Project)
-    $script = Join-Path $PSScriptRoot '../../lib/profiles/detect-stack.ts'
+    $script = Join-Path $PSScriptRoot '../../lib/profiles/ts/detect-stack.ts'
     if (-not (Test-Path $script)) { return '' }
     $tsx = Get-HostdimeTsx
     if (-not $tsx) { return '' }
