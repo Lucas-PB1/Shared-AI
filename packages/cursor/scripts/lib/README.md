@@ -1,6 +1,6 @@
 # scripts/lib — fatias do motor Cursor
 
-Cada fatura agrupa por linguagem quando há mais de um tipo de arquivo:
+Cada fatia agrupa por linguagem quando há mais de um tipo de arquivo:
 
 | Fatia | Layout |
 | --- | --- |

@@ -60,17 +60,20 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
-@test "export exclusions a partir de context.yaml" {
+@test "export exclusions a partir de context no workdir" {
   project="$(hostdime_make_git_project)"
-  mkdir -p "$project/.cursor/review"
+  export HOSTDIME_REVIEW_WORKDIR
+  HOSTDIME_REVIEW_WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/hd-rev.XXXXXX")"
+  mkdir -p "$HOSTDIME_REVIEW_WORKDIR"
   cp "$HOSTDIME_IA_ROOT/tests/fixtures/review/context.yaml" \
-    "$project/.cursor/review/context.yaml"
+    "$HOSTDIME_REVIEW_WORKDIR/context.yaml"
 
   run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-export-exclusions.sh" "$project"
   [ "$status" -eq 0 ]
-  [ -f "$project/.cursor/review/exclusions.yaml" ]
-  grep -q 'accepted-repo-pattern' "$project/.cursor/review/exclusions.yaml"
-  ! grep -q 'still-pending' "$project/.cursor/review/exclusions.yaml"
+  [ -f "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml" ]
+  grep -q 'accepted-repo-pattern' "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"
+  ! grep -q 'still-pending' "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"
+  [[ ! -d "$project/.cursor/review" ]]
 }
 
 @test "smoke ingest sem gh" {

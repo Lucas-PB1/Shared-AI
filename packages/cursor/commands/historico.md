@@ -24,7 +24,7 @@ Ler skill **`history-watch`** antes de setup ou append.
 3. **Nome do arquivo** — sugerir:
    - OKF → `log.md` no escopo ou `<escopo>/log.md`
    - MD → `history.md` ou `memory.md` (usuário pode customizar)
-4. **Versionado** — default **sim** (git); **não** adicionar ao `project-gitignore.fragment`.
+4. **Versionado** — default **sim** (git); não colocar path de history no gitignore do projeto.
 5. **Gerar artefatos** (passos abaixo).
 6. Resumo: escopo, path do histórico, id do watch, hook ativo.
 

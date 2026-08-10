@@ -59,8 +59,9 @@ async function main(): Promise<number> {
   }
 
   if (!rows.length) {
-    console.error("Nenhuma decisão para dual-write");
-    return 1;
+    console.error("Nenhuma decisão para dual-write (ok)");
+    console.log(JSON.stringify({ ok: true, attempted: false, written: 0, skipped: 0, input: 0 }));
+    return 0;
   }
 
   const result = await dualWriteDecisions(rows, {

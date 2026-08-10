@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
- * U3 — puxa exclusions/conventions do store → cache local (.cursor/review/).
- * Store obrigatório.
+ * Puxa exclusions/conventions do store (fonte de verdade).
+ * Por padrão não grava em disco; HOSTDIME_REVIEW_DISK_CACHE=1 → workdir tmp.
  *
  * Uso: review-memory-pull.ts [project] [--slug SLUG]
  */
@@ -47,6 +47,7 @@ async function main(): Promise<number> {
         attempted: result.attempted,
         exclusions: result.exclusionCount,
         conventions: result.conventionCount,
+        cached: result.cached,
         exclusions_path: result.exclusionsPath ?? null,
         conventions_path: result.conventionsPath ?? null,
         error: result.error ?? null,

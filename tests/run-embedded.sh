@@ -42,6 +42,7 @@ test_link_symlinks() {
   assert "sem orquestrador no projeto" test ! -e "$project/.cursor/rules/skills-orchestrator-base.mdc"
   assert "sem command no projeto" test ! -e "$project/.cursor/commands/avaliar.md"
   assert "orquestrador global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-base.mdc"
+  assert "sem pasta review no projeto" test ! -d "$project/.cursor/review"
   assert "command avaliar global" test -L "$CURSOR_USER_DIR/commands/avaliar.md"
   assert "command memoria global" test -L "$CURSOR_USER_DIR/commands/memoria.md"
   assert "command hubspot-mcp global" test -L "$CURSOR_USER_DIR/commands/hubspot-mcp.md"
@@ -51,9 +52,6 @@ test_link_symlinks() {
   assert "command onboard global" test -L "$CURSOR_USER_DIR/commands/onboard.md"
   assert "rule hubspot global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-hubspot.mdc"
   assert "rule okf global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-okf.mdc"
-  assert "review inbox" test -d "$project/.cursor/review/inbox"
-  assert "memoria v2" test -f "$project/.cursor/review/.memoria-version"
-  assert "sem memoria.md" test ! -f "$project/.cursor/review/memoria.md"
 }
 
 test_link_removes_project_orchestrator() {
@@ -83,7 +81,11 @@ test_gitignore_scrub_orphans() {
 .cursor/rules/skills-orchestrator-*.mdc
 .cursor/commands/avaliar.md
 .cursor/review/memoria.md
+.cursor/review/
+!.cursor/review/inbox/.gitkeep
 EOF
+  mkdir -p "$project/.cursor/review/inbox"
+  touch "$project/.cursor/review/inbox/.gitkeep"
   ln -sf "$HOSTDIME_IA_ROOT/packages/cursor/rules/skills-orchestrator-base.mdc" \
     "$project/.cursor/rules/skills-orchestrator-base.mdc"
   ln -sf "$HOSTDIME_IA_ROOT/packages/code-review/commands/avaliar.md" \
@@ -113,8 +115,12 @@ EOF
   else
     assert "ignore memoria.md scrub" true
   fi
-  assert "ignore context.yaml mantido" grep -qxF '.cursor/review/context.yaml' "$project/.gitignore"
-  assert "ignore decisions mantido" grep -qxF '.cursor/review/decisions.jsonl' "$project/.gitignore"
+  if grep -qE '^\.cursor/review(/|$)' "$project/.gitignore"; then
+    assert "sem ignore review no gitignore" false
+  else
+    assert "sem ignore review no gitignore" true
+  fi
+  assert "pasta review removida se existia" test ! -d "$project/.cursor/review"
 }
 
 test_link_preserves_real() {
@@ -211,29 +217,15 @@ test_hubspot_mcp_detect() {
   assert "mcp instalado" hubspot_mcp_installed
 }
 
-test_finalizar_inbox() {
-  project="$(hostdime_make_project)"
-  export CURSOR_PROJECT_DIR="$project"
-  inbox="$project/.cursor/review/inbox"
-  reports="$project/.cursor/review/reports"
-  mkdir -p "$inbox" "$reports" "$project/.cursor/review/resultados"
-  echo '<?php echo 1;' >"$inbox/sample.php"
-  cat >"$reports/2026-06-30_review-sample.md" <<'MD'
-## `.cursor/review/inbox/sample.php`
-**Veredito:** OK
-MD
-  bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/finalizar-review.sh" \
-    "$inbox/sample.php" >/dev/null
-  assert "inbox limpo" test ! -f "$inbox/sample.php"
-  assert "relatorio empacotado" test -f "$project/.cursor/review/resultados/2026-06-30_review-sample/relatorio.md"
-}
-
 test_finalizar_repo() {
   project="$(hostdime_make_project)"
   export CURSOR_PROJECT_DIR="$project"
-  reports="$project/.cursor/review/reports"
+  export HOSTDIME_IA_ROOT
+  export HOSTDIME_REVIEW_WORKDIR
+  HOSTDIME_REVIEW_WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/hd-rev.XXXXXX")"
+  reports="$HOSTDIME_REVIEW_WORKDIR/reports"
   src="$project/app/Sample.php"
-  mkdir -p "$(dirname "$src")" "$reports" "$project/.cursor/review/resultados"
+  mkdir -p "$(dirname "$src")" "$reports"
   echo '<?php echo 1;' >"$src"
   cat >"$reports/2026-06-30_app-Sample.md" <<'MD'
 ## `app/Sample.php`
@@ -242,7 +234,8 @@ MD
   bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/finalizar-review.sh" "$src" >/dev/null
   assert "arquivo repo preservado" test -f "$src"
   assert "report removido" test ! -f "$reports/2026-06-30_app-Sample.md"
-  assert "resultado criado" test -f "$project/.cursor/review/resultados/2026-06-30_app-Sample/relatorio.md"
+  assert "resultado criado" test -f "$HOSTDIME_REVIEW_WORKDIR/resultados/2026-06-30_app-Sample/relatorio.md"
+  assert "sem pasta review no projeto" test ! -d "$project/.cursor/review"
 }
 
 test_boot_sync_toggle() {
@@ -470,16 +463,19 @@ test_onboard_noninteractive() {
 
 test_memoria_init_backup_restore() {
   project="$(hostdime_make_project)"
+  export HOSTDIME_REVIEW_WORKDIR
+  HOSTDIME_REVIEW_WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/hd-rev.XXXXXX")"
   hostdime_tsx "$ROOT/packages/code-review/bin/review-memoria.ts" init --write "$project" >/dev/null
-  assert "memoria version" test -f "$project/.cursor/review/.memoria-version"
-  assert "context yaml" test -f "$project/.cursor/review/context.yaml"
-  assert "decisions jsonl" test -f "$project/.cursor/review/decisions.jsonl"
-  assert "convencoes" test -f "$project/.cursor/review/convencoes.md"
+  assert "memoria version" test -f "$HOSTDIME_REVIEW_WORKDIR/.memoria-version"
+  assert "context yaml" test -f "$HOSTDIME_REVIEW_WORKDIR/context.yaml"
+  assert "decisions jsonl" test -f "$HOSTDIME_REVIEW_WORKDIR/decisions.jsonl"
+  assert "convencoes" test -f "$HOSTDIME_REVIEW_WORKDIR/convencoes.md"
+  assert "sem pasta no projeto" test ! -d "$project/.cursor/review"
   hostdime_tsx "$ROOT/packages/code-review/bin/review-memoria.ts" backup "$project" >/dev/null
-  assert "backup latest context" test -f "$project/.cursor/review/backups/latest/context.yaml"
+  assert "backup latest context" test -f "$HOSTDIME_REVIEW_WORKDIR/backups/latest/context.yaml"
   hostdime_tsx "$ROOT/packages/code-review/bin/review-memoria.ts" restore --write "$project" >/dev/null
-  assert "restore version" test -f "$project/.cursor/review/.memoria-version"
-  assert "restore context" test -f "$project/.cursor/review/context.yaml"
+  assert "restore version" test -f "$HOSTDIME_REVIEW_WORKDIR/.memoria-version"
+  assert "restore context" test -f "$HOSTDIME_REVIEW_WORKDIR/context.yaml"
 }
 
 test_health_multi_project() {
@@ -563,19 +559,22 @@ test_check_inbox_clean_js() {
 
 test_export_exclusions() {
   project="$(hostdime_make_git_project)"
-  mkdir -p "$project/.cursor/review"
+  export HOSTDIME_REVIEW_WORKDIR
+  HOSTDIME_REVIEW_WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/hd-rev.XXXXXX")"
+  mkdir -p "$HOSTDIME_REVIEW_WORKDIR"
   cp "$HOSTDIME_IA_ROOT/tests/fixtures/review/context.yaml" \
-    "$project/.cursor/review/context.yaml"
+    "$HOSTDIME_REVIEW_WORKDIR/context.yaml"
 
   out="$(
     bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-export-exclusions.sh" "$project" 2>&1
   )"
   status=$?
   assert "export exit 0" test "$status" -eq 0
-  assert "export file" test -f "$project/.cursor/review/exclusions.yaml"
+  assert "export file" test -f "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"
   assert "export count 2" grep -q '2 exclus' <<<"$out"
-  assert "export rejeitado" grep -q 'accepted-repo-pattern' "$project/.cursor/review/exclusions.yaml"
-  if grep -q 'still-pending' "$project/.cursor/review/exclusions.yaml"; then
+  assert "export rejeitado" grep -q 'accepted-repo-pattern' "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"
+  assert "sem pasta no projeto" test ! -d "$project/.cursor/review"
+  if grep -q 'still-pending' "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"; then
     assert "export nao inclui aceito" false
   else
     assert "export nao inclui aceito" true
@@ -665,7 +664,6 @@ run_test "detach registry" test_detach_registry
 run_test "merge hooks" test_merge_hooks
 run_test "hubspot mcp install" test_hubspot_mcp_install
 run_test "hubspot mcp detect" test_hubspot_mcp_detect
-run_test "finalizar inbox" test_finalizar_inbox
 run_test "finalizar repo" test_finalizar_repo
 run_test "boot sync toggle" test_boot_sync_toggle
 run_test "boot sync unset" test_boot_sync_unset

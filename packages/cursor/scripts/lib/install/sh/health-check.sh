@@ -5,21 +5,7 @@
 #         health_check_project /caminho/repo
 
 health_count_review_inbox() {
-  local project="$1"
-  local inbox="$project/.cursor/review/inbox"
-  local count=0 f
-
-  [[ -d "$inbox" ]] || {
-    echo 0
-    return
-  }
-
-  for f in "$inbox"/*; do
-    [[ -e "$f" ]] || continue
-    [[ "$(basename "$f")" == ".gitkeep" ]] && continue
-    count=$((count + 1))
-  done
-  echo "$count"
+  echo 0
 }
 
 health_detect_profile_label() {

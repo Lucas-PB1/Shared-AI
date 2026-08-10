@@ -7,56 +7,31 @@ description: >-
 
 # Review — `/avaliar`, `/avaliar-diff` e `/finalizar`
 
-Commands universais em `~/.cursor/commands/` (global; setup/sync).
+Commands em `~/.cursor/commands/` (global).
 
 | Command | Uso |
 | --- | --- |
-| `/avaliar` | Deep dive em um arquivo do repo (De/Para + GitLab) |
-| `/avaliar-diff` | Triagem do diff do branch → fila para `/avaliar` |
-| `/finalizar` | Empacota em `resultados/` + persiste decisões |
-| `/memoria` | Migra, compacta e promove memória v2 |
+| `/avaliar` | Deep dive em um arquivo |
+| `/avaliar-diff` | Triagem do diff → fila |
+| `/finalizar` | Persist decisões no **store** |
+| `/memoria` | Compactar workdir tmp (preferir store pull/push) |
 
-## Pastas no projeto
+## Memória e artefatos
 
-| Pasta / arquivo | Uso |
+| Onde | Uso |
 | --- | --- |
-| `.cursor/review/reports/` | Rascunho do `/avaliar` — removido no `/finalizar` |
-| `.cursor/review/resultados/` | Pacote final após `/finalizar` |
-| `.cursor/review/decisions.jsonl` | staging local de decisões (gitignored) |
-| `.cursor/review/decisions-ingest.jsonl` | histórico versionado do ingest CI (github-pr-*) |
-| `.cursor/review/context.yaml` | exclusões, pending, rules e candidates (gitignored) |
-| `.cursor/review/exclusions.yaml` | exclusões versionadas para CI (export de context.yaml) |
-| `.cursor/review/convencoes.md` | padrão promovido — **versionado** em projetos com CI GitHub (`/avaliar` automático) |
-
-Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run bootstrap`). Commands hostdime **não** são espelhados no projeto. Memória: `decisions.jsonl` + `context.yaml` + `convencoes.md`.
+| **Supabase** | Fonte de verdade (exclusions, conventions, decisions, runs) |
+| Workdir tmp | Rascunhos CI opcionais (`HOSTDIME_REVIEW_WORKDIR` / `$TMPDIR/hostdime-review/...`) |
 
 ## Fluxo
 
-**Arquivo do repo**
+1. `/avaliar` → `review-check.sh` + relatório no chat (+ LLM no CI)
+2. `/finalizar` → dual-write no store
+3. GitHub: pull memory (store) → avaliar → **publish** store
 
-1. `/avaliar` no caminho do arquivo (ou arquivo aberto)
-2. Lê `context.yaml` + `convencoes.md`
-3. `~/.cursor/review-check.sh <arquivo>` antes do relatório
-4. Salva em `.cursor/review/reports/<data>_<slug>.md`
-5. `/finalizar` → decisões do dev → `~/.cursor/review-finalizar.sh`
-6. `/memoria compactar` / `promover` quando o dev quiser contexto explícito
-7. Relatório vai para `resultados/`; **arquivo do repo permanece intacto**
-
-**Diff do branch**
-
-1. `/avaliar-diff` → `~/.cursor/review-diff.sh [base]` + triagem por arquivo
-2. Relatório em `.cursor/review/reports/diff-<data>.md` + fila deep dive
-3. `/avaliar <arquivo>` para cada item da fila
-4. `/finalizar` por arquivo quando aplicável
-
-**GitHub (automático no PR — Fase 2)**
-
-1. Workflow `avaliar-pr.yml` — estático + LLM (`review-llm.ts`) por arquivo
-2. Versionar `convencoes.md` + `exclusions.yaml`; incremental por blob SHA
-3. Secret `REVIEW_LLM_API_KEY` no repo; `/finalizar` manual no Cursor
+Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `REVIEW_PROJECT_SLUG`, `CURSOR_API_KEY`.
 
 ## Regras
 
 - Não alterar o arquivo do repo salvo pedido explícito
-- Tier 2 + skill de stack
-- Detalhes: `~/.cursor/commands/avaliar.md`, `avaliar-diff.md`, `finalizar.md`
+- Não colar logs inteiros de linter no relatório

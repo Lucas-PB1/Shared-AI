@@ -1,5 +1,5 @@
-# Prepara pastas de review em .cursor/ do projeto.
-# Rules do orquestrador e commands hostdime ficam só em ~/.cursor/ (não no projeto).
+# Prepara .cursor/ do projeto (store-only: remove .cursor/review se existir).
+# Rules/commands hostdime ficam só em ~/.cursor/.
 param(
     [switch]$Quiet,
     [Parameter(Position = 0)]
@@ -51,43 +51,11 @@ Reset-LinkCounters
 $Target = (Resolve-Path -LiteralPath $Target).Path
 $rulesDir = Join-Path $Target '.cursor/rules'
 $commandsDir = Join-Path $Target '.cursor/commands'
-$reviewDir = Join-Path $Target '.cursor/review'
-
-# Não criar rules/commands vazios — só limpar se já existirem
-foreach ($sub in @('inbox', 'reports', 'resultados')) {
-    $path = Join-Path $reviewDir $sub
-    if (-not (Test-Path $path)) { New-Item -ItemType Directory -Path $path -Force | Out-Null }
+$removedReview = $false
+if (Get-Command Remove-ProjectReviewDir -ErrorAction SilentlyContinue) {
+    $removedReview = [bool](Remove-ProjectReviewDir $Target)
 }
 
-foreach ($keep in @(
-    (Join-Path $reviewDir 'inbox/.gitkeep'),
-    (Join-Path $reviewDir 'reports/.gitkeep')
-)) {
-    $dir = Split-Path $keep -Parent
-    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-    if (-not (Test-Path $keep)) { New-Item -ItemType File -Path $keep -Force | Out-Null }
-}
-
-$memoriaTs = Join-Path $root 'packages/code-review/bin/review-memoria.ts'
-$tsxBin = Join-Path $root 'node_modules/.bin/tsx'
-if ((Test-Path $memoriaTs) -and (Test-Path $tsxBin)) {
-    & $tsxBin $memoriaTs migrar --write $Target 2>$null | Out-Null
-} else {
-    Set-Content -Path (Join-Path $reviewDir '.memoria-version') -Value "2`n" -NoNewline
-    $decisions = Join-Path $reviewDir 'decisions.jsonl'
-    if (-not (Test-Path $decisions)) { New-Item -ItemType File -Path $decisions -Force | Out-Null }
-    $convTpl = Join-Path $root 'packages/code-review/templates/convencoes.md'
-    $convDest = Join-Path $reviewDir 'convencoes.md'
-    if (-not (Test-Path $convDest) -and (Test-Path $convTpl)) {
-        Copy-Item $convTpl $convDest
-    }
-}
-foreach ($stale in @('memoria.md', 'context.json')) {
-    $p = Join-Path $reviewDir $stale
-    if (Test-Path $p) { Remove-Item -LiteralPath $p -Force }
-}
-
-# Garantir ausência de espelhos: orquestrador + commands só em ~/.cursor/
 if (Test-Path $rulesDir) {
     Remove-ProjectOrchestratorRuleSymlinks -RulesDir $rulesDir
 }
@@ -95,7 +63,6 @@ if (Test-Path $commandsDir) {
     Remove-ProjectManagedCommandSymlinks -CommandsDir $commandsDir
 }
 
-# Pastas vazias após limpeza
 foreach ($dir in @($rulesDir, $commandsDir)) {
     if ((Test-Path $dir) -and -not (Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue | Select-Object -First 1)) {
         Remove-Item -LiteralPath $dir -Force -ErrorAction SilentlyContinue
@@ -107,14 +74,20 @@ Ensure-ProjectGitignore $Target
 if (-not $Quiet) {
     Write-Host ''
     Write-Host "Concluído em $Target/.cursor/"
-    Write-Host '  review/ → reports/, resultados/, memória v2 (context/decisions)'
+    Write-Host '  memória / decisões → store Supabase'
     Write-Host '  orquestrador → ~/.cursor/rules/ (global)'
     Write-Host '  commands → ~/.cursor/commands/ (global)'
+    if ($removedReview) {
+        Write-Host '  removido: .cursor/review/'
+    }
     if ($script:LinkOrchestratorRemoved -gt 0) {
         Write-Host "  removidos do projeto: $script:LinkOrchestratorRemoved skills-orchestrator-*.mdc"
     }
     if ($script:LinkCommandsRemoved -gt 0) {
         Write-Host "  removidos do projeto: $script:LinkCommandsRemoved command(s)"
+    }
+    if ($script:LinkGitignoreScrubbed -gt 0) {
+        Write-Host "  gitignore: $($script:LinkGitignoreScrubbed) linha(s) scrubadas"
     }
     if ($script:LinkSkipped -gt 0) {
         Write-Host "Ignorados (arquivo real do projeto): $script:LinkSkipped"

@@ -26,4 +26,4 @@ alwaysApply: false
 | DOM / simulador grande | `modules/<Nome>/styles/*.css` |
 
 - Forms HubSpot embed: escopo por classe do módulo (ex. `.hostdime-*-form`); `!important` só contra CSS do embed
-- Convenções do **repo alvo**: `.cursor/skills/*/SKILL.md` (ex. styling) e `.cursor/review/convencoes.md` por escopo
+- Convenções do **repo alvo**: `.cursor/skills/*/SKILL.md` (ex. styling) e memória no **store** (conventions por escopo)

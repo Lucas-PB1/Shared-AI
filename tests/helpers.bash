@@ -10,7 +10,7 @@ hostdime_test_setup() {
   local tmp_base="${BATS_TMPDIR:-${TMPDIR:-/tmp}}"
   export TEST_TMP="${tmp_base}/hostdime-${BATS_TEST_NAME:-test}-$$"
   export CURSOR_USER_DIR="$TEST_TMP/cursor-user"
-  export CURSOR_LINK_PROJECT_SCRIPT="$HOSTDIME_IA_ROOT/packages/cursor/scripts/link-project.sh"
+  export CURSOR_LINK_PROJECT_SCRIPT="$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/link-project.sh"
   rm -rf "$TEST_TMP"
   mkdir -p "$CURSOR_USER_DIR"
 
@@ -44,7 +44,6 @@ hostdime_make_git_project() {
   git -C "$dir" config user.name "HostDime Test"
   # default branch main (git 2.28+); fallback se config ignorada
   git -C "$dir" checkout -b main >/dev/null 2>&1 || true
-  mkdir -p "$dir/.cursor/review/inbox" "$dir/.cursor/review/reports"
   printf '%s' "$dir"
 }
 

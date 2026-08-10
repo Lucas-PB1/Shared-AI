@@ -95,18 +95,8 @@ function runHealthProject(project: string): ProjectReport {
     item.profile = 'custom';
   }
 
-  const inbox = join(project, '.cursor/review/inbox');
-  if (existsSync(inbox) && statSync(inbox).isDirectory()) {
-    item.inbox = readdirSync(inbox).filter((n) => {
-      if (n === '.gitkeep') return false;
-      try {
-        return statSync(join(inbox, n)).isFile();
-      } catch {
-        return false;
-      }
-    }).length;
-    if (item.inbox) item.issues.push(`review_inbox:${item.inbox}`);
-  }
+  // Inbox legada removida — memória no store
+  item.inbox = 0;
 
   const gitCheck = spawnSync('git', ['-C', project, 'rev-parse', '--is-inside-work-tree'], {
     encoding: 'utf-8',

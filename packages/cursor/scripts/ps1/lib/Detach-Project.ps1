@@ -35,5 +35,5 @@ function Remove-HostdimeFromProject {
         Write-Host "  total: $removed symlink(s)"
     }
 
-    Write-Host '  preservado: rules/commands reais, SKILLS-ROUTING.md, skills/, review/'
+    Write-Host '  preservado: rules/commands reais, SKILLS-ROUTING.md, skills/'
 }

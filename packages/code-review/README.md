@@ -2,18 +2,16 @@
 
 Instalado com `npm run setup:code-review` (inclui `npm install` + `composer install`).
 
-**Organização:** núcleo em **TypeScript** (`src/`, `bin/` via tsx). Shell em `tools/`. Ver [STRUCTURE.md](STRUCTURE.md).
+**Organização:** TypeScript em `src/` + `bin/` (tsx); bash em `tools/sh/`. Ver [STRUCTURE.md](STRUCTURE.md) e [docs/okf/review-store.md](../../docs/okf/review-store.md).
 
 Commands: `/avaliar`, `/avaliar-diff`, `/finalizar`, `/memoria`, `/skills-why`.
 
-**Análise estática por extensão** (`check-inbox.sh` → `~/.cursor/review-check.sh`): PHP, JS/TS via Semgrep + linters acima. CSS e demais stacks: Semgrep auto + skills/rules/convencoes injetados no LLM (sem linter CSS no pacote).
+**Estático** (`check-inbox.sh` → `~/.cursor/review-check.sh`): PHP, JS/TS (Semgrep + linters). CSS e outras stacks: Semgrep + skills no LLM.
 
-Memória por projeto: `.cursor/review/` (gitignored) — `decisions.jsonl`, `context.yaml`, `convencoes.md`. Scaffold: `/memoria init --write`.
+**Memória oficial:** store Supabase (obrigatório). Rascunhos opcionais em workdir tmp (`HOSTDIME_REVIEW_WORKDIR` / `$TMPDIR/hostdime-review/<hash>`).
 
 Diagnóstico: `npm run doctor`.
 
-CI GitLab: [ci/README.md](ci/README.md) — job `hostdime-review` com paridade ao `review-check.sh`.
-
-CI GitHub: [ci/README.md](ci/README.md) — `/avaliar` automático no PR (Fase 2: estático + LLM).
+CI: [ci/README.md](ci/README.md) — GitHub `/avaliar` no PR; GitLab `hostdime-review`.
 
 Bootstrap do projeto: `npm run bootstrap -- <repo>`.

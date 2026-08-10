@@ -5,15 +5,10 @@ import { resolveContextForFile } from "../skill-routing/index.js";
 import { inferStack, parseArgs, type LlmCliArgs } from "./args.js";
 import {
   buildUserPrompt,
-  convencoesForFile,
-  exclusionsForFile,
   loadSystemPrompt,
 } from "./prompt.js";
 import { callLLM, resolveProvider } from "./providers.js";
-import {
-  mergeTextLayers,
-  storeMemoryForFile,
-} from "../store/index.js";
+import { storeMemoryForFile } from "../store/index.js";
 
 const PACKAGE_ROOT = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -53,12 +48,10 @@ export async function runLlmReview(args: LlmCliArgs): Promise<string> {
   const stack = inferStack(args.file);
   const staticOut = readOptional(args.staticFile);
   const diff = readOptional(args.diffFile);
-  // Cache local (se houver) + store obrigatório
-  let convencoes = convencoesForFile(args.project, args.file);
-  let exclusions = exclusionsForFile(args.project, args.file);
+  // Memória só do store (hard)
   const storeLayer = await storeMemoryForFile(args.file);
-  convencoes = mergeTextLayers(convencoes, storeLayer.conventions);
-  exclusions = mergeTextLayers(exclusions, storeLayer.exclusions);
+  const convencoes = storeLayer.conventions;
+  const exclusions = storeLayer.exclusions;
   const codeReviewRoot = process.env.HOSTDIME_IA_ROOT
     ? path.join(process.env.HOSTDIME_IA_ROOT, "packages/code-review")
     : PACKAGE_ROOT;

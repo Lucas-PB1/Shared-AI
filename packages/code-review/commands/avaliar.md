@@ -1,65 +1,31 @@
 # Avaliar código (`/avaliar`)
 
-Avalie **objetivamente** o arquivo indicado no **repositório** (caminho informado, arquivo aberto ou no diff).
-
-Funciona em **qualquer projeto** — o command é symlink universal (como as rules).
+Avalie **objetivamente** o arquivo indicado no **repositório**.
 
 ## Entrada
 
 | Campo | Origem |
 | --- | --- |
-| Arquivo | Mensagem do usuário, caminho no repo, ou arquivo aberto no editor |
-| Linguagem / framework | Informado pelo usuário; se omitido, inferir pelo código |
-| Contexto extra | Opcional (ex.: "é um controller Laravel") |
+| Arquivo | Mensagem, caminho no repo, ou arquivo aberto |
+| Linguagem / framework | Informado ou inferido |
+| Contexto extra | Opcional |
 
-## Fluxo de pastas
+## Memória
 
-| Pasta | Papel |
-| --- | --- |
-| `.cursor/review/reports/` | Rascunho do `/avaliar` — **removido** no `/finalizar` |
-| `.cursor/review/resultados/` | Pacote final (relatório + snapshot do código) |
-| `.cursor/review/context.yaml` | Exclusões e pending (gitignored) |
-| `.cursor/review/convencoes.md` | Padrão local promovido (gitignored) |
+**Só store Supabase** (obrigatório: `SUPABASE_URL` + chave + slug).
 
-O **arquivo avaliado no repo não é alterado nem deletado** — só copiado para `resultados/` no `/finalizar`.
-
-## Memória do projeto (só v2)
-
-Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `npm run memoria -- init --write`.
-
-1. Se existir `context.yaml`, aplicar `exclusions` (não sugerir o que foi `rejeitado` / `nao-aplicavel` no escopo) e priorizar `pending` com `revisit: next-touch`.
-2. Se existir `convencoes.md`, alinhar sugestões e geração aos bullets cujo escopo casa com o arquivo (`## Escopo:`).
-3. **Não** ler `decisions.jsonl` (staging bruto).
-4. **Não** criar nem atualizar arquivos de memória — isso é `/memoria` e `/finalizar`.
+- Exclusions / conventions vêm do store no LLM (`storeMemoryForFile`).
+- **Não** versionar yaml/md de memória no git do projeto.
 
 ## Como avaliar
 
-1. Rodar `~/.cursor/review-check.sh <arquivo>`. Incorporar achados **filtrados** — **não** colar o log inteiro.
+1. Rodar `~/.cursor/review-check.sh <arquivo>`. Incorporar achados filtrados.
 2. Ler o arquivo completo.
-3. Tier 2: `clean-code`, `solid`, `dry` + skill de stack.
-4. **Não** alterar o arquivo — só diagnosticar. De/Para + GitLab (inglês) + português.
-5. **Salvar** em `.cursor/review/reports/<YYYY-MM-DD>_<slug>.md`
-   - `<slug>` = caminho relativo ao repo, sem extensão, `/` → `-` (ex.: `app-Http-Controllers-Foo`)
-   - Sufixo `-2`, `-3` se colidir no mesmo dia.
+3. Skills de stack + tier 2 (`clean-code`, `solid`, `dry`).
+4. **Não** alterar o arquivo — De/Para + GitLab (en) + PT-BR.
+5. Entregar relatório **no chat** (formato abaixo). Persistência de decisões é `/finalizar` → store.
 
-**Não** incluir achados causados só pelo ambiente:
-
-- PHPStan/ESLint/tsc por dependências ausentes (`vendor/`, `node_modules/`)
-- "Class not found" quando o import é padrão do stack
-- Config do projeto alvo ausente neste workspace
-
-**Incluir** sintaxe, Semgrep, bugs visíveis na leitura.
-
-## Ferramentas
-
-| Camada | Escopo |
-| --- | --- |
-| Semgrep | PHP, JS/TS (e demais linguagens com rules auto) |
-| PHP | `php -l` + PHPStan 6 |
-| JS | `node --check` + ESLint 9 |
-| TS | ESLint 9 + `tsc --strict` |
-
-Setup: `npm run setup:code-review` no clone do hostdime-ia.
+**Não** incluir falhas só de ambiente (`vendor`/`node_modules` ausentes).
 
 ## Classificação
 
@@ -117,3 +83,5 @@ Responder **somente** neste formato:
 | **OK** | Zero achados ou só melhorias leves (≤1) |
 | **Ajustes necessários** | Erros ou melhoria essencial relevante |
 | **Não recomendado** | ≥1 impeditivo ou combinação grave |
+
+Setup: `npm run setup:code-review`. Store: [docs/okf/review-store.md](../../docs/okf/review-store.md).

@@ -13,7 +13,7 @@ Use para mapear o MR e priorizar; use `/avaliar <arquivo>` na fila para De/Para 
 
 ## Memória do projeto
 
-Mesmas regras do `/avaliar` (só v2: `context.yaml` + `convencoes.md`).
+Store Supabase (mesmas regras do `/avaliar`).
 
 ## Como triar
 
@@ -26,7 +26,7 @@ Mesmas regras do `/avaliar` (só v2: `context.yaml` + `convencoes.md`).
    - Tier 2 + skill de stack
    - Veredito **por arquivo**: OK | Ajustes necessários | Não recomendado
 4. **Não** gerar De/Para completo aqui — só bullets curtos. Exceção: impeditivo (1 linha + ação).
-5. **Salvar** em `.cursor/review/reports/diff-<YYYY-MM-DD>.md` (sufixo `-2`, `-3` se colidir).
+5. Relatório no chat (e opcionalmente workdir tmp se `HOSTDIME_REVIEW_WORKDIR` estiver setado). **Não** escrever sob o projeto.
 6. Montar **Fila `/avaliar`** com arquivos em Ajustes necessários ou Não recomendado.
 
 ## Ambiente

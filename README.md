@@ -10,7 +10,7 @@ Dois pacotes e uma família de comandos npm para skills/rules do Cursor e code-r
 | **Skills + code-review** | Setup completo (recomendado) | `npm run onboard` **ou** `setup:skills` + `setup:code-review` + `bootstrap` |
 | **Só code-review** | Máquina já tem skills; falta inbox/review | `npm run setup:code-review` → `npm run bootstrap -- <repo>` |
 
-`setup:code-review` instala deps (`npm`/`composer`) e commands `/avaliar`, `/avaliar-diff`, `/finalizar`, etc. Sem ele, o bootstrap ainda cria `.cursor/review/`, mas as ferramentas e commands globais do review podem faltar — use `npm run doctor`.
+`setup:code-review` instala deps (`npm`/`composer`) e commands `/avaliar`, `/avaliar-diff`, `/finalizar`, etc. Sem ele as ferramentas e commands globais do review podem faltar — use `npm run doctor`. Memória/decisões vivem no **store Supabase**.
 
 Wizard (setup + perfil + bootstrap + extras):
 
@@ -43,7 +43,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | --- | --- | --- |
 | `npm run setup:skills` | Máquina | Rules, skills, hooks (merge), motor de sync |
 | `npm run setup:code-review` | Máquina | Commands `/avaliar`, `/avaliar-diff`, `/finalizar`, ferramentas |
-| `npm run bootstrap -- <repo>` | Projeto | Symlinks + pastas `.cursor/review/` |
+| `npm run bootstrap -- <repo>` | Projeto | Symlinks + registry (sem pasta review no repo) |
 | `npm run bootstrap -- <repo> --profile=laravel\|hubspot\|react\|next\|python\|zend-laminas` | Projeto | + `SKILLS-ROUTING.md` e rule do stack |
 | `npm run detach -- <repo>` | Projeto | Remove symlinks gerenciados; desregistra do sync |
 | `npm run detach -- <repo> --keep-registry` | Projeto | Só remove symlinks; mantém no registry |
@@ -74,7 +74,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 
 macOS e outros SOs **não são suportados**. O dispatcher recusa plataformas diferentes de `win32` e `linux`.
 
-Windows: [docs/WINDOWS.md](docs/WINDOWS.md).
+Windows: [docs/okf/windows.md](docs/okf/windows.md).
 
 ```powershell
 npm run setup:skills
@@ -126,24 +126,24 @@ O `bootstrap` também atualiza o `.gitignore` do projeto com symlinks e conteúd
 
 ```
 hostdime-ia/
-├── CHECKLIST.md          # backlog de melhorias
+├── CHECKLIST.md          # backlog aberto
 ├── VERSION
 ├── package.json
-├── package-lock.json     # versionado (npm ci)
-├── composer.lock         # versionado (PHPStan do review-check)
+├── package-lock.json
+├── composer.lock
 ├── docs/
-│   ├── PLANO-MODULAR-SLICES.md     # arquitetura Modular Slices (fases S0–S6)
-│   ├── PLANO-SAUDE.md              # plano de hardening por fases
-│   ├── PLANO-REVIEW-UNIFICADO.md   # store Supabase local→cloud
-│   ├── supabase-local.md           # Docker + smoke do store
-│   └── WINDOWS.md
-├── supabase/                       # migrations + seed (sem dados de clientes)
+│   ├── README.md                 # aponta ao bundle OKF
+│   └── okf/                      # knowledge bundle OKF v0.1
+│       ├── index.md
+│       ├── log.md
+│       └── *.md                  # concepts
+├── supabase/                     # migrations + seed
 ├── tests/
 └── packages/
     ├── cursor/
     └── code-review/
 ```
 
-Plano de estrutura: [docs/PLANO-MODULAR-SLICES.md](docs/PLANO-MODULAR-SLICES.md). Plano de saúde: [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md). Review unificado: [docs/PLANO-REVIEW-UNIFICADO.md](docs/PLANO-REVIEW-UNIFICADO.md).
+Docs: [docs/okf/index.md](docs/okf/index.md) · [docs/README.md](docs/README.md).
 
 MIT — [LICENSE](LICENSE).

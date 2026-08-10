@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { reviewWorkDir } from "../memory/paths.js";
 import { scopeMatchesFile } from "../skill-routing/index.js";
 
 const PACKAGE_ROOT = path.join(
@@ -9,9 +10,10 @@ const PACKAGE_ROOT = path.join(
 );
 
 export function convencoesForFile(project: string, relFile: string): string {
+  const rd = reviewWorkDir(project);
   const paths = [
-    path.join(project, ".cursor/review/convencoes.md"),
-    path.join(project, ".cursor/review/convencoes-store.md"),
+    path.join(rd, "convencoes.md"),
+    path.join(rd, "convencoes-store.md"),
   ];
   const bullets: string[] = [];
   for (const convPath of paths) {
@@ -32,9 +34,10 @@ export function convencoesForFile(project: string, relFile: string): string {
 }
 
 export function exclusionsForFile(project: string, relFile: string): string {
+  const rd = reviewWorkDir(project);
   const candidates = [
-    path.join(project, ".cursor/review/exclusions.yaml"),
-    path.join(project, ".cursor/review/context.yaml"),
+    path.join(rd, "exclusions.yaml"),
+    path.join(rd, "context.yaml"),
   ];
   let raw = "";
   for (const p of candidates) {

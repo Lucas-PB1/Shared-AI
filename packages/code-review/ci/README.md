@@ -20,34 +20,18 @@ Comentários **por arquivo** no pull request — **estático + LLM** no formato 
 
 Copie `github-avaliar-pr.yml` para `.github/workflows/avaliar-pr.yml`.
 
-Copie `github-avaliar-pr-memoria.yml` para `.github/workflows/avaliar-pr-memoria.yml` — dispara no **merge** do PR e atualiza `convencoes.md` / `exclusions.yaml` a partir dos threads do `/avaliar`.
+Copie `github-avaliar-pr-memoria.yml` — no **merge** ingere threads do `/avaliar` **direto no store** (sem PR de yaml no repo).
 
 **Memória = store (obrigatório):**  
 `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` + `REVIEW_PROJECT_SLUG` — pull/publish/ingest no CI. Jobs **falham** sem secrets. Sem fallback offline.
 
-Cache efêmero no workspace (não versionar): `exclusions.yaml` / `convencoes-store.md` gerados pelo pull; `reports/` artifact.
-
-**Promover memória local → CI:**
-
-```bash
-# convenções
-/memoria promover   # no Cursor → commit convencoes.md
-
-# exclusões
-bash review-export-exclusions.sh /caminho/do/projeto
-git add .cursor/review/exclusions.yaml && git commit
-```
+Cache efêmero: `HOSTDIME_REVIEW_WORKDIR` (default no template: `${{ runner.temp }}/hostdime-review`); artifacts de `reports/`.
 
 **Aprendizado automático pós-merge (CI):**
 
 1. Dev mergeia PR com comentários `avaliar-inline`
-2. Workflow `avaliar-pr-memoria` classifica cada thread (comentários de devs humanos no thread):
-   - resposta **rejeitando** o achado (`ignorar`, `false positive`, `não se aplica`, …) → **rejeitado** / **nao-aplicavel** → `exclusions.yaml`
-   - resposta **sem objeção** (positiva, neutra ou vazia) → **aceito** → candidate em `decisions-ingest.jsonl`
-   - fix no merge (suggestion / De / intra-PR) sem reply → **aceito**
-   - merge sem reply e achado **ainda no código** → **rejeitado** → `exclusions.yaml`
-3. `aceito` vira bullet em `convencoes.md` após **≥2 ocorrências** do mesmo achado (`finding_id` estável no marker `<!-- avaliar-inline:path:line:fid:… -->`; histórico em `decisions-ingest.jsonl`)
-4. Bot abre PR com `decisions-ingest.jsonl` / `convencoes.md` / `exclusions.yaml` se mudarem
+2. Workflow `avaliar-pr-memoria` classifica cada thread e **grava no store** (decisions + exclusions/conventions)
+3. Memória só no store (sem pasta de review no cliente)
 
 Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-ia apontando `--project` pro hub.
 
@@ -68,9 +52,9 @@ Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-
 | Artefato | Papel |
 | --- | --- |
 | `review-store-publish` | run CI + findings dos reports |
-| `review-memory-pull` | cache local exclusions/conventions |
+| `review-memory-pull` | carrega exclusions/conventions do store (opcional disk cache) |
 | `review-memory-push` | exclusions.yaml → store |
-| Guia cloud | [docs/supabase-cloud.md](../../../docs/supabase-cloud.md) |
+| Guia cloud | [docs/okf/supabase-cloud.md](../../../docs/okf/supabase-cloud.md) |
 | `REVIEW_SKILL_STACK` | Variable | Não | `false` desliga hints react/typescript no CI |
 | `REVIEW_SKILL_MAX_CHARS` | Variable | Não | Limite de chars de skills/rules no prompt (default `18000`) |
 
@@ -108,7 +92,7 @@ Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
   2. `review-llm.ts` → relatório `/avaliar` (skills/rules por path + convencoes + exclusions + diff)
   3. Comentário no PR (cria ou atualiza)
   4. Comentários **inline** nos achados com `#### arquivo:L`
-  5. Cópia em `.cursor/review/reports/` → artifact no workflow
+  5. Cópia em workdir tmp (`HOSTDIME_REVIEW_WORKDIR/reports/`) → artifact no workflow
 - Job **não bloqueia merge** por default (`REVIEW_AVALIAR_SOFT=true`) — comenta achados para o dev
 - Job **falha** só se `REVIEW_AVALIAR_SOFT=false` (gate hard, opcional)
 - `/finalizar` no Cursor continua para decisões do dev

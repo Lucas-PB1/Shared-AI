@@ -1,9 +1,8 @@
 # Pacote Code Review — layout
 
-Arquitetura: **[Modular Slices](../../docs/PLANO-MODULAR-SLICES.md)**.  
-Store: [PLANO-REVIEW-UNIFICADO](../../docs/PLANO-REVIEW-UNIFICADO.md).
+Fatias (Modular Slices). Store: [docs/okf/review-store.md](../../docs/okf/review-store.md).
 
-## Estado atual (S1–S6)
+## Layout
 
 ```text
 packages/code-review/
@@ -11,23 +10,26 @@ packages/code-review/
 ├── src/
 │   ├── shared/
 │   ├── memory/
-│   ├── ingest/            # extract, git, fix, classify, decisions
+│   ├── ingest/
 │   ├── report/
-│   ├── store/             # open, dual-write, publish, memory-*, supabase-*
+│   ├── store/           # port, dual-write, publish, memory-*, supabase-*
 │   ├── skill-routing/
 │   └── llm/
 ├── tools/
-│   ├── github-pr/         # módulos bash do CI /avaliar (soft ≤200L)
-│   └── review-github-pr.sh
+│   ├── sh/              # wrappers + github-pr/
+│   ├── mjs/
+│   └── conf/
+├── commands/ skills/ ci/ templates/
+└── tests/
 ```
 
 ## Princípios
 
 | Princípio | No código |
 | --- | --- |
-| **Modular Slices** | import via `index` / `shared` |
-| **Store** | port → supabase-client; **sempre hard** (sem offline) |
-| **Dependência** | bin/ingest → store; store **não** importa memory (só shapes) |
+| **Fatias** | import via `index` / `shared` |
+| **Store** | port → supabase-client; **sempre hard** |
+| **Dependência** | bin → fatia; store não importa internals de memory |
 
 ## Scripts
 
@@ -41,7 +43,5 @@ npm run test:review-unit
 npm run lint:ts
 ```
 
-### Store env
-
-`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `REVIEW_PROJECT_SLUG`  
-Store sempre obrigatório. Ver [docs/supabase-cloud.md](../../docs/supabase-cloud.md).
+Env: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `REVIEW_PROJECT_SLUG`  
+(ver [supabase-local.md](../../docs/okf/supabase-local.md) / [supabase-cloud.md](../../docs/okf/supabase-cloud.md)).

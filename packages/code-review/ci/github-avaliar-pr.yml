@@ -37,6 +37,7 @@ env:
   REVIEW_AVALIAR_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'both' }}
   REVIEW_AVALIAR_SOFT: "true"
   REVIEW_LLM_PROVIDER: cursor
+  HOSTDIME_REVIEW_WORKDIR: ${{ runner.temp }}/hostdime-review
 
 jobs:
   avaliar:
@@ -189,5 +190,5 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: avaliar-reports-pr-${{ steps.pr.outputs.number }}
-          path: .cursor/review/reports/
+          path: ${{ runner.temp }}/hostdime-review/reports/
           if-no-files-found: ignore

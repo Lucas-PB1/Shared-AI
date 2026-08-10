@@ -1,31 +1,25 @@
 #!/usr/bin/env bash
-# Empacota relatório + código em .cursor/review/resultados/<data>_<slug>/
+# Finaliza review: dual-write decisões → store (obrigatório).
+# Rascunhos opcionais em workdir tmp (HOSTDIME_REVIEW_WORKDIR).
 # Uso: finalizar-review.sh [arquivo]
-#      ~/.cursor/review-finalizar.sh app/Http/Controllers/Foo.php
 set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./_review-workdir.sh
+source "$TOOLS_DIR/_review-workdir.sh"
+
 TARGET="${1:-}"
 
-is_inbox_file() {
-  [[ "$1" == *"/.cursor/review/inbox/"* ]]
-}
-
 resolve_project_root() {
-  local file="$1"
-  if [[ "$file" == *"/.cursor/review/"* ]]; then
-    printf '%s' "${file%%/.cursor/review/*}"
-    return
-  fi
-  if [[ -n "${CURSOR_PROJECT_DIR:-}" && -d "${CURSOR_PROJECT_DIR}/.cursor/review" ]]; then
-    printf '%s' "$CURSOR_PROJECT_DIR"
+  if [[ -n "${CURSOR_PROJECT_DIR:-}" && -d "${CURSOR_PROJECT_DIR}" ]]; then
+    printf '%s' "$(cd "$CURSOR_PROJECT_DIR" && pwd)"
     return
   fi
   if git rev-parse --show-toplevel >/dev/null 2>&1; then
     printf '%s' "$(git rev-parse --show-toplevel)"
     return
   fi
-  echo "Erro: não foi possível identificar o projeto (.cursor/review/)" >&2
+  echo "Erro: identifique o projeto (git root ou CURSOR_PROJECT_DIR)" >&2
   exit 1
 }
 
@@ -45,13 +39,6 @@ strip_extension() {
 slug_from_path() {
   local rel="$1"
   rel="${rel#./}"
-  if is_inbox_file "$rel" || [[ "$rel" == .cursor/review/inbox/* ]]; then
-    rel="${rel#*\.cursor/review/inbox/}"
-    rel="${rel#*inbox/}"
-    rel="$(strip_extension "$rel")"
-    printf '%s' "review-${rel}" | sed 's#/#-#g'
-    return
-  fi
   rel="$(strip_extension "$rel")"
   printf '%s' "$rel" | sed 's#/#-#g'
 }
@@ -75,8 +62,8 @@ resolve_target() {
   fi
 
   local project reports latest_report path_from_report
-  project="$(resolve_project_root "${CURSOR_PROJECT_DIR:-.}")"
-  reports="$project/.cursor/review/reports"
+  project="$(resolve_project_root)"
+  reports="$(hostdime_review_workdir "$project")/reports"
 
   latest_report="$(find "$reports" -maxdepth 1 -type f -name '*.md' ! -name 'diff-*' \
     -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2- || true)"
@@ -84,26 +71,21 @@ resolve_target() {
   if [[ -n "$latest_report" && -f "$latest_report" ]]; then
     path_from_report="$(grep -m1 '^## `' "$latest_report" 2>/dev/null \
       | sed 's/^## `\([^`]*\)`.*/\1/' || true)"
-    if [[ -n "$path_from_report" ]]; then
-      if [[ -f "$project/$path_from_report" ]]; then
-        printf '%s\n' "$project/$path_from_report"
-        return
-      fi
-      if [[ -f "$path_from_report" ]]; then
-        printf '%s\n' "$(cd "$(dirname "$path_from_report")" && pwd)/$(basename "$path_from_report")"
-        return
-      fi
+    if [[ -n "$path_from_report" && -f "$project/$path_from_report" ]]; then
+      printf '%s\n' "$project/$path_from_report"
+      return
     fi
   fi
 
-  echo "Erro: informe o caminho do arquivo ou rode /avaliar antes." >&2
+  echo "Erro: informe o caminho do arquivo (relatório opcional no workdir)." >&2
   exit 1
 }
 
 find_report() {
   local reports_dir="$1"
   local slug="$2"
-  local match
+  local match=""
+  [[ -d "$reports_dir" ]] || { printf '%s\n' ""; return; }
   match="$(find "$reports_dir" -maxdepth 1 -type f -name "*_${slug}.md" 2>/dev/null \
     | sort -r | head -1 || true)"
   if [[ -z "$match" ]]; then
@@ -114,86 +96,52 @@ find_report() {
 }
 
 main() {
-  local target project_root review_root inbox reports output rel slug date_prefix base dest dest_name report rel_codigo codigo_dest from_inbox
+  local target project_root review_root reports output rel slug date_prefix base dest dest_name report rel_codigo
 
   target="$(resolve_target)"
-  project_root="$(resolve_project_root "$target")"
-  review_root="$project_root/.cursor/review"
-  inbox="$review_root/inbox"
+  project_root="$(resolve_project_root)"
+  review_root="$(hostdime_review_workdir "$project_root")"
   reports="$review_root/reports"
   output="$review_root/resultados"
+  mkdir -p "$reports" "$output"
 
   rel="${target#"$project_root"/}"
   [[ "$rel" == "$target" ]] && rel="$(basename "$target")"
   slug="$(slug_from_path "$rel")"
-  from_inbox=0
-  is_inbox_file "$target" && from_inbox=1
 
   report="$(find_report "$reports" "$slug")"
-  if [[ -z "$report" || ! -f "$report" ]]; then
-    echo "Erro: relatório não encontrado em .cursor/review/reports/ para slug: ${slug}" >&2
-    echo "Rode /avaliar antes de finalizar." >&2
-    exit 1
-  fi
-
-  date_prefix="$(date +%Y-%m-%d)"
-  if [[ "$(basename "$report")" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2})_ ]]; then
-    date_prefix="${BASH_REMATCH[1]}"
-  fi
-
-  base="${output}/${date_prefix}_${slug}"
-  dest="$base"
-  dest_name="$(basename "$dest")"
-
-  if [[ -d "$dest" ]]; then
-    local n=2
-    while [[ -d "${base}-${n}" ]]; do
-      n=$((n + 1))
-    done
-    dest="${base}-${n}"
+  if [[ -n "$report" && -f "$report" ]]; then
+    date_prefix="$(date +%Y-%m-%d)"
+    if [[ "$(basename "$report")" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2})_ ]]; then
+      date_prefix="${BASH_REMATCH[1]}"
+    fi
+    base="${output}/${date_prefix}_${slug}"
+    dest="$base"
     dest_name="$(basename "$dest")"
-  fi
-
-  mkdir -p "$dest/codigo"
-
-  cp "$report" "$dest/relatorio.md"
-
-  if [[ "$from_inbox" -eq 1 ]]; then
-    rel_codigo="${target#"$inbox"/}"
-  else
+    if [[ -d "$dest" ]]; then
+      local n=2
+      while [[ -d "${base}-${n}" ]]; do n=$((n + 1)); done
+      dest="${base}-${n}"
+      dest_name="$(basename "$dest")"
+    fi
+    mkdir -p "$dest/codigo"
+    cp "$report" "$dest/relatorio.md"
     rel_codigo="$rel"
-  fi
-  codigo_dest="$dest/codigo/$(dirname "$rel_codigo")"
-  mkdir -p "$codigo_dest"
-  cp "$target" "$codigo_dest/$(basename "$rel_codigo")"
-
-  cat >"$dest/meta.txt" <<EOF
+    mkdir -p "$dest/codigo/$(dirname "$rel_codigo")"
+    cp "$target" "$dest/codigo/$(basename "$rel_codigo")"
+    cat >"$dest/meta.txt" <<EOF
 data: $(date -Iseconds)
 arquivo: ${rel}
 slug: ${slug}
-origem: $([[ "$from_inbox" -eq 1 ]] && echo inbox || echo projeto)
-relatorio_origem: ${report#"$project_root"/}
+workdir: ${review_root}
 veredito: $(grep -m1 '^\*\*Veredito:\*\*' "$report" | sed 's/^\*\*Veredito:\*\* //' || echo '?')
 EOF
-
-  rm -f "$report"
-
-  if [[ "$from_inbox" -eq 1 ]]; then
-    rm -f "$target"
-    find "$inbox" -type d -empty ! -path "$inbox" -delete 2>/dev/null || true
-  fi
-
-  echo "Empacotado em: .cursor/review/resultados/${dest_name}/"
-  echo "  relatorio.md"
-  echo "  codigo/${rel_codigo}"
-  echo "  meta.txt"
-  if [[ "$from_inbox" -eq 1 ]]; then
-    echo "Limpo: inbox/ e reports/"
+    rm -f "$report"
+    echo "Empacotado (tmp): ${dest}"
   else
-    echo "Limpo: reports/ (arquivo do projeto preservado: ${rel})"
+    echo "Sem relatório no workdir — só dual-write store."
   fi
 
-  # U1/U2: dual-write decisões → store (obrigatório)
   local root_ia tsx
   root_ia="${HOSTDIME_IA_ROOT:-}"
   if [[ -z "$root_ia" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then

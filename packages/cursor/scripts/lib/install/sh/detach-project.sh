@@ -39,5 +39,5 @@ detach_hostdime_from_project() {
     echo "  total: $removed symlink(s)"
   fi
 
-  echo "  preservado: rules/commands reais, SKILLS-ROUTING.md, skills/, review/"
+  echo "  preservado: rules/commands reais, SKILLS-ROUTING.md, skills/"
 }

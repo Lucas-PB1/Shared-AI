@@ -9,6 +9,7 @@ export {
   decisionsIngestPath,
   localStamp,
   reviewDir,
+  reviewWorkDir,
   utcNowIso,
 } from "./paths.js";
 

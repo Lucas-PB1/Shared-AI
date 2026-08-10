@@ -1,4 +1,5 @@
-# Garante entradas no .gitignore do projeto para artefatos de review (hostdime-ia).
+# Garante .gitignore do projeto limpo (hostdime-ia).
+# Memória no store Supabase — sem entradas .cursor/review.
 
 $script:HostdimeGitignoreMarker = '# hostdime-ia: cursor gerenciado localmente (npm run bootstrap)'
 
@@ -15,8 +16,6 @@ $script:HostdimeGitignoreOrphans = @(
     '.cursor/commands/sync-inbox.md'
     '.cursor/commands/onboard.md'
     '.cursor/commands/migrar-cursor.md'
-    '.cursor/review/memoria.md'
-    '.cursor/review/context.json'
 )
 
 $script:LinkGitignoreScrubbed = 0
@@ -40,22 +39,27 @@ function Test-CursorDirFullyIgnored {
     return $false
 }
 
+function Test-ReviewGitignoreLine {
+    param([string]$Line)
+    $bare = $Line.TrimStart()
+    if ($bare.StartsWith('!')) { $bare = $bare.Substring(1) }
+    return ($bare -eq '.cursor/review' -or $bare -like '.cursor/review/*')
+}
+
 function Scrub-ProjectGitignoreHostdime {
     param([Parameter(Mandatory)][string]$Project)
 
     $script:LinkGitignoreScrubbed = 0
-    $root = $env:HOSTDIME_IA_ROOT
-    if (-not $root -or -not (Test-Path $root)) { return }
-
     $gitignore = Join-Path $Project '.gitignore'
     if (-not (Test-Path $gitignore)) { return }
-    if (-not (Select-String -Path $gitignore -Pattern ([regex]::Escape($script:HostdimeGitignoreMarker)) -Quiet)) {
-        return
-    }
 
     $kept = [System.Collections.Generic.List[string]]::new()
     $scrubbed = 0
     foreach ($line in (Get-Content $gitignore)) {
+        if (Test-ReviewGitignoreLine $line) {
+            $scrubbed++
+            continue
+        }
         if ($script:HostdimeGitignoreOrphans -contains $line) {
             $scrubbed++
             continue
@@ -64,46 +68,19 @@ function Scrub-ProjectGitignoreHostdime {
     }
     Set-Content -Path $gitignore -Value $kept
     $script:LinkGitignoreScrubbed = $scrubbed
+}
 
-    $fragment = Join-Path $root 'packages/cursor/scripts/lib/install/conf/project-gitignore.fragment'
-    if ((Test-Path $fragment) -and -not (Test-CursorDirFullyIgnored $Project)) {
-        $existing = Get-Content $gitignore
-        foreach ($line in (Get-Content $fragment)) {
-            if (-not $line) { continue }
-            if ($existing -notcontains $line) {
-                Add-Content -Path $gitignore -Value $line
-            }
-        }
+function Remove-ProjectReviewDir {
+    param([Parameter(Mandatory)][string]$Project)
+    $rev = Join-Path $Project '.cursor/review'
+    if (Test-Path -LiteralPath $rev) {
+        Remove-Item -LiteralPath $rev -Recurse -Force
+        return $true
     }
+    return $false
 }
 
 function Ensure-ProjectGitignore {
     param([Parameter(Mandatory)][string]$Project)
-
-    $root = $env:HOSTDIME_IA_ROOT
-    if (-not $root -or -not (Test-Path $root)) { return }
-
-    $fragment = Join-Path $root 'packages/cursor/scripts/lib/install/conf/project-gitignore.fragment'
-    if (-not (Test-Path $fragment)) { return }
-
     Scrub-ProjectGitignoreHostdime $Project
-
-    if (Test-CursorDirFullyIgnored $Project) { return }
-
-    $gitignore = Join-Path $Project '.gitignore'
-    $lines = Get-Content $fragment
-
-    if ((Test-Path $gitignore) -and (Select-String -Path $gitignore -Pattern ([regex]::Escape($script:HostdimeGitignoreMarker)) -Quiet)) {
-        $existing = Get-Content $gitignore
-        foreach ($line in $lines) {
-            if (-not $line) { continue }
-            if ($existing -notcontains $line) {
-                Add-Content -Path $gitignore -Value $line
-            }
-        }
-        return
-    }
-
-    $block = @('', $script:HostdimeGitignoreMarker) + $lines
-    Add-Content -Path $gitignore -Value ($block -join "`n")
 }

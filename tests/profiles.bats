@@ -35,7 +35,7 @@ teardown() {
 
 @test "bootstrap aplica perfil next" {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=next "$project" >/dev/null
 
   [[ -f "$project/.cursor/SKILLS-ROUTING.md" ]]
@@ -44,7 +44,7 @@ teardown() {
 
 @test "bootstrap aplica perfil python" {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=python "$project" >/dev/null
 
   [[ -f "$project/.cursor/rules/python-project.mdc" ]]

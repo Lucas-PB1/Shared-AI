@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Análise estática — Semgrep + PHP / JS/TS.
 # Uso: check-inbox.sh <arquivo>
-#      ~/.cursor/review-check.sh .cursor/review/inbox/foo.php
+#      ~/.cursor/review-check.sh caminho/arquivo.php
 set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -49,18 +49,13 @@ require_node() {
 
 resolve_review_dirs() {
   local file="$1"
-  if [[ "$file" == *"/.cursor/review/inbox/"* ]]; then
-    PROJECT_ROOT="${file%%/.cursor/review/*}"
-    INBOX="$PROJECT_ROOT/.cursor/review/inbox"
-    return
-  fi
-  if [[ -n "${CURSOR_PROJECT_DIR:-}" && -d "${CURSOR_PROJECT_DIR}/.cursor/review/inbox" ]]; then
-    PROJECT_ROOT="$CURSOR_PROJECT_DIR"
-    INBOX="$PROJECT_ROOT/.cursor/review/inbox"
-    return
-  fi
   PROJECT_ROOT=""
   INBOX=""
+  if [[ -n "${CURSOR_PROJECT_DIR:-}" && -d "$CURSOR_PROJECT_DIR" ]]; then
+    PROJECT_ROOT="$CURSOR_PROJECT_DIR"
+  elif git -C "$(dirname "$file")" rev-parse --show-toplevel >/dev/null 2>&1; then
+    PROJECT_ROOT="$(git -C "$(dirname "$file")" rev-parse --show-toplevel)"
+  fi
 }
 
 resolve_target() {

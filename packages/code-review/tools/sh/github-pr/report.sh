@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Relatório estático/LLM e cópia em .cursor/review/reports.
+# Relatório estático/LLM e cópia no workdir de review (tmp ou HOSTDIME_REVIEW_WORKDIR).
+# shellcheck source=./_review-workdir.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../_review-workdir.sh"
 build_static_fallback_report() {
   local file="$1"
   local stack="$2"
@@ -76,7 +78,8 @@ save_report_copy() {
   local report_file="$2"
   local slug
   slug="$(printf '%s' "$file" | sed 's/\//-/g;s/\.[^.]*$//')"
-  local dest_dir="$PROJECT/.cursor/review/reports"
+  local dest_dir
+  dest_dir="$(hostdime_review_workdir "$PROJECT")/reports"
   mkdir -p "$dest_dir"
   cp "$report_file" "$dest_dir/ci-$(date +%F)_${slug}.md"
 }

@@ -11,7 +11,7 @@ teardown() {
 
 @test "bootstrap registra projeto e aplica perfil laravel" {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=laravel "$project" >/dev/null
 
   [[ -f "$project/.cursor/SKILLS-ROUTING.md" ]]
@@ -24,7 +24,7 @@ teardown() {
 
 @test "bootstrap perfil inválido falha antes de linkar" {
   project="$(hostdime_make_project)"
-  run bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  run bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=invalid "$project"
   [ "$status" -eq 1 ]
   [[ ! -L "$project/.cursor/rules/skills-orchestrator-base.mdc" ]]

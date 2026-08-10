@@ -1,10 +1,11 @@
 /**
- * Pull/push de exclusions e conventions entre store e .cursor/review/.
+ * Pull/push de exclusions e conventions do store.
+ * Disco local (workdir tmp) só se HOSTDIME_REVIEW_DISK_CACHE=1.
  */
 
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { reviewDir } from "../memory/paths.js";
+import { reviewWorkDir } from "../memory/paths.js";
 import type { LoadConfigOpts } from "./config.js";
 import type { ReviewStorePort } from "./port.js";
 import { STORE_REQUIRED_MSG, openStore } from "./open.js";
@@ -66,6 +67,15 @@ export async function fetchStoreMemory(
   }
 }
 
+function wantDiskCache(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env
+): boolean {
+  const v = String(env.HOSTDIME_REVIEW_DISK_CACHE ?? "")
+    .trim()
+    .toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
 export async function pullMemoryToProject(
   project: string,
   opts: LoadConfigOpts & {
@@ -79,10 +89,12 @@ export async function pullMemoryToProject(
   exclusionCount: number;
   conventionCount: number;
   error?: string;
+  cached: boolean;
 }> {
+  const env = opts.env ?? process.env;
   const mem = await fetchStoreMemory({
     port: opts.port,
-    env: opts.env,
+    env,
     projectSlug: opts.projectSlug,
   });
   if (mem.error) {
@@ -91,10 +103,23 @@ export async function pullMemoryToProject(
       exclusionCount: 0,
       conventionCount: 0,
       error: mem.error,
+      cached: false,
     };
   }
 
-  const rd = reviewDir(project);
+  const exclusionCount = mem.exclusions.filter((e) => e.active).length;
+  const conventionCount = mem.conventions.length;
+
+  if (!wantDiskCache(env)) {
+    return {
+      attempted: true,
+      exclusionCount,
+      conventionCount,
+      cached: false,
+    };
+  }
+
+  const rd = reviewWorkDir(project);
   mkdirSync(rd, { recursive: true });
   const exclusionsPath = path.join(rd, "exclusions.yaml");
   const conventionsPath = path.join(rd, "convencoes-store.md");
@@ -104,8 +129,9 @@ export async function pullMemoryToProject(
     attempted: true,
     exclusionsPath,
     conventionsPath,
-    exclusionCount: mem.exclusions.filter((e) => e.active).length,
-    conventionCount: mem.conventions.length,
+    exclusionCount,
+    conventionCount,
+    cached: true,
   };
 }
 
@@ -127,12 +153,12 @@ export async function pushExclusionsFromProject(
   }
 
   const yamlPath =
-    opts.yamlPath ?? path.join(reviewDir(project), "exclusions.yaml");
+    opts.yamlPath ?? path.join(reviewWorkDir(project), "exclusions.yaml");
   if (!existsSync(yamlPath)) {
     return {
       attempted: true,
       written: 0,
-      error: `arquivo ausente: ${yamlPath}`,
+      error: `arquivo ausente: ${yamlPath} (use --yaml ou SOURCE no store)`,
     };
   }
 

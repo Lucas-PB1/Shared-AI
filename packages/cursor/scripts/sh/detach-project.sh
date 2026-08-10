@@ -21,7 +21,7 @@ while [[ $# -gt 0 ]]; do
       echo "Uso: npm run detach -- <repo> [--keep-registry]"
       echo ""
       echo "Remove symlinks gerenciados (orquestrador + commands)."
-      echo "Preserva arquivos reais, SKILLS-ROUTING.md, skills/ e review/."
+      echo "Preserva arquivos reais, SKILLS-ROUTING.md e skills/ do projeto."
       echo "Por padrão remove o projeto do registry (npm run sync não relinka)."
       exit 0
       ;;

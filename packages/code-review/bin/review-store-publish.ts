@@ -13,6 +13,7 @@ import {
   extractReportFilePath,
   parseFindingsFromReport,
 } from "../src/report/index.js";
+import { reviewWorkDir } from "../src/memory/paths.js";
 import {
   loadDotenvFile,
   logPublishResult,
@@ -97,7 +98,7 @@ async function main(): Promise<number> {
 
   const reportsDir = args.reports
     ? path.resolve(args.reports)
-    : path.join(project, ".cursor/review/reports");
+    : path.join(reviewWorkDir(project), "reports");
 
   const findings = collectFindings(reportsDir);
   const envPr =

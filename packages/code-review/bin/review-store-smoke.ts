@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Smoke: grava run + finding + decision no Supabase local.
- * Ver docs/supabase-local.md
+ * Ver docs/okf/supabase-local.md
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -57,7 +57,7 @@ async function main(): Promise<void> {
   const finding = await store.createFinding(String(run.id), {
     findingKey,
     summary,
-    filePath: "docs/PLANO-REVIEW-UNIFICADO.md",
+    filePath: "docs/okf/review-store.md",
     lineStart: 1,
     severity: "info",
     category: "smoke",

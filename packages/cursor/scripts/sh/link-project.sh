@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Prepara pastas de review em .cursor/ do projeto.
-# Rules do orquestrador e commands hostdime ficam só em ~/.cursor/ (não no projeto).
+# Prepara .cursor/ do projeto (store-only: remove .cursor/review se existir).
+# Rules do orquestrador e commands hostdime ficam só em ~/.cursor/.
 # Uso: link-project.sh [--quiet] /caminho/do/repo
 set -euo pipefail
 
@@ -14,8 +14,6 @@ TARGET="${1:?Informe o diretório raiz do projeto}"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
 
-# Nunca tratar $HOME (nem o próprio ~/.cursor) como projeto — o cleanup
-# de orquestrador/commands apagaria os artefatos globais do usuário.
 TARGET_ABS="$(cd "$TARGET" 2>/dev/null && pwd -P)" || TARGET_ABS="$TARGET"
 HOME_ABS="$(cd "$HOME" 2>/dev/null && pwd -P)" || HOME_ABS="$HOME"
 CURSOR_ABS="$(cd "$CURSOR_DIR" 2>/dev/null && pwd -P)" || CURSOR_ABS="$CURSOR_DIR"
@@ -36,7 +34,6 @@ if [[ -z "${HOSTDIME_IA_ROOT:-}" || ! -d "$HOSTDIME_IA_ROOT" ]]; then
 fi
 
 LIB="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/link-from-repo.sh"
-
 # shellcheck disable=SC1091
 source "$LIB"
 # shellcheck disable=SC1091
@@ -46,35 +43,17 @@ reset_link_counters
 
 RULES_DIR="$TARGET/.cursor/rules"
 COMMANDS_DIR="$TARGET/.cursor/commands"
-REVIEW_DIR="$TARGET/.cursor/review"
-mkdir -p "$REVIEW_DIR"/{inbox,reports,resultados}
-# Não criar rules/commands vazios — só limpar se já existirem
+REMOVED_REVIEW=0
 [[ -d "$RULES_DIR" ]] || RULES_DIR=""
 [[ -d "$COMMANDS_DIR" ]] || COMMANDS_DIR=""
 
-touch "$REVIEW_DIR/inbox/.gitkeep" "$REVIEW_DIR/reports/.gitkeep" 2>/dev/null || true
-
-MEMORIA_TS="$HOSTDIME_IA_ROOT/packages/code-review/bin/review-memoria.ts"
-TSX_BIN="$HOSTDIME_IA_ROOT/node_modules/.bin/tsx"
-if [[ -f "$MEMORIA_TS" && -x "$TSX_BIN" ]]; then
-  "$TSX_BIN" "$MEMORIA_TS" migrar --write "$TARGET" >/dev/null || true
-else
-  # Fallback mínimo sem CLI
-  echo "2" >"$REVIEW_DIR/.memoria-version"
-  [[ -f "$REVIEW_DIR/decisions.jsonl" ]] || : >"$REVIEW_DIR/decisions.jsonl"
-  CONV_TEMPLATE="$HOSTDIME_IA_ROOT/packages/code-review/templates/convencoes.md"
-  if [[ ! -f "$REVIEW_DIR/convencoes.md" && -f "$CONV_TEMPLATE" ]]; then
-    cp "$CONV_TEMPLATE" "$REVIEW_DIR/convencoes.md"
-  fi
+if remove_project_review_dir "$TARGET"; then
+  REMOVED_REVIEW=1
 fi
-# Nunca deixar artefatos inválidos de memória no projeto
-rm -f "$REVIEW_DIR/memoria.md" "$REVIEW_DIR/context.json"
 
-# Garantir ausência de espelhos: orquestrador + commands só em ~/.cursor/
 [[ -n "$RULES_DIR" ]] && remove_project_orchestrator_rule_symlinks "$RULES_DIR"
 [[ -n "$COMMANDS_DIR" ]] && remove_project_managed_command_symlinks "$COMMANDS_DIR"
 
-# Pastas vazias após limpeza
 if [[ -n "$RULES_DIR" && -d "$RULES_DIR" ]] && [[ -z "$(find "$RULES_DIR" -mindepth 1 -maxdepth 1 2>/dev/null | head -1)" ]]; then
   rmdir "$RULES_DIR" 2>/dev/null || true
 fi
@@ -86,11 +65,13 @@ ensure_project_gitignore "$TARGET"
 if [[ "$QUIET" -eq 0 ]]; then
   echo ""
   echo "Concluído em $TARGET/.cursor/"
-  echo "  review/ → reports/, resultados/, memória v2 (context/decisions)"
+  echo "  memória / decisões → store Supabase"
   echo "  orquestrador → ~/.cursor/rules/ (global)"
   echo "  commands → ~/.cursor/commands/ (global)"
+  [[ "$REMOVED_REVIEW" -eq 1 ]] && echo "  removido: .cursor/review/"
   [[ "$LINK_ORCHESTRATOR_REMOVED" -gt 0 ]] && echo "  removidos do projeto: $LINK_ORCHESTRATOR_REMOVED skills-orchestrator-*.mdc"
   [[ "$LINK_COMMANDS_REMOVED" -gt 0 ]] && echo "  removidos do projeto: $LINK_COMMANDS_REMOVED command(s)"
+  [[ "${LINK_GITIGNORE_SCRUBBED:-0}" -gt 0 ]] && echo "  gitignore: $LINK_GITIGNORE_SCRUBBED linha(s) scrubadas"
   [[ "$LINK_SKIPPED" -gt 0 ]] && echo "Ignorados (arquivo real do projeto): $LINK_SKIPPED"
 fi
 
