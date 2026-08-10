@@ -13,6 +13,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+_TOOLS_DIR = Path(__file__).resolve().parent
+if str(_TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(_TOOLS_DIR))
+
+from lib.finding_ids import (  # noqa: E402
+    FINDING_THEME,
+    extract_finding_theme,
+    slugify,
+    stable_finding_id,
+)
+
 SCHEMA_VERSION = 1
 HISTORY_LINE = re.compile(
     r"^-\s+\[(aceito|rejeitado|adiado|nao-aplicavel)\]\s+"
@@ -21,7 +32,6 @@ HISTORY_LINE = re.compile(
 HISTORY_SECTION = re.compile(r"^###\s+(\d{4}-\d{2}-\d{2})\s+—\s+(.+)$")
 CONVENTION_SECTION = re.compile(r"^###\s+(.+)$")
 CONVENCOES_SCOPE = re.compile(r"^##\s+Escopo:\s+(.+)$")
-FINDING_THEME = re.compile(r"^[^:\n]+:\d+(?:-\d+)?\s*[—\-]\s*(.+)$")
 DECISIONS_INGEST_FILE = "decisions-ingest.jsonl"
 
 SCOPE_MAP = {
@@ -44,28 +54,6 @@ def review_dir(project: Path) -> Path:
 def decisions_ingest_path(project: Path) -> Path:
     """Histórico versionado de decisões ingeridas pelo CI (github-pr-*)."""
     return review_dir(project) / DECISIONS_INGEST_FILE
-
-
-def slugify(text: str) -> str:
-    base = re.sub(r"[^\w\s-]", "", text.lower())
-    base = re.sub(r"[-\s]+", "-", base).strip("-")
-    return base[:80] or "finding"
-
-
-def extract_finding_theme(text: str) -> str:
-    """Remove prefixo arquivo:linha — do título do achado."""
-    stripped = text.strip()
-    if not stripped:
-        return "finding"
-    match = FINDING_THEME.match(stripped)
-    if match:
-        return match.group(1).strip()
-    return stripped
-
-
-def stable_finding_id(text: str) -> str:
-    """ID estável entre PRs — só a descrição do achado, não path/linha."""
-    return slugify(extract_finding_theme(text))
 
 
 def decision_store_label(decision: dict[str, Any]) -> str:

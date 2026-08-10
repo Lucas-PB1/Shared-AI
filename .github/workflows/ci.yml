@@ -40,5 +40,7 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Sintaxe Python (tools)
         run: npm run lint:python
+      - name: Unit tests review (ingest/ids)
+        run: npm run test:review-unit
       - name: Rodar testes
         run: npm test

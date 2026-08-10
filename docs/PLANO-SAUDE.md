@@ -207,41 +207,39 @@ Scripts monólitos aumentam custo de mudança:
 
 ### Preparações específicas
 
-- [ ] Fase 2 mergeada (smoke como rede de segurança)
-- [ ] Escolher linguagem-alvo por módulo:
-  - lógica pura já em Python/JS → testes unitários nativos
-  - shell só orquestra → manter fino, mover lógica para `*.py`/`*.mjs`
-- [ ] Definir “não reescrever tudo”: extrair 1–2 peixes por PR
+- [x] Fase 2 mergeada (smoke como rede de segurança)
+- [x] Lógica pura em Python (`lib/`); shell continua orquestrando
+- [x] Extrair 1 peixe por PR (ingest + finding_ids nesta entrega)
 
 ### Ordem de trabalho sugerida
 
-1. **`review-ingest-pr-decisions.py`** — regras de aceito/exclusão/fix intra-PR (histórico recente de bugs)
-2. **`review-github-pr.sh`** — geração de resumo, `finding_id`, ordenação por prioridade
-3. **`review-memoria.py`** — migrar/restore/compactar (parcialmente testado)
-4. **`review-llm.mjs` / skill-routing** — mocks de API; routing sem I/O pesado
+1. **`review-ingest-pr-decisions.py`** — ~~regras~~ → `lib/ingest_decisions.py` *(feito)*
+2. **`review-github-pr.sh`** — geração de resumo, `finding_id`, ordenação por prioridade *(pending)*
+3. **`review-memoria.py`** — resto do monólito; finding_ids já extraído *(parcial)*
+4. **`review-llm.mjs` / skill-routing** — mocks de API; routing sem I/O pesado *(pending)*
 
 ### Trabalho (iterativo)
 
-| # | Item | Critério de pronto |
+| # | Item | Status |
 | --- | --- | --- |
-| 3.1 | Extrair módulo de regras de decisão (ingest) | unit tests + mesma CLI pública |
-| 3.2 | Extrair helpers de `finding_id` / prioridade | unit tests |
-| 3.3 | Reduzir shell “gordo” para orquestração | script main &lt; ~400 linhas ou libs `lib/` |
-| 3.4 | Cobertura de regressão para bugs já corrigidos (SHAs, re-ingest, reply humano) | teste nomeado por bug |
-| 3.5 | Atualizar `packages/code-review/tools/README.md` | mapa módulos + como testar |
+| 3.1 | Extrair módulo de regras de decisão (ingest) | feito (`lib/ingest_decisions.py`) |
+| 3.2 | Extrair helpers de `finding_id` | feito (`lib/finding_ids.py`) |
+| 3.3 | Reduzir shell “gordo” (github-pr) | pending |
+| 3.4 | Cobertura de regressão (re-ingest, reply, fix intra-PR) | feito (unittest) |
+| 3.5 | Atualizar `packages/code-review/tools/README.md` | feito |
 
 ### Validação
 
 ```bash
+npm run test:review-unit
 npm test
-# testes unitários python se criados, ex.:
-# python -m pytest packages/code-review/tools/tests/ -q
+npm run lint:python
 ```
 
 ### Saída
 
-- [ ] Núcleo de regras com testes unitários
-- [ ] PRs pequenos, cada um com antes/depois de `npm test`
+- [x] Núcleo de regras com testes unitários (parcial: ingest + ids)
+- [ ] PRs pequenos mergeados (3.3+ em follow-ups)
 
 ---
 
@@ -371,3 +369,4 @@ Convenções:
 | 2026-08-10 | Avaliação de saúde; criação deste plano |
 | 2026-08-10 | Fase 0 decidida (locks B); fase 1 implementada (locks, npm ci, docs) |
 | 2026-08-10 | Fase 2 implementada (smoke review, lint:shell, lint:python) |
+| 2026-08-10 | Fase 3 parcial: `lib/finding_ids` + `lib/ingest_decisions` + unittest |
