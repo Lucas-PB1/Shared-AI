@@ -90,9 +90,9 @@ EOF
     "$project/.cursor/commands/avaliar.md"
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/ensure-project-gitignore.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/ensure-project-gitignore.sh"
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/link-from-repo.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/link-from-repo.sh"
   export HOSTDIME_IA_ROOT
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
 
@@ -182,7 +182,7 @@ test_merge_hooks() {
   cat >"$hooks" <<'JSON'
 {"version":1,"hooks":{"beforeSubmitPrompt":[{"command":"./custom.sh"}]}}
 JSON
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-hooks-json.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/merge-hooks-json.ts"
   example="$HOSTDIME_IA_ROOT/packages/cursor/scripts/hooks/hooks.json.example"
   result="$(hostdime_tsx "$ts" "$hooks" "$example")"
   assert "merge ok" test "$result" = "merged"
@@ -194,7 +194,7 @@ JSON
 
 test_hubspot_mcp_install() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot-mcp.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot/hubspot-mcp.sh"
   mcp_file="$CURSOR_USER_DIR/mcp.json"
   printf '{"mcpServers":{"other":{"command":"echo"}}}\n' >"$mcp_file"
   "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-hubspot-mcp.sh" >/dev/null
@@ -206,7 +206,7 @@ test_hubspot_mcp_install() {
 
 test_hubspot_mcp_detect() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot-mcp.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot/hubspot-mcp.sh"
   printf '{"mcpServers":{"HubSpotDev":{"command":"npx"}}}\n' >"$CURSOR_USER_DIR/mcp.json"
   assert "mcp instalado" hubspot_mcp_installed
 }
@@ -247,7 +247,7 @@ MD
 
 test_boot_sync_toggle() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/boot-sync.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/boot-sync.sh"
   boot_sync_disable
   assert "off após disable" test "$(boot_sync_read_mode)" = "off"
   boot_sync_write_state "on" "1"
@@ -258,7 +258,7 @@ test_boot_sync_toggle() {
 
 test_boot_sync_unset() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/boot-sync.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/boot-sync.sh"
   rm -f "$(boot_sync_state_file)"
   assert "unset sem state" test "$(boot_sync_read_mode)" = "unset"
   if boot_sync_was_asked; then
@@ -270,7 +270,7 @@ test_boot_sync_unset() {
 
 test_boot_sync_prompt_skip() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/boot-sync.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/boot-sync.sh"
   export HOSTDIME_BOOT_SYNC_PROMPT=skip
   rm -f "$(boot_sync_state_file)"
   boot_sync_prompt_if_needed
@@ -284,7 +284,7 @@ test_historico_validate() {
   cat >"$project/.cursor/history/watches.json" <<'JSON'
 {"version":1,"watches":[{"id":"domain","scope":"src/domain/**","scopeKind":"glob","historyFile":"docs/log.md","format":"okf-log","enabled":true}]}
 JSON
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
   result="$(hostdime_tsx "$ts" validate "$project")"
   assert "watches valid" test "$result" = "ok"
 }
@@ -293,7 +293,7 @@ test_historico_validate_invalid() {
   project="$(hostdime_make_project)"
   mkdir -p "$project/.cursor/history"
   echo '{"version":1,"watches":[{"id":"Bad Id","scope":"x"}]}' >"$project/.cursor/history/watches.json"
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
   if hostdime_tsx "$ts" validate "$project" >/dev/null 2>&1; then
     assert "watches invalid fails" false
   else
@@ -307,7 +307,7 @@ test_historico_scope_match() {
   cat >"$project/.cursor/history/watches.json" <<'JSON'
 {"version":1,"watches":[{"id":"domain","scope":"src/domain/**","scopeKind":"glob","historyFile":"docs/log.md","format":"okf-log","enabled":true}]}
 JSON
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
   if hostdime_tsx "$ts" scope-match "$project" "src/domain/order.ts" >/dev/null 2>&1; then
     assert "scope match hit" true
   else
@@ -326,7 +326,7 @@ test_historico_merge_hooks() {
   cat >"$project/.cursor/history/watches.json" <<'JSON'
 {"version":1,"watches":[{"id":"api","scope":"src/**","scopeKind":"glob","historyFile":"history.md","format":"markdown","enabled":true}]}
 JSON
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-historico-hooks.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/merge-historico-hooks.ts"
   hooks="$project/.cursor/hooks.json"
   result="$(hostdime_tsx "$ts" "$hooks" "$project")"
   assert "historico merge created" test "$result" = "created"
@@ -361,7 +361,7 @@ JSON
   echo "change" >"$project/src/domain/order.ts"
   git -C "$project" add src/domain/order.ts
 
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
   pending="$(hostdime_tsx "$ts" pending "$project")"
   assert "pending lists domain file" grep -q "src/domain/order.ts" <<<"$pending"
 
@@ -377,7 +377,7 @@ test_cursor_cli_merge_config() {
   project="$(hostdime_make_project)"
   config="$project/cli-config.json"
   tpl="$HOSTDIME_IA_ROOT/packages/cursor/templates/cli-config.auto.json"
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-cursor-cli-config.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/merge-cursor-cli-config.ts"
   result="$(hostdime_tsx "$ts" "$config" "$tpl")"
   assert "cli config created" test "$result" = "created"
   assert "approval unrestricted" grep -q '"approvalMode": "unrestricted"' "$config"
@@ -422,24 +422,24 @@ test_sync_inbox_scan() {
   git -C "$project" commit -q -m "initial"
   echo "wip" >>"$project/README.md"
   printf '{"projects":[{"path":"%s"}]}' "$project" >"$CURSOR_USER_DIR/hostdime-ia/projects.json"
-  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/scan-sync-inbox.ts"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox/scan-sync-inbox.ts"
   out="$(hostdime_tsx "$ts")"
   assert "sync-inbox scan hit" grep -q '"changedCount"' <<<"$out"
   assert "sync-inbox scan project" grep -qF "$project" <<<"$out"
   assert "sync-inbox summary field" grep -q '"summary"' <<<"$out"
-  assert "sync-inbox cards script" test -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox-cards.ts"
+  assert "sync-inbox cards script" test -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox/sync-inbox-cards.ts"
 }
 
 test_profiles_detect_and_bootstrap() {
   project="$(hostdime_make_project)"
   echo '{"dependencies":{"next":"14.0.0"}}' >"$project/package.json"
-  out="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.ts" "$project")"
+  out="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/detect-stack.ts" "$project")"
   assert "detect next" test "$out" = "next"
 
   project2="$(hostdime_make_project)-py"
   mkdir -p "$project2/.git"
   touch "$project2/pyproject.toml"
-  out2="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.ts" "$project2")"
+  out2="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/detect-stack.ts" "$project2")"
   assert "detect python" test "$out2" = "python"
 
   bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
@@ -448,7 +448,7 @@ test_profiles_detect_and_bootstrap() {
   assert "next-project.mdc" test -f "$project/.cursor/rules/next-project.mdc"
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/profiles.sh"
   list="$(profiles_list)"
   assert "profiles_list next" grep -q next <<<"$list"
   assert "profiles_list python" grep -q python <<<"$list"
@@ -488,7 +488,7 @@ test_health_multi_project() {
     --profile=python "$project" >/dev/null
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/health-check.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/health-check.sh"
   out="$(health_check_project "$project" 2>&1 || true)"
   assert "health python label" grep -q 'perfil: python' <<<"$out"
   assert "health rules ok" grep -q 'rules do projeto ok' <<<"$out"

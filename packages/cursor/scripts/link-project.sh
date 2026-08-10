@@ -35,12 +35,12 @@ if [[ -z "${HOSTDIME_IA_ROOT:-}" || ! -d "$HOSTDIME_IA_ROOT" ]]; then
   exit 1
 fi
 
-LIB="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/link-from-repo.sh"
+LIB="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/link-from-repo.sh"
 
 # shellcheck disable=SC1091
 source "$LIB"
 # shellcheck disable=SC1091
-source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/ensure-project-gitignore.sh"
+source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/ensure-project-gitignore.sh"
 export HOSTDIME_IA_ROOT
 reset_link_counters
 

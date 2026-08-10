@@ -5,7 +5,7 @@
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
-import { loadContext, reviewDir } from "../src/memoria.js";
+import { loadContext, reviewDir } from "../src/memory/index.js";
 
 function yamlEscape(s: string): string {
   if (/[:{}[\]&*#?|<>=!%@`]/.test(s) || s.includes("\n")) {

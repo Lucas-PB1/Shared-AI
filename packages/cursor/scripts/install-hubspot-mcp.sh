@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/hubspot-mcp.sh"
+source "$SCRIPT_DIR/lib/hubspot/hubspot-mcp.sh"
 
 action=install
 for arg in "$@"; do

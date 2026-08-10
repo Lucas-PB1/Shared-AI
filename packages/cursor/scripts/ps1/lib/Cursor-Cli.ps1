@@ -44,7 +44,7 @@ function Get-CursorCliTemplateFile {
 function Get-CursorCliMergeTs {
     $root = Get-HostdimeIaRoot
     if (-not $root) { return $null }
-    $path = Join-Path $root 'packages/cursor/scripts/lib/merge-cursor-cli-config.ts'
+    $path = Join-Path $root 'packages/cursor/scripts/lib/install/merge-cursor-cli-config.ts'
     if (Test-Path -LiteralPath $path) { return $path }
     return $null
 }

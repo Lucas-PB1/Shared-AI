@@ -14,8 +14,8 @@ Layout e política de linguagem: [../STRUCTURE.md](../STRUCTURE.md).
 | `review-pre-commit.sh` | Review estático só nos **staged** (git hook — sem LLM) |
 | `install-pre-commit.sh` | Instala `.git/hooks/pre-commit` no projeto |
 | `~/.cursor/review-github-pr.sh` | /avaliar automático no GitHub — estático + LLM |
-| `review-llm.mjs` | Gera relatório /avaliar via LLM |
-| `review-skill-routing.mjs` | Resolve skills/rules por path do arquivo |
+| `review-llm.sh` → `bin/review-llm.ts` | Gera relatório /avaliar via LLM (`src/llm/`) |
+| `src/skill-routing/` | Resolve skills/rules por path do arquivo |
 | `review-export-exclusions.sh` | Exporta exclusions.yaml do context.yaml |
 | `~/.cursor/review-finalizar.sh` | Empacota resultado (`/finalizar`) |
 
@@ -23,19 +23,23 @@ Layout e política de linguagem: [../STRUCTURE.md](../STRUCTURE.md).
 
 | Módulo | Responsabilidade |
 | --- | --- |
-| `src/finding-ids.ts` | `slugify`, `extractFindingTheme`, `stableFindingId` |
-| `src/pr-report.ts` | Veredito, resumo PR, markers, snippets |
-| `src/memoria-core.ts` | Escopos, convenções, merge de decisões (puro) |
-| `src/memoria.ts` | YAML/I/O e comandos da CLI de memória |
-| `src/ingest-decisions.ts` | Classificação de threads, git helpers, upsert |
-| `src/store/` | Cliente REST Supabase (`ReviewStore`, `loadConfig`) |
+| `src/shared/` | Kernel: IDs, markers, snippets, dotenv |
+| `src/memory/` | Memória local: paths, YAML, decisions, merge, cmds |
+| `src/ingest/` | Threads PR → decisions |
+| `src/report/` | Veredito, resumo PR, helpers inline |
+| `src/store/` | Port + Supabase + dual-write + publish + memory |
+| `bin/review-dual-write.ts` | Replay local → store (pós-/finalizar) |
+| `bin/review-store-publish.ts` | CI/local: run + findings dos reports (U2) |
+| `bin/review-memory-pull.ts` | Store → exclusions.yaml + convencoes-store.md (U3) |
+| `bin/review-memory-push.ts` | exclusions.yaml slim → store (U3) |
+| `review-store-publish.sh` / `review-memory-*.sh` | Wrappers `_tsx.sh` |
 
 ## Testes unitários
 
 ```bash
 npm run test:review-unit
 # tsx:  packages/code-review/tests/*.test.ts
-# node: tools/tests/*.mjs (LLM / skill routing)
+# TS units: tests/skill-routing, tests/llm (+ memory/ingest/report/store)
 npm run lint:ts
 ```
 

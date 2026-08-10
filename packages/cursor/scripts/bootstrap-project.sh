@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h | --help)
       # shellcheck disable=SC1091
-      source "$SCRIPT_DIR/lib/profiles.sh"
+      source "$SCRIPT_DIR/lib/profiles/profiles.sh"
       echo "Uso: npm run bootstrap -- <repo> [--profile=nome]"
       profiles_usage_line
       exit 0
@@ -47,11 +47,11 @@ done
 }
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/projects-registry.sh"
+source "$SCRIPT_DIR/lib/install/projects-registry.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/apply-bootstrap-profile.sh"
+source "$SCRIPT_DIR/lib/profiles/apply-bootstrap-profile.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/profiles.sh"
+source "$SCRIPT_DIR/lib/profiles/profiles.sh"
 
 if [[ ! -x "$LINK_SCRIPT" ]]; then
   echo "Pacote não instalado. Execute primeiro:" >&2

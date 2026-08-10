@@ -3,11 +3,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB="$SCRIPT_DIR/lib/history-watch-match.ts"
-MERGE="$SCRIPT_DIR/lib/merge-historico-hooks.ts"
+LIB="$SCRIPT_DIR/lib/history/history-watch-match.ts"
+MERGE="$SCRIPT_DIR/lib/history/merge-historico-hooks.ts"
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/hostdime-env.sh"
+source "$SCRIPT_DIR/lib/install/hostdime-env.sh"
 
 usage() {
   cat <<'EOF'

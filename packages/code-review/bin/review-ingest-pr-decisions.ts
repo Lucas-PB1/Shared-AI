@@ -11,7 +11,7 @@ import {
   parseRepo,
   resolvePrCommitRange,
   upsertPrDecisions,
-} from "../src/ingest-decisions.js";
+} from "../src/ingest/index.js";
 import {
   DECISIONS_INGEST_FILE,
   buildContext,
@@ -20,7 +20,11 @@ import {
   readDecisions,
   reviewDir,
   writeContext,
-} from "../src/memoria.js";
+} from "../src/memory/index.js";
+import {
+  dualWriteDecisions,
+  logDualWriteResult,
+} from "../src/store/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const toolsDir = path.resolve(__dirname, "../tools");
@@ -99,13 +103,13 @@ function runExportExclusions(project: string): void {
   }
 }
 
-function cmdIngest(
+async function cmdIngest(
   project: string,
   prNumber: number,
   repository: string,
   write: boolean,
   promoteAll: boolean
-): number {
+): Promise<number> {
   let owner: string;
   let repo: string;
   try {
@@ -181,6 +185,19 @@ function cmdIngest(
     `\n${added.length} decisão(ões) gravada(s) em ${DECISIONS_INGEST_FILE} (source github-pr-${prNumber})`
   );
 
+  const dual = await dualWriteDecisions(added, {
+    run: {
+      source: "ci",
+      prNumber,
+      reviewSlug: `pr-${prNumber}`,
+      actorKind: "tool",
+      actorRef: "review-ingest-pr",
+      meta: { kind: "pr-ingest" },
+    },
+    decidedBy: "review-ingest-pr",
+  });
+  logDualWriteResult("review-ingest-pr", dual);
+
   const allDecisions = readDecisions(decisionsPath);
   const context = buildContext(
     project,
@@ -200,7 +217,7 @@ function cmdIngest(
   return 0;
 }
 
-function main(): number {
+async function main(): Promise<number> {
   const argv = process.argv.slice(2);
   let project = ".";
   let write = false;
@@ -248,9 +265,10 @@ function main(): number {
   return cmdIngest(resolved, prNumber, repository, write, promoteAll);
 }
 
-try {
-  process.exit(main());
-} catch (err) {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
-}
+main().then(
+  (code) => process.exit(code),
+  (err) => {
+    console.error(err instanceof Error ? err.message : err);
+    process.exit(1);
+  }
+);

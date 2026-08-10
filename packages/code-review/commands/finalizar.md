@@ -25,6 +25,8 @@ Exigir `.cursor/review/.memoria-version` = `2`. Se ausente: sugerir `npm run mem
 - **Não** atualizar `context.yaml` nem `convencoes.md`.
 - **Não** compactar nem promover — o dev usa `/memoria compactar` e `/memoria promover`.
 - Sugerir `/memoria status` se houver decisões não compactadas.
+- **Store (opcional, U1 soft):** se `SUPABASE_URL` + chave estiverem no ambiente:
+  `npm run review:dual-write -- --project <repo>` (falha de rede não invalida o arquivo local; ver `docs/PLANO-REVIEW-UNIFICADO.md`).
 
 ## Limpeza (script)
 

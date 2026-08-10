@@ -65,7 +65,7 @@ function Scrub-ProjectGitignoreHostdime {
     Set-Content -Path $gitignore -Value $kept
     $script:LinkGitignoreScrubbed = $scrubbed
 
-    $fragment = Join-Path $root 'packages/cursor/scripts/lib/project-gitignore.fragment'
+    $fragment = Join-Path $root 'packages/cursor/scripts/lib/install/project-gitignore.fragment'
     if ((Test-Path $fragment) -and -not (Test-CursorDirFullyIgnored $Project)) {
         $existing = Get-Content $gitignore
         foreach ($line in (Get-Content $fragment)) {
@@ -83,7 +83,7 @@ function Ensure-ProjectGitignore {
     $root = $env:HOSTDIME_IA_ROOT
     if (-not $root -or -not (Test-Path $root)) { return }
 
-    $fragment = Join-Path $root 'packages/cursor/scripts/lib/project-gitignore.fragment'
+    $fragment = Join-Path $root 'packages/cursor/scripts/lib/install/project-gitignore.fragment'
     if (-not (Test-Path $fragment)) { return }
 
     Scrub-ProjectGitignoreHostdime $Project

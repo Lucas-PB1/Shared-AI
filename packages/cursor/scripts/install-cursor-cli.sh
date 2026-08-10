@@ -6,9 +6,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 
-if [[ -f "$SCRIPT_DIR/lib/cursor-cli.sh" ]]; then
+if [[ -f "$SCRIPT_DIR/lib/install/cursor-cli.sh" ]]; then
   # shellcheck disable=SC1091
-  source "$SCRIPT_DIR/lib/cursor-cli.sh"
+  source "$SCRIPT_DIR/lib/install/cursor-cli.sh"
 elif [[ -f "$CURSOR_DIR/hostdime-cursor-cli.sh" ]]; then
   # shellcheck disable=SC1091
   source "$CURSOR_DIR/hostdime-cursor-cli.sh"

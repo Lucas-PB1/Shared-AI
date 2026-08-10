@@ -9,9 +9,9 @@ CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/hostdime-env.sh"
+source "$SCRIPT_DIR/lib/install/hostdime-env.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/projects-registry.sh"
+source "$SCRIPT_DIR/lib/install/projects-registry.sh"
 
 issues=0
 
@@ -209,7 +209,7 @@ else
 fi
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/hubspot-mcp.sh"
+source "$SCRIPT_DIR/lib/hubspot/hubspot-mcp.sh"
 if hubspot_mcp_installed; then
   ok "MCP HubSpotDev em mcp.json"
 elif [[ "$(hubspot_mcp_read_status)" == "declined" ]]; then

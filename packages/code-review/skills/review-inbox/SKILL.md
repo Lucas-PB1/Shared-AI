@@ -51,7 +51,7 @@ Pasta `review/` criada pelo `link-project.sh` (hook sessionStart ou `npm run boo
 
 **GitHub (automático no PR — Fase 2)**
 
-1. Workflow `avaliar-pr.yml` — estático + LLM (`review-llm.mjs`) por arquivo
+1. Workflow `avaliar-pr.yml` — estático + LLM (`review-llm.ts`) por arquivo
 2. Versionar `convencoes.md` + `exclusions.yaml`; incremental por blob SHA
 3. Secret `REVIEW_LLM_API_KEY` no repo; `/finalizar` manual no Cursor
 

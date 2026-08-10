@@ -4,7 +4,7 @@ load helpers
 setup() {
   hostdime_test_setup
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot-mcp.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot/hubspot-mcp.sh"
 }
 
 teardown() {

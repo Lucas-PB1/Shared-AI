@@ -62,7 +62,7 @@ Templates do pacote hostdime-ia (`$HOSTDIME_IA_ROOT` ou clone):
 | Rule | `packages/cursor/templates/history-watch-rule.mdc` |
 | Hook stop sh | `packages/cursor/scripts/hooks/historico-stop.sh` |
 | Hook stop ps1 | `packages/cursor/scripts/hooks/historico-stop.ps1` |
-| Matcher | `packages/cursor/scripts/lib/history-watch-match.ts` |
+| Matcher | `packages/cursor/scripts/lib/history/history-watch-match.ts` |
 
 ### 1. `watches.json`
 
@@ -119,7 +119,7 @@ A partir de `packages/cursor/templates/history-watch-rule.mdc`, substituir:
 2. Merge idempotente em `.cursor/hooks.json`:
 
 ```bash
-"$HOSTDIME_IA_ROOT/node_modules/.bin/tsx" "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-historico-hooks.ts" \
+"$HOSTDIME_IA_ROOT/node_modules/.bin/tsx" "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/merge-historico-hooks.ts" \
   "$PROJECT/.cursor/hooks.json"
 ```
 

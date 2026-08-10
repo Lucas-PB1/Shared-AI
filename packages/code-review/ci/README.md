@@ -7,8 +7,8 @@ Comentários **por arquivo** no pull request — **estático + LLM** no formato 
 | Artefato | Onde |
 | --- | --- |
 | Orquestrador | `packages/code-review/tools/review-github-pr.sh` |
-| LLM | `packages/code-review/tools/review-llm.mjs` |
-| Roteamento skills | `packages/code-review/tools/review-skill-routing.mjs` |
+| LLM | `packages/code-review/bin/review-llm.ts` (`src/llm/`) |
+| Roteamento skills | `packages/code-review/src/skill-routing/` |
 | Prompt | `packages/code-review/templates/avaliar-llm-system.md` |
 | Export exclusões | `packages/code-review/tools/review-export-exclusions.sh` |
 | Ingest pós-merge | `packages/code-review/bin/review-ingest-pr-decisions.ts` (via `tools/review-ingest-pr-decisions.sh`) |
@@ -65,6 +65,21 @@ Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-
 | `REVIEW_LLM_API_KEY` | Secret | Fallback | OpenAI/Anthropic direto (se não usar Cursor). Sem este **nem** `CURSOR_API_KEY`, o workflow roda só a **Fase 1 (estático)** |
 | `REVIEW_LLM_MODEL` | Variable | Não | Modelo do `agent` (ex. `gpt-5`) ou OpenAI |
 | `REVIEW_LLM_PROVIDER` | Variable | Não | `cursor` (default), `openai`, `anthropic` |
+| `SUPABASE_URL` | Secret | Não* | Store review (U2/U3). Ausente = só arquivos |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret | Não* | CI publish/pull; só no pipeline |
+| `REVIEW_PROJECT_SLUG` | Variable | Não | slug em `projects` (default: nome do repo) |
+| `REVIEW_STORE_REQUIRED` | Variable | Não | `true` = hard fail se store down (U4) |
+
+\*Opcionais; sem eles o workflow roda review sem store (soft).
+
+### Store (U2–U4)
+
+| Artefato | Papel |
+| --- | --- |
+| `review-store-publish` | run CI + findings dos reports |
+| `review-memory-pull` | cache local exclusions/conventions |
+| `review-memory-push` | exclusions.yaml → store |
+| Guia cloud | [docs/supabase-cloud.md](../../../docs/supabase-cloud.md) |
 | `REVIEW_SKILL_STACK` | Variable | Não | `false` desliga hints react/typescript no CI |
 | `REVIEW_SKILL_MAX_CHARS` | Variable | Não | Limite de chars de skills/rules no prompt (default `18000`) |
 
@@ -80,7 +95,7 @@ gh secret set REVIEW_LLM_API_KEY --repo HostDimeBR/hostdime-hub
 
 ### Roteamento de skills (CI)
 
-Por arquivo, `review-skill-routing.mjs` injeta no prompt:
+Por arquivo, `src/skill-routing` injeta no prompt:
 
 | Origem | O que carrega |
 | --- | --- |
@@ -99,7 +114,7 @@ Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
 - **Incremental:** blob SHA por arquivo (estado em comentário oculto)
 - Por arquivo:
   1. `review-check.sh` (Semgrep, ESLint, PHPStan, tsc)
-  2. `review-llm.mjs` → relatório `/avaliar` (skills/rules por path + convencoes + exclusions + diff)
+  2. `review-llm.ts` → relatório `/avaliar` (skills/rules por path + convencoes + exclusions + diff)
   3. Comentário no PR (cria ou atualiza)
   4. Comentários **inline** nos achados com `#### arquivo:L`
   5. Cópia em `.cursor/review/reports/` → artifact no workflow
@@ -147,7 +162,7 @@ HOSTDIME_IA_ROOT=/caminho/hostdime-ia npm run review:github-pr
 Testar só LLM de um arquivo:
 
 ```bash
-REVIEW_LLM_API_KEY=sk-... node packages/code-review/tools/review-llm.mjs \
+REVIEW_LLM_API_KEY=sk-... bash packages/code-review/tools/review-llm.sh \
   --project /caminho/projeto --file src/Foo.tsx
 ```
 

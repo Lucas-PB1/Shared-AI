@@ -21,11 +21,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/hostdime-env.sh"
+source "$SCRIPT_DIR/lib/install/hostdime-env.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/projects-registry.sh"
+source "$SCRIPT_DIR/lib/install/projects-registry.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/health-check.sh"
+source "$SCRIPT_DIR/lib/install/health-check.sh"
 
 total_issues=0
 project_count=0
@@ -53,7 +53,7 @@ fi
 
 if [[ "$JSON" -eq 1 ]]; then
   _registry_ensure
-  hostdime_tsx "$SCRIPT_DIR/lib/health-json.ts" "$ENV_FILE" "$REGISTRY_FILE"
+  hostdime_tsx "$SCRIPT_DIR/lib/install/health-json.ts" "$ENV_FILE" "$REGISTRY_FILE"
   exit 0
 fi
 

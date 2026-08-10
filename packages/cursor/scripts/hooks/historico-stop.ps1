@@ -19,7 +19,7 @@ if (-not (Test-Path -LiteralPath $matcher)) {
         }
     }
     if ($hostdimeRoot) {
-        $matcher = Join-Path $hostdimeRoot 'packages/cursor/scripts/lib/history-watch-match.ts'
+        $matcher = Join-Path $hostdimeRoot 'packages/cursor/scripts/lib/history/history-watch-match.ts'
     }
 }
 

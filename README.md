@@ -132,6 +132,7 @@ hostdime-ia/
 ├── package-lock.json     # versionado (npm ci)
 ├── composer.lock         # versionado (PHPStan do review-check)
 ├── docs/
+│   ├── PLANO-MODULAR-SLICES.md     # arquitetura Modular Slices (fases S0–S6)
 │   ├── PLANO-SAUDE.md              # plano de hardening por fases
 │   ├── PLANO-REVIEW-UNIFICADO.md   # store Supabase local→cloud
 │   ├── supabase-local.md           # Docker + smoke do store
@@ -143,6 +144,6 @@ hostdime-ia/
     └── code-review/
 ```
 
-Plano de saúde: [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md). Review unificado: [docs/PLANO-REVIEW-UNIFICADO.md](docs/PLANO-REVIEW-UNIFICADO.md).
+Plano de estrutura: [docs/PLANO-MODULAR-SLICES.md](docs/PLANO-MODULAR-SLICES.md). Plano de saúde: [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md). Review unificado: [docs/PLANO-REVIEW-UNIFICADO.md](docs/PLANO-REVIEW-UNIFICADO.md).
 
 MIT — [LICENSE](LICENSE).

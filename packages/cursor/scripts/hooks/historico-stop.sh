@@ -17,7 +17,7 @@ if [[ ! -f "$MATCHER" ]]; then
     HOSTDIME_ROOT="${HOSTDIME_IA_ROOT:-}"
   fi
   if [[ -n "$HOSTDIME_ROOT" ]]; then
-    MATCHER="$HOSTDIME_ROOT/packages/cursor/scripts/lib/history-watch-match.ts"
+    MATCHER="$HOSTDIME_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
   fi
 fi
 

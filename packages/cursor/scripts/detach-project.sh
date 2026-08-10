@@ -44,9 +44,9 @@ done
 }
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/projects-registry.sh"
+source "$SCRIPT_DIR/lib/install/projects-registry.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/detach-project.sh"
+source "$SCRIPT_DIR/lib/install/detach-project.sh"
 
 if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090

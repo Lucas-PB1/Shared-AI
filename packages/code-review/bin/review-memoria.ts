@@ -13,7 +13,7 @@ import {
   cmdPromover,
   cmdRestore,
   cmdStatus,
-} from "../src/memoria.js";
+} from "../src/memory/index.js";
 
 function parseArgs(argv: string[]): {
   command: string;

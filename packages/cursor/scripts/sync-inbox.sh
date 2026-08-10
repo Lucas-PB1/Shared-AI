@@ -5,7 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/sync-inbox.sh"
+source "$SCRIPT_DIR/lib/sync-inbox/sync-inbox.sh"
 
 action="${1:-status}"
 shift || true

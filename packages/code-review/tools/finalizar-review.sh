@@ -192,6 +192,22 @@ EOF
   else
     echo "Limpo: reports/ (arquivo do projeto preservado: ${rel})"
   fi
+
+  # U1/U2: dual-write decisões locais → store (soft se offline)
+  local root_ia tsx
+  root_ia="${HOSTDIME_IA_ROOT:-}"
+  if [[ -z "$root_ia" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
+    # shellcheck disable=SC1090
+    source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" 2>/dev/null || true
+    root_ia="${HOSTDIME_IA_ROOT:-}"
+  fi
+  if [[ -n "$root_ia" ]]; then
+    tsx="$root_ia/node_modules/.bin/tsx"
+    if [[ -x "$tsx" || -f "$tsx" ]]; then
+      echo "→ dual-write store (soft)…"
+      "$tsx" "$root_ia/packages/code-review/bin/review-dual-write.ts" --project "$project_root" || true
+    fi
+  fi
 }
 
 main "$@"

@@ -34,7 +34,11 @@
     "supabase:stop": "npx supabase stop",
     "supabase:status": "npx supabase status",
     "supabase:reset": "npx supabase db reset",
-    "review:store-smoke": "tsx packages/code-review/bin/review-store-smoke.ts"
+    "review:store-smoke": "tsx packages/code-review/bin/review-store-smoke.ts",
+    "review:dual-write": "tsx packages/code-review/bin/review-dual-write.ts",
+    "review:store-publish": "tsx packages/code-review/bin/review-store-publish.ts",
+    "review:memory-pull": "tsx packages/code-review/bin/review-memory-pull.ts",
+    "review:memory-push": "tsx packages/code-review/bin/review-memory-push.ts"
   },
   "engines": {
     "node": ">=20"

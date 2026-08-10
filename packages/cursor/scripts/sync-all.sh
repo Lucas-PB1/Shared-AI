@@ -17,11 +17,11 @@ LINK_SCRIPT="$CURSOR_DIR/link-project.sh"
 STATE_FILE="$CURSOR_DIR/hostdime-ia/sync-state.env"
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/install-packages.sh"
+source "$SCRIPT_DIR/lib/install/install-packages.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/hostdime-env.sh"
+source "$SCRIPT_DIR/lib/install/hostdime-env.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/projects-registry.sh"
+source "$SCRIPT_DIR/lib/install/projects-registry.sh"
 
 echo "HostDime IA — sync"
 echo "Clone: $MONOREPO_ROOT"
@@ -98,5 +98,5 @@ echo ""
 echo "Sync concluído."
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/boot-sync.sh"
+source "$SCRIPT_DIR/lib/install/boot-sync.sh"
 boot_sync_prompt_if_needed

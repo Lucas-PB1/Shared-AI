@@ -7,12 +7,12 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
-LIB="$SCRIPT_DIR/lib/link-from-repo.sh"
+LIB="$SCRIPT_DIR/lib/install/link-from-repo.sh"
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/hostdime-env.sh"
+source "$SCRIPT_DIR/lib/install/hostdime-env.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/projects-registry.sh"
+source "$SCRIPT_DIR/lib/install/projects-registry.sh"
 # shellcheck disable=SC1091
 source "$LIB"
 

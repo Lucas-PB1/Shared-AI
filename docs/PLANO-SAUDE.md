@@ -216,7 +216,7 @@ Scripts monólitos aumentam custo de mudança:
 1. **`review-ingest-pr-decisions.py`** — `lib/ingest_decisions.py` *(feito)*
 2. **`review-github-pr.sh`** — `lib/pr_report.py` *(feito para regras; gh I/O no shell)*
 3. **`review-memoria.py`** — `lib/memoria_core.py` *(feito para escopo/convencoes/merge)*
-4. **`review-llm.mjs` / skill-routing** — unit tests Node *(feito)*
+4. **`review-llm` / skill-routing (TS)** — unit tests em `tests/llm`, `tests/skill-routing` *(feito — S6)*
 
 ### Trabalho (iterativo)
 

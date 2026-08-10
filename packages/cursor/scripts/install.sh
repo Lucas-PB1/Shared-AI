@@ -9,11 +9,11 @@ CURSOR_PKG="$MONOREPO_ROOT/packages/cursor"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/link-from-repo.sh"
+source "$SCRIPT_DIR/lib/install/link-from-repo.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/hostdime-env.sh"
+source "$SCRIPT_DIR/lib/install/hostdime-env.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/install-packages.sh"
+source "$SCRIPT_DIR/lib/install/install-packages.sh"
 
 echo "Skills — instalando em $CURSOR_DIR"
 echo ""

@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const unit = path.join(
   root,
-  "packages/code-review/tests/finding-ids-and-ingest.test.ts"
+  "packages/code-review/tests/ingest/finding-ids-and-ingest.test.ts"
 );
 const tsx = path.join(root, "node_modules/.bin/tsx");
 

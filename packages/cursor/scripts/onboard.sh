@@ -55,7 +55,7 @@ EOF
 done
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/lib/profiles.sh"
+source "$SCRIPT_DIR/lib/profiles/profiles.sh"
 export HOSTDIME_IA_ROOT="$MONOREPO_ROOT"
 
 onboard_prompt() {

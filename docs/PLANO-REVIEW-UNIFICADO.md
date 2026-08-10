@@ -42,7 +42,7 @@ Unificar o code-review **local (Cursor)** e **remoto (CI/GitHub)** com um **stor
 
 ### Princípios
 
-1. **TypeScript-first** para o núcleo do code-review: `packages/code-review/src/` + `bin/` (tsx). Layout: [STRUCTURE.md](../packages/code-review/STRUCTURE.md).
+1. **TypeScript-first** para o núcleo do code-review: `packages/code-review/src/` + `bin/` (tsx). Layout e migração por fatias: [PLANO-MODULAR-SLICES.md](PLANO-MODULAR-SLICES.md) e [STRUCTURE.md](../packages/code-review/STRUCTURE.md).
 2. **Dois drivers**: local (Cursor) e CI — mesmos shapes de run/finding/decision.
 3. **Store = fonte de verdade**; arquivos locais = cache/export opcional (git do cliente).
 4. **Privacidade**: snippets de código só no Supabase (projeto privado). Migration e código no git **sem rows de clientes**. Export versionável: `exclusions` (finding_key + reason + scope), não `de_code`/`para_code`.
@@ -111,32 +111,53 @@ Soft (transição): dual-write arquivo + store. Hard (meta): store obrigatório 
 
 ### Fase U1 — Domínio no store
 
-- Mapear `decisions.jsonl` ↔ rows `decisions`
-- Mapear run CI (PR number, sha, branch) → `review_runs`
-- Helpers: `upsert_decision`, `list_memory(project_slug)`
-- Dual-write opcional em `/finalizar` e ingest PR
-- Unit tests sem rede no client
+> **S4 feito** ([PLANO-MODULAR-SLICES](PLANO-MODULAR-SLICES.md)): `port` + adapter + `dualWriteDecisions`.
+
+| Item | Status |
+| --- | --- |
+| Mapear decisões jsonl → `decisions` (verdict enum) | **feito** (skip `adiado`) |
+| Run CI no dual-write ingest (`source: ci`, `pr_number`) | **feito** |
+| `upsertDecision` / `listMemory` na port | **feito** |
+| Dual-write soft ingest + `npm run review:dual-write` | **feito** |
+| Unit tests sem rede (mock port) | **feito** |
+| Hard-fail se `SUPABASE_URL` e store down | **opcional** (`REVIEW_STORE_REQUIRED=1`, U4) |
 
 ### Fase U2 — Drivers local + CI
 
-- Env: `SUPABASE_URL`, keys, `REVIEW_PROJECT_SLUG`
-- CI template: secret + step “publish run”
-- Fallbacks offline (só arquivo se store down)
+| Item | Status |
+| --- | --- |
+| Env: `SUPABASE_URL`, keys, `REVIEW_PROJECT_SLUG` | **feito** |
+| `publishRun` + `bin/review-store-publish.ts` | **feito** |
+| CI template: pull memory + publish steps | **feito** (`github-avaliar-pr.yml`) |
+| Fallbacks offline (só arquivo se store down) | **feito** (soft default) |
+| `/finalizar` chama dual-write | **feito** (soft) |
 
 ### Fase U3 — Memória e exclusões
 
-- Ler exclusions/conventions do store no check/ingest
-- Export git (opcional): só exclusions slim
-- Dashboard mínimo (Studio ou página interna) multi-projeto
+| Item | Status |
+| --- | --- |
+| `listExclusions` / `listConventions` / upsert na port | **feito** |
+| LLM merge store + arquivos | **feito** |
+| `review:memory-pull` / `review:memory-push` | **feito** |
+| Export slim yaml (sem snippets) | **feito** |
+| Dashboard multi-projeto | Studio (v1) — app interno fora deste monorepo |
 
 ### Fase U4 — Cloud HostDime
 
-- Projeto Supabase (não no git público de dados)
-- Auth HostDime (email/SSO) + membership
-- Secrets CI; service role só no pipeline
-- Hard unification default nos repos migrados
+| Item | Status |
+| --- | --- |
+| Guia projeto cloud + secrets CI | **feito** ([docs/supabase-cloud.md](supabase-cloud.md)) |
+| Auth multi-user + RLS (schema) | **feito** (migration); membership operacional no projeto cloud |
+| `REVIEW_STORE_REQUIRED` hard por repo | **feito** |
+| Projeto cloud físico + SSO org | **ops HostDime** (fora do git de dados) |
 
 ---
+
+## Próximo passo imediato
+
+1. Local: `npm run supabase:start` + `review:store-smoke`.
+2. CI alvo: secrets `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` + var `REVIEW_PROJECT_SLUG`.
+3. Cloud: seguir [supabase-cloud.md](supabase-cloud.md).
 
 ## O que NÃO vai no git do hostdime-ia
 
@@ -164,16 +185,8 @@ npm run review:store-smoke
 
 ## Critérios de pronto do produto
 
-- [ ] Mesmo formato de run em local e CI
-- [ ] Decisões de dev e PR no mesmo `decisions` por `project_id`
-- [ ] Query “todos os findings rejeitados do projeto X no mês”
-- [ ] Nenhum artefato sensível no histórico git do monorepo
-- [ ] Offline: review continua só com arquivos se store offline
-
----
-
-## Próximo passo imediato
-
-1. Rodar smoke no Supabase local (**U0**).
-2. Dual-write de decisões no finalize/ingest (**U1**).
-3. Step de publish no workflow de review CI (**U2**).
+- [x] Mesmo formato de run em local e CI (`publishRun` / dual-write)
+- [x] Decisões de dev e PR no mesmo `decisions` por `project_id`
+- [x] Query “findings rejeitados do projeto” via PostgREST/Studio (schema)
+- [x] Nenhum artefato sensível no histórico git do monorepo (policy)
+- [x] Offline: review continua só com arquivos se store offline (soft)

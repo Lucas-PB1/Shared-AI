@@ -5,7 +5,7 @@
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { stableFindingId } from "../src/finding-ids.js";
+import { stableFindingId } from "../src/shared/index.js";
 import {
   ReviewStore,
   StoreError,

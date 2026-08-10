@@ -2,7 +2,7 @@
  * Config do review store (Supabase / PostgREST).
  */
 
-import { loadDotenvFile as loadDotenvFileFromEnv } from "../dotenv.js";
+import { loadDotenvFile as loadDotenvFileFromEnv } from "../shared/index.js";
 
 export class StoreError extends Error {
   constructor(message: string) {

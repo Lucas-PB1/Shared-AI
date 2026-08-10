@@ -289,7 +289,7 @@ run_llm_review() {
   local diff_file="$3"
   local out_file="$4"
 
-  node "$TOOLS_DIR/review-llm.mjs" \
+  "$HOSTDIME_TSX" "$HOSTDIME_IA_ROOT/packages/code-review/bin/review-llm.ts" \
     --project "$PROJECT" \
     --file "$file" \
     --static-file "$static_file" \

@@ -2,7 +2,7 @@
 /**
  * CLI de helpers puras do review-github-pr (sem rede).
  */
-import { stableFindingId } from "../src/finding-ids.js";
+import { stableFindingId } from "../src/shared/index.js";
 import {
   buildInlineMarker,
   codeSnippetsMatch,
@@ -13,7 +13,7 @@ import {
   inlineBlockScore,
   normalizeCodeSnippet,
   parseVerdict,
-} from "../src/pr-report.js";
+} from "../src/report/index.js";
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];

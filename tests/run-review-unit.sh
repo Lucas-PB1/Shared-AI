@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Unit tests do code-review (TypeScript / node — sem Python).
+# Unit tests do code-review (TypeScript — sem Python).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,25 +12,17 @@ if [[ ! -x "$TSX" ]]; then
 fi
 
 ts_tests=(
-  packages/code-review/tests/finding-ids-and-ingest.test.ts
-  packages/code-review/tests/pr-report.test.ts
-  packages/code-review/tests/memoria-core.test.ts
-  packages/code-review/tests/store.test.ts
-)
-
-node_tests=(
-  packages/code-review/tools/tests/test_skill_routing.mjs
-  packages/code-review/tools/tests/test_llm_helpers.mjs
+  packages/code-review/tests/ingest/finding-ids-and-ingest.test.ts
+  packages/code-review/tests/report/pr-report.test.ts
+  packages/code-review/tests/memory/merge.test.ts
+  packages/code-review/tests/store/store.test.ts
+  packages/code-review/tests/skill-routing/skill-routing.test.ts
+  packages/code-review/tests/llm/llm-helpers.test.ts
 )
 
 for t in "${ts_tests[@]}"; do
   echo "=== tsx --test $t ==="
   "$TSX" --test "$t"
-done
-
-for t in "${node_tests[@]}"; do
-  echo "=== node --test $t ==="
-  node --test "$t"
 done
 
 echo "test:review-unit: OK"
