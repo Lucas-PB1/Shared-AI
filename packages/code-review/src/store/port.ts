@@ -33,6 +33,7 @@ export type CreateDecisionFields = {
   findingKey: string;
   verdict: string;
   runId?: string | null;
+  findingId?: string | null;
   reason?: string | null;
   decidedBy?: string | null;
   source?: string | null;
@@ -52,12 +53,16 @@ export type ExclusionFields = {
   reason?: string;
   scopeGlob?: string;
   active?: boolean;
+  occurrences?: number;
+  source?: string | null;
 };
 
 export type ConventionFields = {
   scopeGlob?: string;
   body: string;
   source?: string | null;
+  findingKey?: string | null;
+  occurrences?: number;
 };
 
 /** Contrato U0–U3. */

@@ -6,6 +6,9 @@ import assert from "node:assert/strict";
 import {
   StoreError,
   buildHeaders,
+  CONVENTION_PROMOTE_THRESHOLD,
+  conventionBodyFromDecision,
+  countAceitoVerdicts,
   dualWriteDecisions,
   formatExclusionsYaml,
   isStoreConfigured,
@@ -112,6 +115,8 @@ describe("isStoreConfigured / openStore / isStoreRequired", () => {
 });
 
 function mockPort(calls: string[]): ReviewStorePort {
+  const decisionLog: Array<Record<string, unknown>> = [];
+  let findingSeq = 0;
   return {
     async getProjectId() {
       calls.push("getProjectId");
@@ -126,19 +131,28 @@ function mockPort(calls: string[]): ReviewStorePort {
       return { id: runId, status: "completed" };
     },
     async createFinding(_runId: string, fields: CreateFindingFields) {
+      findingSeq += 1;
       calls.push(`createFinding:${fields.findingKey}`);
-      return { id: "f1" };
+      return { id: `f-${findingSeq}` };
     },
     async createDecision(_pid: string, fields: CreateDecisionFields) {
       calls.push(`createDecision:${fields.findingKey}:${fields.verdict}`);
+      decisionLog.push({
+        finding_key: fields.findingKey,
+        verdict: fields.verdict,
+      });
       return { id: "d1" };
     },
     async upsertDecision(pid: string, fields: CreateDecisionFields) {
-      calls.push(`upsertDecision:${fields.findingKey}`);
+      calls.push(`upsertDecision:${fields.findingKey}:${fields.verdict}`);
       return this.createDecision(pid, fields);
     },
-    async listDecisions(_pid: string, _opts?: ListDecisionsOpts) {
-      return [];
+    async listDecisions(_pid: string, opts?: ListDecisionsOpts) {
+      let rows = [...decisionLog];
+      if (opts?.findingKey) {
+        rows = rows.filter((r) => r.finding_key === opts.findingKey);
+      }
+      return rows;
     },
     async listMemory() {
       return { projectId: "proj-1", decisions: [] };
@@ -167,11 +181,49 @@ function mockPort(calls: string[]): ReviewStorePort {
       return { id: "ex1" };
     },
     async upsertConvention(_pid: string, fields: ConventionFields) {
-      calls.push(`upsertConvention:${fields.body}`);
+      calls.push(
+        `upsertConvention:${fields.findingKey ?? ""}:${fields.body}`
+      );
       return { id: "cv1" };
     },
   };
 }
+
+describe("convention helpers", () => {
+  it("threshold is 2", () => {
+    assert.equal(CONVENTION_PROMOTE_THRESHOLD, 2);
+  });
+
+  it("counts aceito verdicts", () => {
+    assert.equal(
+      countAceitoVerdicts([
+        { verdict: "aceito" },
+        { verdict: "rejeitado" },
+        { verdict: "aceito" },
+      ]),
+      2
+    );
+  });
+
+  it("builds body from summary/reason", () => {
+    assert.equal(
+      conventionBodyFromDecision({
+        findingKey: "null-check",
+        summary: "Check null",
+        reason: "team agreed",
+      }),
+      "Check null — team agreed"
+    );
+    assert.equal(
+      conventionBodyFromDecision({
+        findingKey: "null-check",
+        summary: "Check null",
+        reason: "resposta humana no thread (sem objeção)",
+      }),
+      "Check null"
+    );
+  });
+});
 
 describe("dualWriteDecisions", () => {
   it("errors when no store", async () => {
@@ -205,6 +257,8 @@ describe("dualWriteDecisions", () => {
           finding_id: "const",
           decision: "aceito",
           summary: "Prefer const",
+          file: "src/b.ts",
+          line: 2,
         },
       ],
       {
@@ -216,11 +270,53 @@ describe("dualWriteDecisions", () => {
     assert.equal(r.written, 2);
     assert.equal(r.skipped, 1);
     assert.equal(r.runId, "run-1");
+    assert.equal(r.exclusions, 1);
+    assert.equal(r.conventions, 0);
+    assert.equal(r.findings, 2);
     assert.ok(!r.error);
     assert.ok(calls.includes("getProjectId"));
     assert.ok(calls.includes("createRun:ci"));
+    assert.ok(calls.includes("createFinding:null-check"));
+    assert.ok(calls.includes("upsertExclusion:null-check"));
     assert.ok(calls.some((c) => c.startsWith("upsertDecision:null-check")));
+    assert.ok(
+      !calls.some((c) => c.startsWith("upsertConvention:")),
+      "single aceito must not promote convention"
+    );
     assert.ok(calls.includes("completeRun:run-1"));
+  });
+
+  it("promotes convention when same finding_key aceito twice", async () => {
+    const calls: string[] = [];
+    const port = mockPort(calls);
+    const r = await dualWriteDecisions(
+      [
+        {
+          finding_id: "doc-type-fallback",
+          decision: "aceito",
+          summary: "documentType fallback",
+          file: "app/Helpers/CpfCnpj.php",
+          line: 45,
+        },
+        {
+          finding_id: "doc-type-fallback",
+          decision: "aceito",
+          summary: "documentType fallback",
+          reason: "second time on related MR",
+          file: "app/Helpers/CpfCnpj.php",
+          line: 45,
+        },
+      ],
+      { port }
+    );
+    assert.equal(r.written, 2);
+    assert.equal(r.conventions, 1);
+    assert.equal(r.exclusions, 0);
+    assert.ok(
+      calls.some((c) =>
+        c.startsWith("upsertConvention:doc-type-fallback:")
+      )
+    );
   });
 
   it("returns error on port failure", async () => {

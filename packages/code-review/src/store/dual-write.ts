@@ -1,7 +1,13 @@
 /**
- * Dual-write decisões locais → store (sempre hard).
+ * Dual-write decisões locais → store (sempre hard) + promote memory.
+ *
+ * - findings: comentário materializado se summary/file e sem finding_id
+ * - decisions: ledger
+ * - rejeitado | nao-aplicavel → exclusions
+ * - aceito ×≥2 no mesmo finding_key → conventions
  */
 
+import { inferScopeFromFile } from "../memory/merge.js";
 import { StoreError } from "./config.js";
 import type { CreateRunFields, ReviewStorePort } from "./port.js";
 import {
@@ -10,10 +16,25 @@ import {
   openStore,
 } from "./open.js";
 
+/** Mínimo de `aceito` com o mesmo finding_key para virar convention. */
+export const CONVENTION_PROMOTE_THRESHOLD = 2;
+
+const POLICY_SKIP_REASON_PREFIXES = [
+  "suggestion / Para",
+  "código De removido",
+  "indicador `",
+  "thread resolvido",
+  "merge sem resposta",
+  "resposta humana no thread",
+];
+
 export type DualWriteResult = {
   attempted: boolean;
   written: number;
   skipped: number;
+  exclusions: number;
+  conventions: number;
+  findings: number;
   runId?: string;
   error?: string;
 };
@@ -25,6 +46,44 @@ function lineFromDecision(d: Record<string, unknown>): number | null {
     return Number.parseInt(line, 10);
   }
   return null;
+}
+
+function uuidish(value: unknown): string | null {
+  const s = String(value ?? "").trim();
+  if (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      s
+    )
+  ) {
+    return s;
+  }
+  return null;
+}
+
+/** Texto de convention a partir de summary (+ reason se útil). */
+export function conventionBodyFromDecision(d: {
+  summary?: string | null;
+  reason?: string | null;
+  findingKey: string;
+}): string {
+  const summary =
+    String(d.summary ?? "").trim() ||
+    d.findingKey.replace(/-/g, " ").trim() ||
+    d.findingKey;
+  const reason = String(d.reason ?? "").trim();
+  if (
+    reason &&
+    !POLICY_SKIP_REASON_PREFIXES.some((p) => reason.startsWith(p))
+  ) {
+    return `${summary} — ${reason.slice(0, 100)}`;
+  }
+  return summary;
+}
+
+export function countAceitoVerdicts(
+  rows: Array<Record<string, unknown>>
+): number {
+  return rows.filter((r) => String(r.verdict ?? "").trim() === "aceito").length;
 }
 
 export async function dualWriteDecisions(
@@ -49,12 +108,18 @@ export async function dualWriteDecisions(
       attempted: true,
       written: 0,
       skipped: decisions.length,
+      exclusions: 0,
+      conventions: 0,
+      findings: 0,
       error: STORE_REQUIRED_MSG,
     };
   }
 
   let written = 0;
   let skipped = 0;
+  let exclusions = 0;
+  let conventions = 0;
+  let findings = 0;
 
   try {
     const projectId = await port.getProjectId(opts.projectSlug);
@@ -84,15 +149,48 @@ export async function dualWriteDecisions(
       }
 
       const line = lineFromDecision(d);
+      const filePath = d.file != null ? String(d.file) : null;
+      const summary =
+        d.summary != null ? String(d.summary) : null;
+      const reason = d.reason != null ? String(d.reason) : null;
+      const scopeGlob = inferScopeFromFile(filePath ?? "");
+
+      let findingId =
+        uuidish(d.finding_uuid) ?? uuidish(d.store_finding_id);
+
+      // Materialize finding (comentário) no run se temos conteúdo e ainda sem UUID.
+      if (
+        !findingId &&
+        runId &&
+        (summary || filePath || line != null)
+      ) {
+        const created = await port.createFinding(runId, {
+          findingKey,
+          summary: summary || findingKey,
+          filePath,
+          lineStart: line,
+          lineEnd: line,
+          category:
+            d.category != null ? String(d.category) : null,
+          meta: {
+            review_slug: d.review_slug ?? null,
+            from_finalize: true,
+          },
+        });
+        findingId = String(created.id ?? "");
+        findings += 1;
+      }
+
       await port.upsertDecision(projectId, {
         findingKey,
         verdict,
         runId: runId ?? null,
-        reason: d.reason != null ? String(d.reason) : null,
+        findingId: findingId || null,
+        reason,
         decidedBy: opts.decidedBy ?? String(d.source ?? "dual-write"),
         source: d.source != null ? String(d.source) : null,
-        filePath: d.file != null ? String(d.file) : null,
-        summary: d.summary != null ? String(d.summary) : null,
+        filePath,
+        summary,
         schemaVersion: d.schema != null ? String(d.schema) : "1",
         meta: {
           review_slug: d.review_slug ?? null,
@@ -101,13 +199,53 @@ export async function dualWriteDecisions(
         },
       });
       written += 1;
+
+      if (verdict === "rejeitado" || verdict === "nao-aplicavel") {
+        await port.upsertExclusion(projectId, {
+          findingKey,
+          reason: reason || summary || findingKey,
+          scopeGlob,
+          active: true,
+          source: "finalize",
+        });
+        exclusions += 1;
+      } else if (verdict === "aceito") {
+        const prior = await port.listDecisions(projectId, {
+          findingKey,
+          limit: 200,
+        });
+        const aceitoCount = countAceitoVerdicts(prior);
+        if (aceitoCount >= CONVENTION_PROMOTE_THRESHOLD) {
+          const body = conventionBodyFromDecision({
+            summary,
+            reason,
+            findingKey,
+          });
+          await port.upsertConvention(projectId, {
+            scopeGlob,
+            body,
+            source: "finalize",
+            findingKey,
+            occurrences: aceitoCount,
+          });
+          conventions += 1;
+        }
+      }
     }
 
     if (runId) {
       await port.completeRun(runId, { status: "completed" });
     }
 
-    return { attempted: true, written, skipped, runId };
+    return {
+      attempted: true,
+      written,
+      skipped,
+      exclusions,
+      conventions,
+      findings,
+      runId,
+    };
   } catch (err) {
     const msg =
       err instanceof StoreError
@@ -119,6 +257,9 @@ export async function dualWriteDecisions(
       attempted: true,
       written,
       skipped,
+      exclusions,
+      conventions,
+      findings,
       error: msg,
     };
   }
@@ -134,6 +275,8 @@ export function logDualWriteResult(
   }
   console.error(
     `${label}: store dual-write ok written=${result.written} skipped=${result.skipped}` +
+      ` findings=${result.findings ?? 0} exclusions=${result.exclusions ?? 0}` +
+      ` conventions=${result.conventions ?? 0}` +
       (result.runId ? ` run=${result.runId}` : "")
   );
 }

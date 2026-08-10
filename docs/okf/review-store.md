@@ -2,15 +2,32 @@
 type: Architecture
 title: Review store
 description: >-
-  Fonte de verdade multi-repo de runs, findings e memória de review via Supabase.
-  Sem modo offline.
+  Fonte de verdade multi-repo: runs, findings, decisions e policy
+  (exclusions/conventions) via Supabase. Memória evolutiva no /finalizar.
 tags: [store, supabase, review]
-timestamp: 2026-08-10T16:00:00Z
+timestamp: 2026-08-10T19:00:00Z
 ---
 
 ## Contexto
 
 O **review store** unifica code-review no Cursor e no GitHub Actions. Todos os fluxos oficiais exigem `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
+
+## Memória evolutiva
+
+```text
+/avaliar ou CI publish  →  review_runs + findings (comentários)
+/finalizar              →  decisions
+                            ├─ rejeitado | n/a  → exclusions (sempre)
+                            └─ aceito (≥2× mesmo finding_key) → conventions
+próximo /avaliar        →  prompt ← exclusions + conventions (por path)
+```
+
+| Camada | Evolui o quê |
+| --- | --- |
+| Skills / rules | stack e arquitetura genérica |
+| **exclusions** | falsos positivos / o que o time recusou |
+| **conventions** | padrões aceitos **recorrentes** neste projeto |
+| findings / decisions | auditoria e ledger (Studio), não fine-tune de pesos |
 
 ## Fluxo
 
@@ -28,23 +45,25 @@ O **review store** unifica code-review no Cursor e no GitHub Actions. Todos os f
 
 | Ator | Auth | Escreve |
 | --- | --- | --- |
-| Dev / CLI | service role (local); JWT membro (cloud alvo) | runs local/agent, decisions `/finalizar` |
-| CI | `SUPABASE_SERVICE_ROLE_KEY` | runs `ci`, findings, ingest pós-merge |
+| Dev / CLI | service role (local); JWT membro (cloud alvo) | runs, findings no finalize, decisions, policy |
+| CI | `SUPABASE_SERVICE_ROLE_KEY` | runs `ci`, findings publish, ingest pós-merge |
 | Studio | UI | leitura / ops |
 
-Cache efêmero em workdir tmp (`HOSTDIME_REVIEW_WORKDIR` / `$TMPDIR/hostdime-review/…`) — **não** pasta no repo. O banco (Supabase) é a fonte de verdade.
+Cache efêmero em workdir tmp (`HOSTDIME_REVIEW_WORKDIR` / `$TMPDIR/hostdime-review/…`) — **não** pasta no repo.
+
+Repos em `projects` sem `.env` próprio (ex. DNA): secrets só no monorepo; slug = basename / `--slug`.
 
 ## Status (código)
 
 | Capacidade | Estado |
 | --- | --- |
 | Store local + smoke | feito |
-| Dual-write / publish / memory pull-push | feito (hard) |
+| Dual-write + promote exclusions/conventions | feito |
+| Publish / memory pull-push | feito (hard) |
 | CI template pull → review → publish | feito |
-| Schema multi-user + RLS | feito |
-| Projeto cloud + secrets operacionais | **ops HostDime** |
-| Dashboard multi-repo além do Studio | fora do monorepo |
-| Gateway HTTP HostDime na frente do Supabase | opcional / futuro |
+| Schema multi-user + RLS | feito (ACL; não é fine-tuning) |
+| Projeto cloud + secrets | **ops HostDime** |
+| Dashboard multi-repo | fora do monorepo |
 
 ## Privacidade
 

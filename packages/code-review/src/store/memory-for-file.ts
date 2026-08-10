@@ -1,5 +1,7 @@
 /**
  * Camadas de memória do store filtradas por path de arquivo.
+ * Injeta só **policy ativa**: exclusions (negativa) + conventions (positiva).
+ * Não injeta findings/decisions crus — ledger fica para Studio/auditoria.
  * Store obrigatório — propaga erro se offline ou mal configurado.
  */
 
@@ -21,21 +23,30 @@ export async function storeMemoryForFile(
     throw new StoreError(mem.error);
   }
 
-  const convBullets = mem.conventions
-    .filter((c) => scopeMatchesFile(c.scopeGlob, relFile))
-    .map((c) => {
-      const body = c.body.trim();
-      return body.startsWith("- ") ? body : `- ${body}`;
-    });
+  // Dedup bullets por conteúdo (mesma convention promovida N vezes).
+  const convSeen = new Set<string>();
+  const convBullets: string[] = [];
+  for (const c of mem.conventions) {
+    if (!scopeMatchesFile(c.scopeGlob, relFile)) continue;
+    const body = c.body.trim();
+    if (!body) continue;
+    const bullet = body.startsWith("- ") ? body : `- ${body}`;
+    if (convSeen.has(bullet)) continue;
+    convSeen.add(bullet);
+    convBullets.push(bullet);
+  }
 
-  const exclBullets = mem.exclusions
-    .filter((e) => e.active && scopeMatchesFile(e.scopeGlob, relFile))
-    .map(
-      (e) =>
-        `- [rejeitado] ${e.reason || e.findingKey}${
-          e.findingKey ? ` (${e.findingKey})` : ""
-        }`
-    );
+  const exclSeen = new Set<string>();
+  const exclBullets: string[] = [];
+  for (const e of mem.exclusions) {
+    if (!e.active || !scopeMatchesFile(e.scopeGlob, relFile)) continue;
+    const text = `- [rejeitado] ${e.reason || e.findingKey}${
+      e.findingKey ? ` (${e.findingKey})` : ""
+    }`;
+    if (exclSeen.has(text)) continue;
+    exclSeen.add(text);
+    exclBullets.push(text);
+  }
 
   return {
     conventions: convBullets.join("\n"),

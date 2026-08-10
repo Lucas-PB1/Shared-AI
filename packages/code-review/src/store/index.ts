@@ -32,6 +32,9 @@ export {
 } from "./open.js";
 
 export {
+  CONVENTION_PROMOTE_THRESHOLD,
+  conventionBodyFromDecision,
+  countAceitoVerdicts,
   dualWriteDecisions,
   logDualWriteResult,
   type DualWriteResult,

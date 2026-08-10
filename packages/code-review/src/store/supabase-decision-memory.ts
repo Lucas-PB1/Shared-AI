@@ -20,6 +20,7 @@ export async function restCreateDecision(
   const payload = {
     project_id: projectId,
     run_id: fields.runId ?? null,
+    finding_id: fields.findingId ?? null,
     finding_key: fields.findingKey,
     verdict: fields.verdict,
     reason: fields.reason ?? null,
@@ -109,7 +110,7 @@ export async function restUpsertExclusion(
   projectId: string,
   fields: ExclusionFields
 ): Promise<Record<string, unknown>> {
-  const payload = {
+  const payload: Record<string, unknown> = {
     project_id: projectId,
     finding_key: fields.findingKey,
     reason: fields.reason ?? "",
@@ -117,6 +118,12 @@ export async function restUpsertExclusion(
     active: fields.active ?? true,
     updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
   };
+  if (fields.occurrences != null) {
+    payload.occurrences = fields.occurrences;
+  }
+  if (fields.source !== undefined) {
+    payload.source = fields.source;
+  }
   const url = `${rest.config.restBase}/exclusions?on_conflict=project_id,finding_key,scope_glob`;
   const rows = (await rest.request(
     "POST",
@@ -135,17 +142,59 @@ export async function restUpsertConvention(
   projectId: string,
   fields: ConventionFields
 ): Promise<Record<string, unknown>> {
-  const payload = {
+  const payload: Record<string, unknown> = {
     project_id: projectId,
     scope_glob: fields.scopeGlob ?? "**/*",
     body: fields.body,
     source: fields.source ?? null,
     updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
   };
-  const url = `${rest.config.restBase}/conventions`;
+  if (fields.findingKey != null && fields.findingKey !== "") {
+    payload.finding_key = fields.findingKey;
+  }
+  if (fields.occurrences != null) {
+    payload.occurrences = fields.occurrences;
+  }
+
+  // Partial unique index on (project_id, finding_key) is not always
+  // addressable via PostgREST on_conflict — select then patch/insert.
+  if (fields.findingKey) {
+    const q = new URLSearchParams({
+      project_id: `eq.${projectId}`,
+      finding_key: `eq.${fields.findingKey}`,
+      select: "id",
+      limit: "1",
+    });
+    const existing = (await rest.request(
+      "GET",
+      `${rest.config.restBase}/conventions?${q}`,
+      rest.headers()
+    )) as Array<{ id: string }> | null;
+    if (existing?.length) {
+      const id = existing[0].id;
+      const patchUrl = `${rest.config.restBase}/conventions?id=eq.${id}`;
+      const patched = (await rest.request(
+        "PATCH",
+        patchUrl,
+        rest.headers({ prefer: "return=representation" }),
+        {
+          body: fields.body,
+          scope_glob: fields.scopeGlob ?? "**/*",
+          source: fields.source ?? null,
+          occurrences: fields.occurrences ?? 1,
+          updated_at: payload.updated_at,
+        }
+      )) as Array<Record<string, unknown>> | null;
+      if (!patched?.length) {
+        throw new StoreError("upsertConvention: patch vazio");
+      }
+      return patched[0];
+    }
+  }
+
   const rows = (await rest.request(
     "POST",
-    url,
+    `${rest.config.restBase}/conventions`,
     rest.headers({ prefer: "return=representation" }),
     payload
   )) as Array<Record<string, unknown>> | null;

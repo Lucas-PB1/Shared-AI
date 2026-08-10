@@ -1,13 +1,20 @@
--- Dados fictícios só para dev local (supabase start / db reset).
--- Nunca copiar para o git com trechos de código reais de clientes.
+-- Projetos locais ligados (paths em ~/Projetos e registry hostdime-ia).
+-- Slug = basename do path (dual-write / --slug).
+-- Secrets do store ficam só no monorepo hostdime-ia — repos ligados sem .env.
 
 INSERT INTO public.projects (slug, name, github_owner, github_repo)
 VALUES
-  ('hostdime-ia', 'HostDime IA (local)', 'HostDimeBR', 'hostdime-ia'),
-  -- Tema HubSpot (hsproject name=hostdime; repo GitHub=hostdime-hub)
-  ('hostdime-hub', 'HostDime tema HubSpot', 'HostDimeBR', 'hostdime-hub'),
-  ('hostdime', 'HostDime tema (alias hsproject)', 'HostDimeBR', 'hostdime-hub'),
-  ('demo-app', 'Demo App', 'hostdime', 'demo-app')
+  ('hostdime-ia', 'HostDime IA', 'HostDimeBR', 'hostdime-ia'),
+  ('dna', 'DNA', NULL, 'dna'),
+  ('core', 'Core', NULL, 'core'),
+  ('hdbr-hubspot', 'HDBR HubSpot (front-website)', 'HostDimeBR', 'front-website'),
+  ('hdbr-payment', 'HDBR Payment', NULL, 'hdbr-payment'),
+  ('hostdime-organograma', 'HostDime Organograma', 'HostDimeBR', 'hostdime-organograma'),
+  ('hostdime', 'HostDime tema HubSpot (hostdime-hub)', 'HostDimeBR', 'hostdime-hub'),
+  ('hostdime-theme-hub', 'HostDime theme hub (workspace)', NULL, NULL),
+  ('hostdime-backend', 'HostDime theme hub backend', NULL, NULL),
+  ('maps', 'Maps', 'Lucas-PB1', 'dnd-maps'),
+  ('sicredi', 'Sicredi', NULL, NULL)
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO public.review_runs (

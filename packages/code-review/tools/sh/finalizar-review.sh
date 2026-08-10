@@ -158,8 +158,15 @@ EOF
     echo "Erro: tsx não encontrado em $tsx" >&2
     exit 1
   fi
-  echo "→ dual-write store…"
-  "$tsx" "$root_ia/packages/code-review/bin/review-dual-write.ts" --project "$project_root"
+  # Secrets vêm do monorepo (HOSTDIME_IA_ROOT/.env). Slug = nome do repo revisado
+  # (ex. dna) — projetos ligados não precisam de .env próprio.
+  local slug
+  slug="$(basename "$project_root" | tr '[:upper:]' '[:lower:]')"
+  echo "→ dual-write store (slug=${slug})…"
+  HOSTDIME_IA_ROOT="$root_ia" \
+    "$tsx" "$root_ia/packages/code-review/bin/review-dual-write.ts" \
+      --project "$project_root" \
+      --slug "$slug"
 }
 
 main "$@"
