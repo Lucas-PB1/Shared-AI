@@ -24,6 +24,7 @@ export {
 
 export {
   extractReportFilePath,
+  extractReportVerdict,
   parseFindingsFromReport,
   type ParsedReportFinding,
 } from "./parse-findings.js";

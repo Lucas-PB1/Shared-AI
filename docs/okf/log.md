@@ -2,6 +2,7 @@
 
 ## 2026-08-10
 
+* **Update**: Cobertura rica no store — `review_runs.meta` (files/reports/verdicts), findings com body/severity no publish e dual-write.
 * **Update**: Adapt hostdime-hub (CI + docs) ao store evolutivo; slug via git remote / `hostdime-hub`.
 * **Update**: Memória evolutiva — dual-write promove exclusions (rejeitado) e conventions (≥2 aceito); findings no finalize; docs do modelo.
 * **Update**: Store-only — `link-project` remove `.cursor/review/` em todos os projetos e limpa gitignores; sem paths legados no monorepo.

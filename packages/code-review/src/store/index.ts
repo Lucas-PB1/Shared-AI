@@ -62,8 +62,17 @@ export {
   pushExclusionsFromProject,
 } from "./memory-sync.js";
 
+export { storeMemoryForFile } from "./memory-for-file.js";
+
 export {
   preserveProcessReviewSlugAfter,
   resolveProjectSlug,
   slugFromGitRemote,
 } from "./project-slug.js";
+
+export {
+  buildFinalizeCoverageMeta,
+  buildRunCoverageMeta,
+  countByKey,
+  type ReportScanEntry,
+} from "./run-summary.js";

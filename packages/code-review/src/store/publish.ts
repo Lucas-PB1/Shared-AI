@@ -9,6 +9,10 @@ import type {
   ReviewStorePort,
 } from "./port.js";
 import { STORE_REQUIRED_MSG, openStore } from "./open.js";
+import {
+  buildRunCoverageMeta,
+  type ReportScanEntry,
+} from "./run-summary.js";
 
 export type PublishRunResult = {
   attempted: boolean;
@@ -25,6 +29,8 @@ export async function publishRun(
     projectSlug?: string;
     run?: CreateRunFields;
     status?: "completed" | "failed";
+    /** Relatórios escaneados (cobertura mesmo com zero findings). */
+    reports?: ReportScanEntry[];
   } = {}
 ): Promise<PublishRunResult> {
   const env = opts.env ?? process.env;
@@ -42,6 +48,10 @@ export async function publishRun(
   }
 
   try {
+    const startMeta = {
+      ...(opts.run?.meta ?? {}),
+      publish: true,
+    };
     const projectId = await port.getProjectId(opts.projectSlug);
     const run = await port.createRun(projectId, {
       source: opts.run?.source ?? "ci",
@@ -52,19 +62,25 @@ export async function publishRun(
       branch: opts.run?.branch ?? null,
       prNumber: opts.run?.prNumber ?? null,
       reviewSlug: opts.run?.reviewSlug ?? null,
-      meta: { ...(opts.run?.meta ?? {}), publish: true },
+      meta: startMeta,
     });
     const runId = String(run.id);
-    let count = 0;
+    const written: CreateFindingFields[] = [];
     for (const f of findings) {
       if (!f.findingKey || !f.summary) continue;
       await port.createFinding(runId, f);
-      count += 1;
+      written.push(f);
     }
+    const finalMeta = buildRunCoverageMeta({
+      findings: written,
+      reports: opts.reports,
+      extra: startMeta,
+    });
     await port.completeRun(runId, {
       status: opts.status ?? "completed",
+      meta: finalMeta,
     });
-    return { attempted: true, runId, findings: count };
+    return { attempted: true, runId, findings: written.length };
   } catch (err) {
     const msg =
       err instanceof StoreError

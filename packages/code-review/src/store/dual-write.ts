@@ -15,6 +15,7 @@ import {
   STORE_VERDICTS,
   openStore,
 } from "./open.js";
+import { buildFinalizeCoverageMeta } from "./run-summary.js";
 
 /** Mínimo de `aceito` com o mesmo finding_key para virar convention. */
 export const CONVENTION_PROMOTE_THRESHOLD = 2;
@@ -158,11 +159,32 @@ export async function dualWriteDecisions(
       let findingId =
         uuidish(d.finding_uuid) ?? uuidish(d.store_finding_id);
 
+      const body =
+        reason ||
+        (d.body != null ? String(d.body) : null) ||
+        summary;
+      const severity =
+        d.severity != null ? String(d.severity) : null;
+      const category =
+        d.category != null ? String(d.category) : null;
+      const deCode =
+        d.de_code != null
+          ? String(d.de_code)
+          : d.deCode != null
+            ? String(d.deCode)
+            : null;
+      const paraCode =
+        d.para_code != null
+          ? String(d.para_code)
+          : d.paraCode != null
+            ? String(d.paraCode)
+            : null;
+
       // Materialize finding (comentário) no run se temos conteúdo e ainda sem UUID.
       if (
         !findingId &&
         runId &&
-        (summary || filePath || line != null)
+        (summary || filePath || line != null || body || reason)
       ) {
         const created = await port.createFinding(runId, {
           findingKey,
@@ -170,11 +192,17 @@ export async function dualWriteDecisions(
           filePath,
           lineStart: line,
           lineEnd: line,
-          category:
-            d.category != null ? String(d.category) : null,
+          severity,
+          category,
+          body,
+          deCode,
+          paraCode,
           meta: {
             review_slug: d.review_slug ?? null,
+            source: d.source ?? null,
             from_finalize: true,
+            verdict,
+            reason,
           },
         });
         findingId = String(created.id ?? "");
@@ -195,7 +223,10 @@ export async function dualWriteDecisions(
         meta: {
           review_slug: d.review_slug ?? null,
           line,
-          category: d.category ?? null,
+          category,
+          severity,
+          source: d.source ?? null,
+          body: body ? body.slice(0, 2000) : null,
         },
       });
       written += 1;
@@ -234,7 +265,18 @@ export async function dualWriteDecisions(
     }
 
     if (runId) {
-      await port.completeRun(runId, { status: "completed" });
+      await port.completeRun(runId, {
+        status: "completed",
+        meta: buildFinalizeCoverageMeta(decisions, {
+          dual_write: true,
+          ...(opts.run?.meta ?? {}),
+          written,
+          skipped,
+          exclusions,
+          conventions,
+          findings_created: findings,
+        }),
+      });
     }
 
     return {

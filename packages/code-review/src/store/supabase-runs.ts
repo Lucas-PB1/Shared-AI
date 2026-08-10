@@ -59,18 +59,29 @@ export async function restCreateRun(
 export async function restCompleteRun(
   rest: SupabaseRest,
   runId: string,
-  fields: { status?: string; finishedAt?: string } = {}
+  fields: {
+    status?: string;
+    finishedAt?: string;
+    meta?: Record<string, unknown>;
+  } = {}
 ): Promise<Record<string, unknown>> {
   const stamp =
     fields.finishedAt ??
     new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
   const q = new URLSearchParams({ id: `eq.${runId}` });
   const url = `${rest.config.restBase}/review_runs?${q}`;
+  const payload: Record<string, unknown> = {
+    status: fields.status ?? "completed",
+    finished_at: stamp,
+  };
+  if (fields.meta && typeof fields.meta === "object") {
+    payload.meta = fields.meta;
+  }
   const rows = (await rest.request(
     "PATCH",
     url,
     rest.headers({ prefer: "return=representation" }),
-    { status: fields.status ?? "completed", finished_at: stamp }
+    payload
   )) as Array<Record<string, unknown>> | null;
   if (!rows?.length) throw new StoreError("completeRun: resposta vazia");
   return rows[0];

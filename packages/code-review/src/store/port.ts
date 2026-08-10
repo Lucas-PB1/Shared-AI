@@ -74,7 +74,12 @@ export interface ReviewStorePort {
   ): Promise<Record<string, unknown>>;
   completeRun(
     runId: string,
-    fields?: { status?: string; finishedAt?: string }
+    fields?: {
+      status?: string;
+      finishedAt?: string;
+      /** Merge final da cobertura (o que foi avaliado, contagens). */
+      meta?: Record<string, unknown>;
+    }
   ): Promise<Record<string, unknown>>;
   createFinding(
     runId: string,

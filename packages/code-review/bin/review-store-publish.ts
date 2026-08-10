@@ -11,6 +11,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   extractReportFilePath,
+  extractReportVerdict,
   parseFindingsFromReport,
 } from "../src/report/index.js";
 import { reviewWorkDir } from "../src/memory/paths.js";
@@ -19,6 +20,7 @@ import {
   logPublishResult,
   publishRun,
   type CreateFindingFields,
+  type ReportScanEntry,
 } from "../src/store/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -54,22 +56,35 @@ function parseArgs(argv: string[]): {
   return { project, reports, pr, sha, branch, source, slug };
 }
 
-function collectFindings(reportsDir: string): CreateFindingFields[] {
-  if (!fs.existsSync(reportsDir)) return [];
+function scanReports(reportsDir: string): {
+  findings: CreateFindingFields[];
+  reports: ReportScanEntry[];
+} {
+  if (!fs.existsSync(reportsDir)) {
+    return { findings: [], reports: [] };
+  }
   const files = fs
     .readdirSync(reportsDir)
     .filter((n) => n.endsWith(".md") && !n.startsWith("diff-"))
-    .map((n) => path.join(reportsDir, n));
+    .map((n) => path.join(reportsDir, n))
+    .sort();
 
   const out: CreateFindingFields[] = [];
+  const scans: ReportScanEntry[] = [];
   const seen = new Set<string>();
+
   for (const f of files) {
     const md = fs.readFileSync(f, "utf8");
     const defaultFile = extractReportFilePath(md);
+    const verdict = extractReportVerdict(md);
+    const basename = path.basename(f);
+    let findingCount = 0;
+
     for (const p of parseFindingsFromReport(md, defaultFile)) {
       const key = `${p.findingKey}|${p.filePath ?? ""}|${p.lineStart ?? ""}`;
       if (seen.has(key)) continue;
       seen.add(key);
+      findingCount += 1;
       out.push({
         findingKey: p.findingKey,
         summary: p.summary,
@@ -78,12 +93,24 @@ function collectFindings(reportsDir: string): CreateFindingFields[] {
         body: p.body,
         deCode: p.deCode,
         paraCode: p.paraCode,
-        category: "avaliar",
-        meta: { report: path.basename(f) },
+        severity: p.severity,
+        category: p.category ?? "avaliar",
+        meta: {
+          report: basename,
+          has_de: Boolean(p.deCode),
+          has_para: Boolean(p.paraCode),
+        },
       });
     }
+
+    scans.push({
+      report: basename,
+      file: defaultFile,
+      verdict,
+      findings: findingCount,
+    });
   }
-  return out;
+  return { findings: out, reports: scans };
 }
 
 async function main(): Promise<number> {
@@ -100,7 +127,7 @@ async function main(): Promise<number> {
     ? path.resolve(args.reports)
     : path.join(reviewWorkDir(project), "reports");
 
-  const findings = collectFindings(reportsDir);
+  const { findings, reports } = scanReports(reportsDir);
   const envPr =
     args.pr ??
     (process.env.PR_NUMBER
@@ -116,6 +143,7 @@ async function main(): Promise<number> {
 
   const result = await publishRun(findings, {
     projectSlug: args.slug,
+    reports,
     run: {
       source: args.source,
       actorKind: "tool",
@@ -127,7 +155,6 @@ async function main(): Promise<number> {
       reviewSlug: envPr ? `pr-${envPr}` : "ci-publish",
       meta: {
         reports_dir: reportsDir,
-        report_files: findings.length,
       },
     },
   });
@@ -140,6 +167,14 @@ async function main(): Promise<number> {
         run_id: result.runId ?? null,
         findings: result.findings,
         scanned: findings.length,
+        reports_scanned: reports.length,
+        files_reviewed: [
+          ...new Set(
+            reports
+              .map((r) => r.file)
+              .filter((p): p is string => Boolean(p && p.trim()))
+          ),
+        ],
         error: result.error ?? null,
         reports: reportsDir,
       },

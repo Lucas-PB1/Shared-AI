@@ -6,6 +6,8 @@ import assert from "node:assert/strict";
 import {
   StoreError,
   buildHeaders,
+  buildRunCoverageMeta,
+  buildFinalizeCoverageMeta,
   CONVENTION_PROMOTE_THRESHOLD,
   conventionBodyFromDecision,
   countAceitoVerdicts,
@@ -33,6 +35,7 @@ import {
 } from "../../src/shared/index.js";
 import {
   extractReportFilePath,
+  extractReportVerdict,
   parseFindingsFromReport,
 } from "../../src/report/index.js";
 
@@ -126,8 +129,11 @@ function mockPort(calls: string[]): ReviewStorePort {
       calls.push(`createRun:${fields?.source ?? "local"}`);
       return { id: "run-1" };
     },
-    async completeRun(runId: string) {
+    async completeRun(runId: string, fields?: { meta?: Record<string, unknown> }) {
       calls.push(`completeRun:${runId}`);
+      if (fields?.meta && typeof fields.meta === "object") {
+        calls.push(`completeRunMeta:${String(fields.meta.kind ?? "")}`);
+      }
       return { id: runId, status: "completed" };
     },
     async createFinding(_runId: string, fields: CreateFindingFields) {
@@ -284,6 +290,7 @@ describe("dualWriteDecisions", () => {
       "single aceito must not promote convention"
     );
     assert.ok(calls.includes("completeRun:run-1"));
+    assert.ok(calls.includes("completeRunMeta:finalize_coverage"));
   });
 
   it("promotes convention when same finding_key aceito twice", async () => {
@@ -361,6 +368,38 @@ describe("publishRun", () => {
     assert.ok(calls.includes("createRun:ci"));
     assert.ok(calls.includes("createFinding:k1"));
     assert.ok(calls.includes("completeRun:run-1"));
+    assert.ok(calls.includes("completeRunMeta:review_coverage"));
+  });
+});
+
+describe("run coverage meta", () => {
+  it("lists files even with zero findings from reports", () => {
+    const meta = buildRunCoverageMeta({
+      findings: [],
+      reports: [
+        {
+          report: "Foo.md",
+          file: "src/Foo.php",
+          verdict: "OK",
+          findings: 0,
+        },
+      ],
+    });
+    assert.equal(meta.kind, "review_coverage");
+    assert.deepEqual(meta.files_reviewed, ["src/Foo.php"]);
+    assert.equal(meta.files_count, 1);
+    assert.equal(meta.findings_count, 0);
+  });
+
+  it("finalize coverage counts verdicts", () => {
+    const meta = buildFinalizeCoverageMeta([
+      { decision: "aceito", file: "a.ts", finding_id: "x" },
+      { decision: "rejeitado", file: "b.ts", finding_id: "y" },
+      { decision: "aceito", file: "a.ts", finding_id: "z" },
+    ]);
+    assert.equal(meta.kind, "finalize_coverage");
+    assert.deepEqual(meta.files_reviewed, ["a.ts", "b.ts"]);
+    assert.equal((meta.by_verdict as Record<string, number>).aceito, 2);
   });
 });
 
@@ -403,18 +442,24 @@ describe("parseFindingsFromReport", () => {
     const md = `
 ## \`src/x.ts\`
 
+**Veredito:** OK
+
 #### x.ts:10 — missing await
 <!-- avaliar-inline:src/x.ts:10:fid:missing-await -->
 
+**Severidade:** media
 **Em português:**
 > Falta await aqui
 `;
     assert.equal(extractReportFilePath(md), "src/x.ts");
+    assert.equal(extractReportVerdict(md), "OK");
     const findings = parseFindingsFromReport(md, "src/x.ts");
     assert.equal(findings.length, 1);
     assert.equal(findings[0].findingKey, "missing-await");
     assert.equal(findings[0].lineStart, 10);
     assert.match(findings[0].summary, /await/i);
+    assert.ok(findings[0].body && findings[0].body.includes("await"));
+    assert.equal(findings[0].severity, "media");
   });
 });
 

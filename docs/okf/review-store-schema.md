@@ -28,8 +28,8 @@ profiles + project_members # ACL cloud (não entram no prompt)
 | --- | --- | --- |
 | `projects` | Repo/sistema (`slug` = basename) | — |
 | `profiles` / `project_members` | Multi-user + roles (JWT/RLS cloud). Local com `service_role` não preenche | Não |
-| `review_runs` | Execução (`local` \| `ci` \| `pre_commit` \| `agent`) | Não |
-| `findings` | Comentários (summary, file, De/Para/body). Auditoria Studio | Não (por default) |
+| `review_runs` | Execução (`local` \| `ci` \| `pre_commit` \| `agent`). `meta` guarda cobertura | Não |
+| `findings` | Comentários (summary, file, De/Para/body, severity). Auditoria Studio | Não (por default) |
 | `decisions` | Ledger de vereditos humanos; fonte imutável de verdade | Não direto |
 | `exclusions` | Política “nunca sugerir”: deriva de `rejeitado` / `nao-aplicavel` | **Sim** |
 | `conventions` | Política “aplicar neste projeto”: promove com **2+** `aceito` no mesmo `finding_key` | **Sim** |
@@ -41,6 +41,17 @@ profiles + project_members # ACL cloud (não entram no prompt)
 - `exclusions.occurrences` / `source`: contagem e origem (`finalize`, `memory-push`).
 - `conventions.finding_key` + `occurrences`: upsert por projeto+tema.
 - RLS: membro só enxerga projetos com membership; `service_role` bypassa (CI/tooling).
+
+### O que foi avaliado (`review_runs.meta`)
+
+Publish e dual-write gravam cobertura no `meta` do run (sem tabela nova):
+
+| `kind` | Origem | Campos úteis |
+| --- | --- | --- |
+| `review_coverage` | CI / `review-store-publish` | `files_reviewed`, `reports[]` (arquivo, veredito, #findings), `by_category`, `by_severity`, contagens De/Para/body |
+| `finalize_coverage` | chat / dual-write | `files_reviewed`, `by_verdict`, `finding_keys`, contagens written/skipped |
+
+Assim um run **OK com 0 findings** ainda registra quais arquivos/relatórios foram lidos.
 
 ### profiles e project_members
 

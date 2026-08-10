@@ -3,10 +3,8 @@
  */
 
 import {
-  DE_LABEL,
   INLINE_MARKER_RE,
   MD_DE_PARA_BLOCK,
-  PARA_LABEL,
   extractFindingTheme,
   stableFindingId,
 } from "../shared/index.js";
@@ -20,6 +18,8 @@ export type ParsedReportFinding = {
   body: string | null;
   deCode: string | null;
   paraCode: string | null;
+  severity: string | null;
+  category: string | null;
 };
 
 function extractDePara(block: string): {
@@ -75,8 +75,10 @@ export function parseFindingsFromReport(
     const pt = extractPtSummary(block);
     const summary = pt || extractFindingTheme(title);
     const { deCode, paraCode } = extractDePara(block);
-    const hasDePara = block.includes(DE_LABEL) || block.includes(PARA_LABEL);
-    const body = hasDePara || pt ? block.slice(0, 4000) : null;
+    // Bloco completo no body — Studio/auditoria precisam do contexto.
+    const body = block.slice(0, 8000);
+    const severity = extractLabeledField(block, "Severidade|Severity");
+    const category = extractLabeledField(block, "Categoria|Category");
 
     const dedupe = `${findingKey}|${filePath ?? ""}|${lineStart ?? ""}`;
     if (seen.has(dedupe)) continue;
@@ -87,9 +89,11 @@ export function parseFindingsFromReport(
       summary,
       filePath,
       lineStart,
-      body,
+      body: body || null,
       deCode,
       paraCode,
+      severity,
+      category,
     });
   }
 
@@ -99,5 +103,25 @@ export function parseFindingsFromReport(
 /** Extrai path do header `## \`path\`` se presente. */
 export function extractReportFilePath(markdown: string): string | null {
   const m = /^##\s+`([^`]+)`/m.exec(markdown);
+  return m ? m[1].trim() : null;
+}
+
+/** `**Veredito:** OK` (CI) / line no topo do relatório. */
+export function extractReportVerdict(markdown: string): string | null {
+  const m =
+    /\*\*Veredito:\*\*\s*(.+)$/im.exec(markdown) ||
+    /^Veredito:\s*(.+)$/im.exec(markdown);
+  return m ? m[1].trim() : null;
+}
+
+function extractLabeledField(
+  block: string,
+  labelAlt: string
+): string | null {
+  const re = new RegExp(
+    `\\*\\*(?:${labelAlt}):\\*\\*\\s*(.+)`,
+    "i"
+  );
+  const m = re.exec(block);
   return m ? m[1].trim() : null;
 }

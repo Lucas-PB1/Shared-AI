@@ -17,7 +17,8 @@ Implementação TypeScript em `packages/code-review`. Layout de fatias: [STRUCTU
 | Port + client | `src/store/` |
 | Dual-write + promote | `dualWriteDecisions` · `bin/review-dual-write.ts` |
 | Policy no prompt | `storeMemoryForFile` → exclusions + conventions |
-| Publish run/findings | `publishRun` · `bin/review-store-publish.ts` |
+| Publish run/findings | `publishRun` · `buildRunCoverageMeta` · `bin/review-store-publish.ts` |
+| Cobertura do run | `src/store/run-summary.ts` (`review_runs.meta`) |
 | Memory pull/push | `bin/review-memory-pull.ts` · `review-memory-push.ts` |
 | LLM | `src/llm/run.ts` ← `storeMemoryForFile` |
 | `/finalizar` | `tools/sh/finalizar-review.sh` |

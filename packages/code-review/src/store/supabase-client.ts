@@ -47,7 +47,11 @@ export class ReviewStore extends SupabaseRest implements ReviewStorePort {
 
   completeRun(
     runId: string,
-    fields?: { status?: string; finishedAt?: string }
+    fields?: {
+      status?: string;
+      finishedAt?: string;
+      meta?: Record<string, unknown>;
+    }
   ): Promise<Record<string, unknown>> {
     return restCompleteRun(this, runId, fields);
   }
