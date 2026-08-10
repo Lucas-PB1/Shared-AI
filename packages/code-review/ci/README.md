@@ -91,7 +91,9 @@ Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
   1. `review-check.sh` (Semgrep, ESLint, PHPStan, tsc)
   2. `review-llm.ts` → relatório `/avaliar` (skills/rules por path + convencoes + exclusions + diff)
   3. Comentário no PR (cria ou atualiza)
-  4. Comentários **inline** nos achados com `#### arquivo:L`
+  4. Comentários **inline** nos achados com `#### arquivo:L` (De/Para).
+     **Não apaga** threads no re-run quando o achado some (histórico + reply/Resolve).
+     Opt-in de purge: `REVIEW_AVALIAR_INLINE_PURGE=1`.
   5. Cópia em workdir tmp (`HOSTDIME_REVIEW_WORKDIR/reports/`) → artifact no workflow
 - Job **não bloqueia merge** por default (`REVIEW_AVALIAR_SOFT=true`) — comenta achados para o dev
 - Job **falha** só se `REVIEW_AVALIAR_SOFT=false` (gate hard, opcional)

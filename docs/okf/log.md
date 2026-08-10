@@ -2,6 +2,7 @@
 
 ## 2026-08-10
 
+* **Update**: Inlines do Avaliar **não** são deletados ao re-avaliar/corrigir código; purge só com `REVIEW_AVALIAR_INLINE_PURGE=1`.
 * **Update**: Cobertura rica no store — `review_runs.meta` (files/reports/verdicts), findings com body/severity no publish e dual-write.
 * **Update**: Adapt hostdime-hub (CI + docs) ao store evolutivo; slug via git remote / `hostdime-hub`.
 * **Update**: Memória evolutiva — dual-write promove exclusions (rejeitado) e conventions (≥2 aceito); findings no finalize; docs do modelo.

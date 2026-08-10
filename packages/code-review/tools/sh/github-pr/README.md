@@ -8,5 +8,5 @@ Entry: `../review-github-pr.sh` (orquestra; soft ≤200 linhas).
 | `state.sh` | estado incremental no PR |
 | `report.sh` | estático/LLM + artifact |
 | `inline-suggestion.sh` | De/Para → suggestion GitHub |
-| `inline-post.sh` | publicae inlines |
+| `inline-post.sh` | publica inlines; **não apaga** threads (purge opt-in) |
 | `summary.sh` | comentário por arquivo + resumo |
