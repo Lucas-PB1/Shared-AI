@@ -158,10 +158,15 @@ EOF
     echo "Erro: tsx não encontrado em $tsx" >&2
     exit 1
   fi
-  # Secrets vêm do monorepo (HOSTDIME_IA_ROOT/.env). Slug = nome do repo revisado
-  # (ex. dna) — projetos ligados não precisam de .env próprio.
-  local slug
-  slug="$(basename "$project_root" | tr '[:upper:]' '[:lower:]')"
+  # Secrets vêm do monorepo (HOSTDIME_IA_ROOT/.env).
+  # Slug: git origin (hostdime-hub) > basename do path > REVIEW_PROJECT_SLUG no CI.
+  local slug origin_url
+  origin_url="$(git -C "$project_root" remote get-url origin 2>/dev/null || true)"
+  if [[ -n "$origin_url" ]]; then
+    slug="$(basename "${origin_url%.git}" | tr '[:upper:]' '[:lower:]')"
+  else
+    slug="$(basename "$project_root" | tr '[:upper:]' '[:lower:]')"
+  fi
   echo "→ dual-write store (slug=${slug})…"
   HOSTDIME_IA_ROOT="$root_ia" \
     "$tsx" "$root_ia/packages/code-review/bin/review-dual-write.ts" \

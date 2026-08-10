@@ -25,6 +25,7 @@ import {
   dualWriteDecisions,
   logDualWriteResult,
 } from "../src/store/index.js";
+import { resolveProjectSlug } from "../src/store/project-slug.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const toolsDir = path.resolve(__dirname, "../tools");
@@ -186,6 +187,10 @@ async function cmdIngest(
   );
 
   const dual = await dualWriteDecisions(added, {
+    projectSlug:
+      resolveProjectSlug(project) ||
+      String(process.env.REVIEW_PROJECT_SLUG ?? "").trim() ||
+      undefined,
     run: {
       source: "ci",
       prNumber,

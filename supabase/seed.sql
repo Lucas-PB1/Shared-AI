@@ -1,5 +1,4 @@
--- Projetos locais ligados (paths em ~/Projetos e registry hostdime-ia).
--- Slug = basename do path (dual-write / --slug).
+-- Projetos com review store (slug = git remote origin / CI REVIEW_PROJECT_SLUG).
 -- Secrets do store ficam só no monorepo hostdime-ia — repos ligados sem .env.
 
 INSERT INTO public.projects (slug, name, github_owner, github_repo)
@@ -10,11 +9,8 @@ VALUES
   ('hdbr-hubspot', 'HDBR HubSpot (front-website)', 'HostDimeBR', 'front-website'),
   ('hdbr-payment', 'HDBR Payment', NULL, 'hdbr-payment'),
   ('hostdime-organograma', 'HostDime Organograma', 'HostDimeBR', 'hostdime-organograma'),
-  ('hostdime', 'HostDime tema HubSpot (hostdime-hub)', 'HostDimeBR', 'hostdime-hub'),
-  ('hostdime-theme-hub', 'HostDime theme hub (workspace)', NULL, NULL),
-  ('hostdime-backend', 'HostDime theme hub backend', NULL, NULL),
-  ('maps', 'Maps', 'Lucas-PB1', 'dnd-maps'),
-  ('sicredi', 'Sicredi', NULL, NULL)
+  ('hostdime-hub', 'HostDime tema HubSpot', 'HostDimeBR', 'hostdime-hub'),
+  ('hostdime-backend', 'HostDime theme hub backend', NULL, NULL)
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO public.review_runs (

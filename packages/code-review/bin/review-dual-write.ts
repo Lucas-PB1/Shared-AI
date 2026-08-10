@@ -4,8 +4,8 @@
  * Uso após /finalizar (append em decisions.jsonl) ou reprocessamento.
  *
  * Secrets (SUPABASE_*): sempre do monorepo hostdime-ia / HOSTDIME_IA_ROOT.
- * Projetos ligados (ex. DNA) **não** precisam de .env — só o slug no store
- * (`--slug`, basename do repo, ou REVIEW_PROJECT_SLUG no CI).
+ * Projetos ligados (ex. DNA, hostdime-hub) **não** precisam de .env —
+ * slug via --slug, git remote origin, basename ou REVIEW_PROJECT_SLUG no CI.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +19,10 @@ import {
   loadDotenvFile,
   logDualWriteResult,
 } from "../src/store/index.js";
+import {
+  preserveProcessReviewSlugAfter,
+  resolveProjectSlug,
+} from "../src/store/project-slug.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(__dirname, "../../..");
@@ -44,25 +48,14 @@ function parseArgs(argv: string[]): {
   return { project, source, slug, all };
 }
 
-/**
- * Secrets centralizados; o .env do app sob review é opcional e não carrega
- * antes do monorepo (evita depender de DNA/hdbr-payment com SUPABASE_*).
- */
 async function loadStoreSecrets(): Promise<void> {
-  const iaRoot = String(process.env.HOSTDIME_IA_ROOT ?? "").trim() || monorepoRoot;
-  for (const root of new Set([iaRoot, monorepoRoot])) {
-    await loadDotenvFile(path.join(root, ".env"));
-  }
-}
-
-/** Slug no store = repo revisado (minúsculo; bate com CHECK projects_slug_format). */
-function resolveProjectSlug(project: string, explicit?: string): string {
-  const fromFlag = String(explicit ?? "").trim();
-  if (fromFlag) return fromFlag.toLowerCase();
-  const base = path.basename(path.resolve(project));
-  if (base && base !== "." && base !== path.sep) return base.toLowerCase();
-  const fromEnv = String(process.env.REVIEW_PROJECT_SLUG ?? "").trim();
-  return (fromEnv || "hostdime-ia").toLowerCase();
+  const iaRoot =
+    String(process.env.HOSTDIME_IA_ROOT ?? "").trim() || monorepoRoot;
+  await preserveProcessReviewSlugAfter(async () => {
+    for (const root of new Set([iaRoot, monorepoRoot])) {
+      await loadDotenvFile(path.join(root, ".env"));
+    }
+  });
 }
 
 async function main(): Promise<number> {
