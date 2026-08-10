@@ -1,0 +1,15 @@
+# context.yaml sintético — fixture de review (exclusions export)
+schema: 2
+exclusions:
+  - id: legacy-repo-pattern
+    scope: "app/Legacy/**"
+    decision: rejeitado
+    reason: "padrão legado aceito pelo time"
+  - id: edge-preview
+    scope: "preview/**"
+    decision: nao-aplicavel
+    reason: "só editor / preview"
+  - id: still-pending
+    scope: "**/*"
+    decision: aceito
+    reason: "não deve ir para exclusions.yaml no export"

@@ -509,6 +509,105 @@ test_health_multi_project() {
   assert "health_detect_profile_label" test "$label" = "python"
 }
 
+test_review_diff_and_ci_empty() {
+  project="$(hostdime_make_git_project)"
+  printf 'readme\n' >"$project/README.md"
+  git -C "$project" add README.md
+  git -C "$project" commit -q -m "init non-reviewable"
+
+  export CURSOR_PROJECT_DIR="$project"
+  mapfile -t files < <(
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD 2>/dev/null || true
+  )
+  assert "diff vazio em HEAD" test "${#files[@]}" -eq 0
+
+  out="$(
+    HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD 2>&1
+  )"
+  status=$?
+  assert "review-ci exit 0 sem arquivos" test "$status" -eq 0
+  assert "review-ci mensagem vazio" grep -q 'Nenhum arquivo revisável' <<<"$out"
+}
+
+test_review_diff_and_ci_with_file() {
+  project="$(hostdime_make_git_project)"
+  hostdime_mock_semgrep
+  printf 'readme\n' >"$project/README.md"
+  git -C "$project" add README.md
+  git -C "$project" commit -q -m "init"
+  mkdir -p "$project/src"
+  cp "$HOSTDIME_IA_ROOT/tests/fixtures/review/sample-ok.mjs" "$project/src/ok.mjs"
+  git -C "$project" add src/ok.mjs
+  git -C "$project" commit -q -m "add reviewable js"
+
+  export CURSOR_PROJECT_DIR="$project"
+  diff_out="$(
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD~1 2>/dev/null
+  )"
+  assert "diff lista ok.mjs" grep -qx 'src/ok.mjs' <<<"$diff_out"
+
+  out="$(
+    HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD~1 2>&1
+  )"
+  status=$?
+  assert "review-ci com arquivo limpo" test "$status" -eq 0
+  assert "review-ci OK summary" grep -q 'CI review: OK' <<<"$out"
+}
+
+test_check_inbox_clean_js() {
+  project="$(hostdime_make_git_project)"
+  hostdime_mock_semgrep
+  mkdir -p "$project/src"
+  cp "$HOSTDIME_IA_ROOT/tests/fixtures/review/sample-ok.mjs" "$project/src/ok.mjs"
+  export CURSOR_PROJECT_DIR="$project"
+
+  out="$(
+    HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
+      REVIEW_CHECK_CI=1 \
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/check-inbox.sh" "$project/src/ok.mjs" 2>&1
+  )"
+  status=$?
+  assert "check-inbox exit 0" test "$status" -eq 0
+  assert "check-inbox fim" grep -q 'Fim' <<<"$out"
+}
+
+test_export_exclusions() {
+  project="$(hostdime_make_git_project)"
+  mkdir -p "$project/.cursor/review"
+  cp "$HOSTDIME_IA_ROOT/tests/fixtures/review/context.yaml" \
+    "$project/.cursor/review/context.yaml"
+
+  out="$(
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-export-exclusions.sh" "$project" 2>&1
+  )"
+  status=$?
+  assert "export exit 0" test "$status" -eq 0
+  assert "export file" test -f "$project/.cursor/review/exclusions.yaml"
+  assert "export count 2" grep -q '2 exclus' <<<"$out"
+  assert "export rejeitado" grep -q 'legacy-repo-pattern' "$project/.cursor/review/exclusions.yaml"
+  if grep -q 'still-pending' "$project/.cursor/review/exclusions.yaml"; then
+    assert "export nao inclui aceito" false
+  else
+    assert "export nao inclui aceito" true
+  fi
+}
+
+test_smoke_ingest_python() {
+  out="$(python3 "$HOSTDIME_IA_ROOT/tests/smoke_review_ingest.py" 2>&1)"
+  status=$?
+  assert "ingest smoke exit 0" test "$status" -eq 0
+  assert "ingest smoke ok" grep -q 'smoke_review_ingest: OK' <<<"$out"
+}
+
+test_lint_python_tools() {
+  out="$(bash "$HOSTDIME_IA_ROOT/tests/lint-python.sh" 2>&1)"
+  status=$?
+  assert "lint python exit 0" test "$status" -eq 0
+  assert "lint python ok" grep -q 'py_compile: OK' <<<"$out"
+}
+
 echo "HostDime IA — testes (runner embutido)"
 
 run_test "link symlinks" test_link_symlinks
@@ -543,6 +642,12 @@ run_test "profiles detect bootstrap" test_profiles_detect_and_bootstrap
 run_test "onboard noninteractive" test_onboard_noninteractive
 run_test "health multi-project" test_health_multi_project
 run_test "memoria migrar restore" test_memoria_migrar_restore
+run_test "review-diff/ci empty" test_review_diff_and_ci_empty
+run_test "review-diff/ci with file" test_review_diff_and_ci_with_file
+run_test "check-inbox clean js" test_check_inbox_clean_js
+run_test "export exclusions" test_export_exclusions
+run_test "smoke ingest python" test_smoke_ingest_python
+run_test "lint python tools" test_lint_python_tools
 
 echo ""
 echo "Resumo: $pass ok, $fail falha(s)"

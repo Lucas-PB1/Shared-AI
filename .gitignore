@@ -15,9 +15,5 @@ vendor/
 __pycache__/
 *.py[cod]
 
-# Locks (dev local)
-composer.lock
-package-lock.json
-
 # Cursor local — symlinks do setup; fonte em packages/
 .cursor/
