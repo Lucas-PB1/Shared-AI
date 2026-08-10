@@ -213,20 +213,21 @@ Scripts monólitos aumentam custo de mudança:
 
 ### Ordem de trabalho sugerida
 
-1. **`review-ingest-pr-decisions.py`** — ~~regras~~ → `lib/ingest_decisions.py` *(feito)*
-2. **`review-github-pr.sh`** — resumo/veredito/`finding_id` → `lib/pr_report.py` *(parcial; orquestração gh ainda no shell)*
-3. **`review-memoria.py`** — resto do monólito; finding_ids já extraído *(parcial)*
-4. **`review-llm.mjs` / skill-routing** — mocks de API; routing sem I/O pesado *(pending)*
+1. **`review-ingest-pr-decisions.py`** — `lib/ingest_decisions.py` *(feito)*
+2. **`review-github-pr.sh`** — `lib/pr_report.py` *(feito para regras; gh I/O no shell)*
+3. **`review-memoria.py`** — `lib/memoria_core.py` *(feito para escopo/convencoes/merge)*
+4. **`review-llm.mjs` / skill-routing** — unit tests Node *(feito)*
 
 ### Trabalho (iterativo)
 
 | # | Item | Status |
 | --- | --- | --- |
-| 3.1 | Extrair módulo de regras de decisão (ingest) | feito (`lib/ingest_decisions.py`) |
-| 3.2 | Extrair helpers de `finding_id` | feito (`lib/finding_ids.py`) |
-| 3.3 | Reduzir shell “gordo” (github-pr) | parcial — veredito/resumo/markers em `lib/pr_report.py` |
-| 3.4 | Cobertura de regressão (re-ingest, reply, fix intra-PR, prioridade resumo) | feito (unittest) |
-| 3.5 | Atualizar `packages/code-review/tools/README.md` | feito |
+| 3.1 | Extrair módulo de regras de decisão (ingest) | feito |
+| 3.2 | Extrair helpers de `finding_id` | feito |
+| 3.3 | Reduzir shell “gordo” (github-pr) | feito (regras em lib; shell orquestra) |
+| 3.4 | Cobertura de regressão | feito |
+| 3.5 | Docs `tools/README.md` | feito |
+| 3.6 | `memoria_core` + skill-routing/LLM unit | feito |
 
 ### Validação
 
@@ -238,8 +239,8 @@ npm run lint:python
 
 ### Saída
 
-- [x] Núcleo de regras com testes unitários (parcial: ingest + ids)
-- [ ] PRs pequenos mergeados (3.3+ em follow-ups)
+- [x] Núcleo de regras com testes unitários (ingest, ids, pr_report, memoria, routing/llm)
+- [ ] PR mergeado em `main`
 
 ---
 
@@ -371,3 +372,4 @@ Convenções:
 | 2026-08-10 | Fase 2 implementada (smoke review, lint:shell, lint:python) |
 | 2026-08-10 | Fase 3 parcial: `lib/finding_ids` + `lib/ingest_decisions` + unittest |
 | 2026-08-10 | Fase 3.3: `lib/pr_report` + CLI `review-pr-report.py` (resumo/veredito) |
+| 2026-08-10 | Fase 3 restante: `memoria_core` + testes skill-routing/llm |

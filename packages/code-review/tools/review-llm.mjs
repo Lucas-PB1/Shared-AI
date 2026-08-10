@@ -29,6 +29,8 @@ function parseArgs(argv) {
   return args;
 }
 
+export { parseArgs };
+
 function inferStack(file) {
   if (file.endsWith('.tsx')) return 'TypeScript / React';
   if (file.endsWith('.ts')) return 'TypeScript';
@@ -39,6 +41,8 @@ function inferStack(file) {
   if (file.includes('constants/layout.ts')) return 'Tailwind / layout.ts';
   return '—';
 }
+
+export { inferStack };
 
 function readOptional(filePath) {
   if (!filePath || !fs.existsSync(filePath)) return '';
@@ -272,6 +276,8 @@ function buildUserPrompt({
     'Produce the /avaliar markdown report now.',
   ].join('\n');
 }
+
+export { buildUserPrompt };
 
 export function parseVerdict(report) {
   const match = report.match(/^\*\*Veredito:\*\*\s*(.+)$/m);
