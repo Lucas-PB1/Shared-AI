@@ -39,3 +39,4 @@ Ver [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md).
 
 - [x] **Fase 1 — Fundação** — locks versionados, CI `npm ci`, docs de testes e onboarding
 - [x] **Fase 2 — Defesa** — smoke review-diff/ci/inbox/export/ingest; `lint:shell` / `lint:python`
+- [x] **Fase 3.1–3.3 (parcial)** — `lib/` ingest + ids + pr_report; shell do github-pr orquestra gh

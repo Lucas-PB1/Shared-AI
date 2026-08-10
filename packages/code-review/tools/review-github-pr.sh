@@ -4,6 +4,11 @@
 set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PR_REPORT_PY="$TOOLS_DIR/review-pr-report.py"
+
+pr_report() {
+  python3 "$PR_REPORT_PY" "$@"
+}
 
 resolve_hostdime_ia_root() {
   if [[ -n "${HOSTDIME_IA_ROOT:-}" && -d "$HOSTDIME_IA_ROOT" ]]; then
@@ -85,19 +90,7 @@ llm_enabled() {
 
 parse_verdict_from_report() {
   local report="$1"
-  if printf '%s' "$report" | grep -qE '^\*\*Veredito:\*\*[[:space:]]*OK[[:space:]]*$'; then
-    printf '%s' "OK"
-    return
-  fi
-  if printf '%s' "$report" | grep -qiE '^\*\*Veredito:\*\*[[:space:]]*N[aã]o recomendado'; then
-    printf '%s' "Não recomendado"
-    return
-  fi
-  if printf '%s' "$report" | grep -qiE '^\*\*Veredito:\*\*[[:space:]]*Ajustes necessários'; then
-    printf '%s' "Ajustes necessários"
-    return
-  fi
-  printf '%s' "Ajustes necessários"
+  printf '%s' "$report" | pr_report parse-verdict
 }
 
 verdict_is_failure() {
@@ -114,7 +107,7 @@ block_is_impeditivo() {
   local report="$1"
   local block="$2"
   local title impeditivo_section
-  title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
+  title="$(extract_block_title "$block")"
   [[ -n "$title" ]] || return 1
   if [[ "$(parse_verdict_from_report "$report")" == "Não recomendado" ]]; then
     return 0
@@ -126,33 +119,25 @@ block_is_impeditivo() {
   ')"
   [[ -n "$impeditivo_section" ]] || return 1
   # grep -F: título do LLM pode conter aspas/backslash — awk -v quebra nesses casos
-  printf '%s' "$impeditivo_section" | grep -qF -- "$title"
+  printf '%s' "$impeditivo_section" | grep -qF -- "#### ${title}" \
+    || printf '%s' "$impeditivo_section" | grep -qF -- "$title"
 }
 
 extract_block_title() {
   local block="$1"
-  local title
-  title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
-  [[ -n "$title" ]] || return 1
-  if [[ "$title" =~ ^####[[:space:]]+(.+)$ ]]; then
-    printf '%s' "${BASH_REMATCH[1]}"
-  else
-    printf '%s' "$title"
-  fi
+  printf '%s' "$block" | pr_report extract-title
 }
 
 compute_finding_id() {
   local title="$1"
-  printf '%s' "$title" | python3 "$TOOLS_DIR/review-memoria.py" finding-id
+  printf '%s' "$title" | pr_report finding-id
 }
 
 build_inline_marker() {
   local file="$1"
   local start_line="$2"
   local title="$3"
-  local fid
-  fid="$(compute_finding_id "$title")"
-  printf '<!-- avaliar-inline:%s:%s:fid:%s -->' "$file" "$start_line" "$fid"
+  pr_report inline-marker "$file" "$start_line" "$title"
 }
 
 summary_log_file() {
@@ -401,25 +386,18 @@ file_snippet_at_range() {
 
 normalize_code_snippet() {
   local code="$1"
-  printf '%s' "$code" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed '/^[[:space:]]*$/d'
+  printf '%s' "$code" | pr_report normalize-snippet
 }
 
 code_snippets_match() {
   local expected="$1"
   local actual="$2"
-  local ne na
-  ne="$(normalize_code_snippet "$expected")"
-  na="$(normalize_code_snippet "$actual")"
-  [[ "$ne" == "$na" ]]
+  pr_report snippets-match "$expected" "$actual"
 }
 
 extract_pt_summary() {
   local block="$1"
-  printf '%s' "$block" | awk '
-    /^\*\*Em português:\*\*/ { found = 1; next }
-    found && /^> / { sub(/^> /, ""); print; exit }
-    found && /^>/ { sub(/^>/, ""); print; exit }
-  '
+  printf '%s' "$block" | pr_report extract-pt
 }
 
 # Comentário inline curto — título + resumo PT. De/Para/GitHub ficam só no artifact.
@@ -427,11 +405,8 @@ build_inline_comment_body() {
   local block="$1"
   local title summary body
 
-  title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
+  title="$(extract_block_title "$block")"
   [[ -n "$title" ]] || return 1
-  if [[ "$title" =~ ^####[[:space:]]+(.+)$ ]]; then
-    title="${BASH_REMATCH[1]}"
-  fi
 
   summary="$(extract_pt_summary "$block")"
   body="$title"
@@ -509,10 +484,10 @@ prepare_github_suggestion() {
   [[ "$de_lines" -ge 1 && "$de_lines" -le 10 ]] || return 1
   [[ "$de_lines" -eq "$para_lines" ]] || return 1
 
-  title="$(printf '%s' "$block" | awk '/^#### / { print; exit }')"
+  title="$(extract_block_title "$block")"
   summary="$(extract_pt_summary "$block")"
   hint=""
-  if [[ "$title" =~ ^####[[:space:]]+[^:]+:([0-9]+) ]]; then
+  if [[ "$title" =~ ^[^:]+:([0-9]+) ]]; then
     hint="${BASH_REMATCH[1]}"
   else
     return 1
@@ -718,48 +693,20 @@ post_summary() {
 
   local reviewed=0 skipped=0 failed=0 inline_this_run=0 blocking_this_run=0
   local files_section="" merge_section=""
-  local line action file verdict inline_count blocking priority sort_file
-  sort_file="$(mktemp)"
-  trap 'rm -f "$sort_file"' RETURN
+  local table_json
 
   if [[ -f "$files_log" ]]; then
-    while IFS=$'\t' read -r action file verdict inline_count blocking; do
-      [[ -z "$file" ]] && continue
-      case "$action" in
-        review)
-          reviewed=$((reviewed + 1))
-          inline_this_run=$((inline_this_run + inline_count))
-          blocking_this_run=$((blocking_this_run + blocking))
-          if verdict_is_failure "$verdict"; then
-            failed=$((failed + 1))
-          fi
-          priority=3
-          local status_icon="✅ revisado"
-          if [[ "${blocking:-0}" -gt 0 ]]; then
-            priority=1
-            status_icon="🛑 impeditivo"
-          elif [[ "${inline_count:-0}" -gt 0 ]]; then
-            priority=2
-            status_icon="💬 ${inline_count} comentário(s) inline"
-          elif verdict_is_failure "$verdict"; then
-            priority=2
-            status_icon="⚠️ achado (sem inline acionável)"
-          fi
-          printf '%s\t%s\t%s\n' "$priority" "$file" \
-            "| \`${file}\` | ${status_icon} | ${verdict:-—} |" >>"$sort_file"
-          ;;
-        skip)
-          skipped=$((skipped + 1))
-          printf '4\t%s\t%s\n' "$file" \
-            "| \`${file}\` | ⏭ pulado (já revisado neste head) | — |" >>"$sort_file"
-          ;;
-      esac
-    done <"$files_log"
-  fi
-
-  if [[ -s "$sort_file" ]]; then
-    files_section="$(sort -t $'\t' -k1,1n -k2,2 "$sort_file" | cut -f3-)"
-    files_section+=$'\n'
+    table_json="$(pr_report format-files-table <"$files_log")"
+    eval "$(
+      printf '%s' "$table_json" | python3 -c '
+import json,sys,shlex
+d=json.load(sys.stdin)
+print("files_section="+shlex.quote(d.get("table","")))
+s=d.get("stats") or {}
+for k in ("reviewed","skipped","failed","inline_this_run","blocking_this_run"):
+    print(f"{k}={int(s.get(k,0))}")
+'
+    )"
   fi
 
   local resultado=""

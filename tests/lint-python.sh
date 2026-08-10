@@ -6,11 +6,19 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-mapfile -t files < <(git ls-files 'packages/code-review/tools/*.py')
-if [[ "${#files[@]}" -eq 0 ]]; then
-  # fallback se git ls-files vazio (worktree estranho)
-  mapfile -t files < <(find packages/code-review/tools -maxdepth 1 -name '*.py' -type f | sort)
-fi
+# Preferir arquivos no git; sempre unir com find (worktree suja / pré-commit).
+declare -A seen=()
+files=()
+while IFS= read -r f; do
+  [[ -n "$f" ]] || continue
+  [[ -n "${seen[$f]:-}" ]] && continue
+  seen[$f]=1
+  files+=("$f")
+done < <(
+  { git ls-files 'packages/code-review/tools/**/*.py' 'packages/code-review/tools/*.py' 2>/dev/null
+    find packages/code-review/tools -name '*.py' -type f ! -path '*/__pycache__/*'
+  } | sort -u
+)
 
 if [[ "${#files[@]}" -eq 0 ]]; then
   echo "Nenhum .py em packages/code-review/tools"
