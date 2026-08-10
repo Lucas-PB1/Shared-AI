@@ -23,7 +23,7 @@ Copie `github-avaliar-pr.yml` para `.github/workflows/avaliar-pr.yml`.
 Copie `github-avaliar-pr-memoria.yml` — no **merge** ingere threads do `/avaliar` **direto no store** (sem PR de yaml no repo).
 
 **Memória = store (obrigatório):**  
-`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` + `REVIEW_PROJECT_SLUG` — pull/publish/ingest no CI. Jobs **falham** sem secrets. Sem fallback offline.
+`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` + `REVIEW_PROJECT_SLUG` — pull/ingest no CI. Jobs **falham** sem secrets. Sem fallback offline. **Publish de findings não roda no open PR** — só ingest pós-merge.
 
 Cache efêmero: `HOSTDIME_REVIEW_WORKDIR` (default no template: `${{ runner.temp }}/hostdime-review`); artifacts de `reports/`.
 

@@ -15,11 +15,13 @@ O **review store** unifica code-review no Cursor e no GitHub Actions. Todos os f
 ## Memória evolutiva
 
 ```text
-/avaliar ou CI publish  →  review_runs + findings (comentários)
-/finalizar              →  decisions
-                            ├─ rejeitado | n/a  → exclusions (sempre)
-                            └─ aceito (≥2× mesmo finding_key) → conventions
-próximo /avaliar        →  prompt ← exclusions + conventions (por path)
+CI /avaliar (open PR)     →  comentários no GitHub + artifact (tmp)
+                             ⛔ sem gravação de resultados no store
+merge + ingest            →  review_runs + findings + decisions
+                              ├─ rejeitado | n/a  → exclusions
+                              └─ aceito (≥2× mesmo finding_key) → conventions
+/finalizar (Cursor)         →  dual-write decisions (ledger humano, opcional no dev)
+próximo /avaliar            →  prompt ← exclusions + conventions (por path)
 ```
 
 | Camada | Evolui o quê |
@@ -27,26 +29,27 @@ próximo /avaliar        →  prompt ← exclusions + conventions (por path)
 | Skills / rules | stack e arquitetura genérica |
 | **exclusions** | falsos positivos / o que o time recusou |
 | **conventions** | padrões aceitos **recorrentes** neste projeto |
-| findings / decisions | auditoria e ledger (Studio), não fine-tune de pesos |
+| findings / decisions | auditoria e ledger (**após merge/ingest** ou `/finalizar`), não todo open PR |
 
 ## Fluxo
 
 ```text
   Cursor /avaliar · /finalizar          GitHub Actions
-  review-* tools (bash + tsx)           review-github-pr · ingest · publish
+  review-* tools (bash + tsx)           review-github-pr · ingest pós-merge
            │                                      │
            └──────── service role / REST ─────────┘
                               │
                               ▼
-                    Supabase (projects, review_runs,
-                    findings, decisions, exclusions,
-                    conventions + RLS)
+                    Supabase (projects always;
+                    runs/findings/decisions/policy
+                    só com decisão humana ou merge)
 ```
 
 | Ator | Auth | Escreve |
 | --- | --- | --- |
-| Dev / CLI | service role (local); JWT membro (cloud alvo) | runs, findings no finalize, decisions, policy |
-| CI | `SUPABASE_SERVICE_ROLE_KEY` | runs `ci`, findings publish, ingest pós-merge |
+| Dev / CLI | service role (local); JWT membro (cloud alvo) | dual-write `/finalizar` (decisions + policy) |
+| CI open PR | secrets para **pull** de policy | **não** grava runs/findings |
+| CI pós-merge | `SUPABASE_SERVICE_ROLE_KEY` | ingest (runs, findings, decisions, policy) |
 | Studio | UI | leitura / ops |
 
 Cache efêmero em workdir tmp (`HOSTDIME_REVIEW_WORKDIR` / `$TMPDIR/hostdime-review/…`) — **não** pasta no repo.
@@ -58,9 +61,10 @@ Repos em `projects` sem `.env` próprio (ex. DNA): secrets só no monorepo; slug
 | Capacidade | Estado |
 | --- | --- |
 | Store local + smoke | feito |
-| Dual-write + promote exclusions/conventions | feito |
-| Publish / memory pull-push | feito (hard) |
-| CI template pull → review → publish | feito |
+| Dual-write + promote exclusions/conventions | feito (`/finalizar`) |
+| Ingest pós-merge (única gravação de resultado no CI) | feito |
+| Memory pull no open PR (só lê policy) | feito |
+| ~~Publish findings no open PR~~ | **removido** (só artifact/GitHub) |
 | Schema multi-user + RLS | feito (ACL; não é fine-tuning) |
 | Projeto cloud + secrets | **ops HostDime** |
 | Dashboard multi-repo | fora do monorepo |
