@@ -214,7 +214,7 @@ Scripts monólitos aumentam custo de mudança:
 ### Ordem de trabalho sugerida
 
 1. **`review-ingest-pr-decisions.py`** — ~~regras~~ → `lib/ingest_decisions.py` *(feito)*
-2. **`review-github-pr.sh`** — geração de resumo, `finding_id`, ordenação por prioridade *(pending)*
+2. **`review-github-pr.sh`** — resumo/veredito/`finding_id` → `lib/pr_report.py` *(parcial; orquestração gh ainda no shell)*
 3. **`review-memoria.py`** — resto do monólito; finding_ids já extraído *(parcial)*
 4. **`review-llm.mjs` / skill-routing** — mocks de API; routing sem I/O pesado *(pending)*
 
@@ -224,8 +224,8 @@ Scripts monólitos aumentam custo de mudança:
 | --- | --- | --- |
 | 3.1 | Extrair módulo de regras de decisão (ingest) | feito (`lib/ingest_decisions.py`) |
 | 3.2 | Extrair helpers de `finding_id` | feito (`lib/finding_ids.py`) |
-| 3.3 | Reduzir shell “gordo” (github-pr) | pending |
-| 3.4 | Cobertura de regressão (re-ingest, reply, fix intra-PR) | feito (unittest) |
+| 3.3 | Reduzir shell “gordo” (github-pr) | parcial — veredito/resumo/markers em `lib/pr_report.py` |
+| 3.4 | Cobertura de regressão (re-ingest, reply, fix intra-PR, prioridade resumo) | feito (unittest) |
 | 3.5 | Atualizar `packages/code-review/tools/README.md` | feito |
 
 ### Validação
@@ -370,3 +370,4 @@ Convenções:
 | 2026-08-10 | Fase 0 decidida (locks B); fase 1 implementada (locks, npm ci, docs) |
 | 2026-08-10 | Fase 2 implementada (smoke review, lint:shell, lint:python) |
 | 2026-08-10 | Fase 3 parcial: `lib/finding_ids` + `lib/ingest_decisions` + unittest |
+| 2026-08-10 | Fase 3.3: `lib/pr_report` + CLI `review-pr-report.py` (resumo/veredito) |

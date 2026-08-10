@@ -19,6 +19,8 @@
 | --- | --- |
 | `lib/finding_ids.py` | `slugify`, `extract_finding_theme`, `stable_finding_id` |
 | `lib/ingest_decisions.py` | Regras de classify, parsers De/Para, `upsert_pr_decisions` |
+| `lib/pr_report.py` | Veredito, prioridade da tabela do resumo PR, markers, snippets |
+| `review-pr-report.py` | CLI fina sobre `lib/pr_report` (chamada pelo shell) |
 
 Import: colocar `packages/code-review/tools` no `sys.path` (os CLIs já fazem isso).
 
@@ -28,9 +30,10 @@ Import: colocar `packages/code-review/tools` no `sys.path` (os CLIs já fazem is
 npm run test:review-unit
 # ou
 python3 packages/code-review/tools/tests/test_ingest_and_ids.py
+python3 packages/code-review/tools/tests/test_pr_report.py
 ```
 
-Inclui regressões: reply humano rejeita/aceita, re-ingest substitui `github-pr-N`, fix intra-PR, `finding_id` estável sem path.
+Inclui regressões: reply humano rejeita/aceita, re-ingest substitui `github-pr-N`, fix intra-PR, `finding_id` estável, ordenação da tabela do resumo por prioridade.
 
 Deps Node/PHP ficam na **raiz do hostdime-ia** — um único `npm run setup`.
 

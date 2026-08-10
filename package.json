@@ -26,7 +26,7 @@
     "review:export-exclusions": "bash packages/code-review/tools/review-export-exclusions.sh",
     "lint:shell": "bash tests/lint-shell.sh",
     "lint:python": "bash tests/lint-python.sh",
-    "test:review-unit": "python3 packages/code-review/tools/tests/test_ingest_and_ids.py",
+    "test:review-unit": "python3 packages/code-review/tools/tests/test_ingest_and_ids.py && python3 packages/code-review/tools/tests/test_pr_report.py",
     "test": "bash tests/run-all.sh"
   },
   "engines": {
