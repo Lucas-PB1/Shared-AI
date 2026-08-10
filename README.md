@@ -59,6 +59,8 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run onboard` | Máquina + projeto | Wizard: setup, perfil, bootstrap, extras |
 | `npm run health` | Máquina | Saúde dos projetos registrados (symlinks, git, review) |
 | `npm run review:ci -- [base]` | Projeto | Mesmo review-check do `/avaliar` nos arquivos do diff |
+| `npm run pre-commit` | Projeto | Review estático nos **arquivos do stage** (sem LLM) |
+| `npm run hooks:pre-commit -- [dir]` | Projeto | Instala `.git/hooks/pre-commit` |
 | `npm run lint:shell` | Dev | ShellCheck nos `*.sh` versionados (skip se não instalado) |
 | `npm run lint:python` | Dev | `py_compile` dos tools Python de code-review |
 | `npm run test` | Dev | Suite de testes (`tests/`; bats se disponível, senão runner embutido) |

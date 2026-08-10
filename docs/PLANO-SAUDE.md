@@ -280,15 +280,15 @@ Só após baseline de fundação + defesa. Itens do [CHECKLIST.md](../CHECKLIST.
 
 **Pre-commit + review:ci**
 
-- [ ] Definir ferramentas no hook (shellcheck? só files do stage?)
-- [ ] Timeout e skip para monorepos enormes
-- [ ] Doc no README: “como desligar / instalar”
+- [x] Ferramentas no hook: check-inbox nos staged + shellcheck opcional em `.sh`
+- [x] Limite `HOSTDIME_PRE_COMMIT_MAX_FILES` (default 40)
+- [x] Doc no README / tools README / WINDOWS.md (skip e install)
 
 **Paridade Windows**
 
 - [ ] Inventário de bash-only em `review-ci` e deps
 - [ ] Máquina ou CI Windows opcional
-- [ ] Atualizar [WINDOWS.md](WINDOWS.md)
+- [x] Nota em [WINDOWS.md](WINDOWS.md) (pre-commit = bash/WSL por enquanto)
 
 **MCP genérico**
 
@@ -373,3 +373,4 @@ Convenções:
 | 2026-08-10 | Fase 3 parcial: `lib/finding_ids` + `lib/ingest_decisions` + unittest |
 | 2026-08-10 | Fase 3.3: `lib/pr_report` + CLI `review-pr-report.py` (resumo/veredito) |
 | 2026-08-10 | Fase 3 restante: `memoria_core` + testes skill-routing/llm |
+| 2026-08-10 | Fase 4 parcial: pre-commit estático (`review-pre-commit`) |

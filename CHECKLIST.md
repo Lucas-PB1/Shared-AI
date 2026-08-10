@@ -15,8 +15,8 @@ Melhorias priorizadas do pacote. Atualize ao concluir itens ou repriorizar.
 ## P2 — próximo
 
 - [ ] **Framework MCP genérico** — generalizar `/hubspot-mcp` para outros servidores
-- [ ] **Pre-commit + `review:ci`** — hook local alinhado ao CI
-- [ ] **Paridade Windows** — `review:ci` nativo PowerShell (hoje exige Git Bash)
+- [x] **Pre-commit + `review:ci`** — hook local estático nos staged (`review-pre-commit` / `hooks:pre-commit`)
+- [ ] **Paridade Windows** — `review:ci` nativo PowerShell (hoje pre-commit exige bash/Git Bash)
 
 ## P3 — futuro
 
@@ -40,3 +40,4 @@ Ver [docs/PLANO-SAUDE.md](docs/PLANO-SAUDE.md).
 - [x] **Fase 1 — Fundação** — locks versionados, CI `npm ci`, docs de testes e onboarding
 - [x] **Fase 2 — Defesa** — smoke review-diff/ci/inbox/export/ingest; `lint:shell` / `lint:python`
 - [x] **Fase 3** — libs puras (ingest, ids, pr_report, memoria_core) + unit Python/Node (routing/LLM)
+- [x] **Fase 4 (parcial)** — pre-commit estático sem LLM (`hooks:pre-commit` / `review-pre-commit`)
