@@ -25,7 +25,7 @@ Este command cobre **install + auto** na config global. SDK e pipelines ficam pa
 
 - Conta Cursor (subscription)
 - Node não é obrigatório para o binário `agent`; Python 3 para merge de config
-- Linux/macOS/WSL ou Windows PowerShell nativo
+- Linux ou Windows PowerShell nativo
 
 ## Fluxo (`/cursor-cli`)
 

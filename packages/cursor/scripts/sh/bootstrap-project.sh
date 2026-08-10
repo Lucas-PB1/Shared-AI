@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# Prepara um repositório: rules, commands, pastas review, perfil opcional.
+# Uso: npm run bootstrap -- /caminho/do/repo [--profile=nome]
+#      npm run bootstrap -- --profile=react /caminho/do/repo
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+LINK_SCRIPT="${CURSOR_LINK_PROJECT_SCRIPT:-${CURSOR_LINK_RULES_SCRIPT:-$HOME/.cursor/link-project.sh}}"
+
+PROJECT=""
+PROFILE=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --profile=*)
+      PROFILE="${1#--profile=}"
+      shift
+      ;;
+    --profile)
+      PROFILE="${2:?Informe o perfil (npm run bootstrap -- --help)}"
+      shift 2
+      ;;
+    -h | --help)
+      # shellcheck disable=SC1091
+      source "$SCRIPT_DIR/../lib/profiles/sh/profiles.sh"
+      echo "Uso: npm run bootstrap -- <repo> [--profile=nome]"
+      profiles_usage_line
+      exit 0
+      ;;
+    *)
+      if [[ -z "$PROJECT" ]]; then
+        PROJECT="$1"
+      else
+        echo "Argumento inesperado: $1" >&2
+        exit 1
+      fi
+      shift
+      ;;
+  esac
+done
+
+[[ -n "$PROJECT" ]] || {
+  echo "Informe o diretório raiz do projeto:" >&2
+  echo "  npm run bootstrap -- /caminho/do/repo [--profile=laravel]" >&2
+  exit 1
+}
+
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../lib/install/sh/projects-registry.sh"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../lib/profiles/sh/apply-bootstrap-profile.sh"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/../lib/profiles/sh/profiles.sh"
+
+if [[ ! -x "$LINK_SCRIPT" ]]; then
+  echo "Pacote não instalado. Execute primeiro:" >&2
+  echo "  npm run setup:skills" >&2
+  exit 1
+fi
+
+if [[ ! -d "$PROJECT" ]]; then
+  echo "Diretório não encontrado: $PROJECT" >&2
+  exit 1
+fi
+
+PROJECT="$(cd "$PROJECT" && pwd)"
+HOSTDIME_IA_ROOT="${HOSTDIME_IA_ROOT:-$MONOREPO_ROOT}"
+
+HOME_ABS="$(cd "$HOME" && pwd -P)"
+if [[ "$PROJECT" == "$HOME_ABS" || "$PROJECT" == "$(cd "$HOME/.cursor" && pwd -P)" ]]; then
+  echo "Erro: não use o home (~) nem ~/.cursor como projeto do hostdime-ia." >&2
+  exit 1
+fi
+
+if [[ -n "$PROFILE" ]]; then
+  if ! profiles_is_valid "$PROFILE"; then
+    echo "Erro: perfil desconhecido: $PROFILE" >&2
+    profiles_usage_line >&2
+    exit 1
+  fi
+fi
+
+mkdir -p "$PROJECT/.cursor/skills"
+"$LINK_SCRIPT" "$PROJECT"
+register_project "$PROJECT"
+
+if [[ -n "$PROFILE" ]]; then
+  apply_bootstrap_profile "$PROJECT" "$PROFILE"
+fi
+
+echo ""
+echo "Projeto preparado: $PROJECT"
+echo "  .cursor/rules/    → rules do projeto (*-project.mdc); orquestrador em ~/.cursor/rules/"
+echo "  .cursor/commands/ → commands do projeto (opcional); hostdime em ~/.cursor/commands/"
+echo "  memória → store Supabase"echo "  .cursor/skills/   → overrides do projeto"
+[[ -n "$PROFILE" ]] && echo "  perfil            → $PROFILE"
+echo "  .gitignore        → artefatos gerenciados (se .cursor/ não estiver ignorado)"

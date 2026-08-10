@@ -8,7 +8,7 @@
 
 ## Mapping
 
-- Anti-corruption entre schema legado e modelo novo na infra
+- Anti-corruption entre schema existente e modelo novo na infra
 - Não expor anemic data holder como “entidade” se domínio é rico
 
 ## Queries de leitura

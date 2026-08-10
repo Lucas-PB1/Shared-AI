@@ -32,7 +32,7 @@ Só estender o roteamento abaixo se o pacote **code-review** estiver instalado (
 - `~/.cursor/skills/review-inbox/SKILL.md`
 - `.cursor/commands/avaliar.md` no workspace (command local do projeto, se existir)
 
-Se **nenhum** existir: manter só a linha genérica de review acima — **não** assumir `/avaliar`, `.cursor/review/inbox/` nem skills `review-*`.
+Se **nenhum** existir: manter só a linha genérica de review acima — **não** assumir `/avaliar` nem skills `review-*`.
 
 | Intenção no pedido | Skill / command |
 | --- | --- |

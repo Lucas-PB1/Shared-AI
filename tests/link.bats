@@ -9,15 +9,13 @@ teardown() {
   hostdime_test_teardown
 }
 
-@test "link-project cria review sem orquestrador nem commands no projeto" {
+@test "link-project não cria .cursor/review no projeto" {
   project="$(hostdime_make_project)"
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
 
   [[ ! -e "$project/.cursor/rules/skills-orchestrator-base.mdc" ]]
   [[ ! -e "$project/.cursor/commands/avaliar.md" ]]
-  [[ -d "$project/.cursor/review/inbox" ]]
-  [[ -f "$project/.cursor/review/.memoria-version" ]]
-  [[ ! -f "$project/.cursor/review/memoria.md" ]]
+  [[ ! -d "$project/.cursor/review" ]]
   [[ -L "$CURSOR_USER_DIR/rules/skills-orchestrator-base.mdc" ]]
   [[ -L "$CURSOR_USER_DIR/commands/avaliar.md" ]]
 }

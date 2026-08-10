@@ -14,8 +14,6 @@ shellcheck não encontrado no PATH.
 Instale para reproduzir o job CI localmente:
   # Debian/Ubuntu
   sudo apt install shellcheck
-  # macOS
-  brew install shellcheck
 
 Depois: npm run lint:shell
 EOF

@@ -11,7 +11,7 @@ teardown() {
 
 @test "health reporta projeto registrado" {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=python "$project" >/dev/null
 
   run bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/health.sh"
@@ -22,7 +22,7 @@ teardown() {
 
 @test "health --json inclui projetos" {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     "$project" >/dev/null
 
   run bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/health.sh" --json

@@ -22,7 +22,7 @@ Request → Front Controller (index.php) → Application bootstrap
 - Scripts `.phtml` no módulo (`view/`)
 - Layout compartilhado via `layout/layout.phtml`
 
-## Zend legado vs Laminas
+## Zend Framework vs Laminas
 
 - Pacotes `zendframework/*` → migrar para `laminas/*` quando possível
 - APIs similares; namespaces `Laminas\` substituem `Zend\`

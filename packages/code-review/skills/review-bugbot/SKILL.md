@@ -50,7 +50,7 @@ If the review subagent fails before producing findings, inspect the failure text
   - rewrote validateSession (L40-58) to check token expiry before the DB lookup
   - removed the fallback that accepted empty tokens
 
-  src/auth/legacy.ts (deleted)
+  src/auth/session.ts (deleted)
 
   src/auth/mfa.ts (added):
   - new verifyMfaCode() (L1-30) that calls the TOTP service and rate-limits attempts

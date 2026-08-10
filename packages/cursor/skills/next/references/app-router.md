@@ -6,7 +6,7 @@
 - Layouts aninhados, loading.js, error.js, route handlers
 - React Server Components como padrão
 
-## Pages Router (legado)
+## Pages Router (`pages/`)
 
 - Diretório `pages/` com `getServerSideProps`, `getStaticProps`
 - Mantido para apps existentes; migração incremental possível

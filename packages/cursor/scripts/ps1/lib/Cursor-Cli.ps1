@@ -41,21 +41,36 @@ function Get-CursorCliTemplateFile {
     return $null
 }
 
-function Get-CursorCliMergePy {
+function Get-CursorCliMergeTs {
     $root = Get-HostdimeIaRoot
     if (-not $root) { return $null }
-    $path = Join-Path $root 'packages/cursor/scripts/lib/merge-cursor-cli-config.py'
+    $path = Join-Path $root 'packages/cursor/scripts/lib/install/ts/merge-cursor-cli-config.ts'
     if (Test-Path -LiteralPath $path) { return $path }
+    return $null
+}
+
+function Get-HostdimeTsx {
+    $root = Get-HostdimeIaRoot
+    if ($root) {
+        $tsx = Join-Path $root 'node_modules/.bin/tsx.cmd'
+        if (Test-Path -LiteralPath $tsx) { return $tsx }
+        $tsx = Join-Path $root 'node_modules/.bin/tsx'
+        if (Test-Path -LiteralPath $tsx) { return $tsx }
+    }
+    $cmd = Get-Command tsx -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
     return $null
 }
 
 function Set-CursorCliAutoConfig {
     $config = Get-CursorCliConfigFile
     $template = Get-CursorCliTemplateFile
-    $py = Get-CursorCliMergePy
+    $mergeTs = Get-CursorCliMergeTs
+    $tsx = Get-HostdimeTsx
     if (-not $template) { throw 'Template cli-config.auto.json não encontrado (HOSTDIME_IA_ROOT?)' }
-    if (-not $py) { throw 'merge-cursor-cli-config.py não encontrado' }
-    $result = & python $py $config $template
+    if (-not $mergeTs) { throw 'merge-cursor-cli-config.ts não encontrado' }
+    if (-not $tsx) { throw 'tsx não encontrado (npm install na raiz do monorepo)' }
+    $result = & $tsx $mergeTs $config $template
     $stateDir = Split-Path -Parent (Get-CursorCliStateFile)
     New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
     Set-Content -LiteralPath (Get-CursorCliStateFile) -Value "STATUS=configured`nCONFIGURED=auto`n"

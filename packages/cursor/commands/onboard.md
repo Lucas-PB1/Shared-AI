@@ -28,7 +28,7 @@ Wizard de **primeira configuração**: instala o pacote, escolhe perfil, faz boo
 | `python` | `pyproject.toml`, `requirements.txt`, `setup.py` |
 | `zend-laminas` | `laminas/*` ou `zendframework/*` no composer |
 
-Detecção: `packages/cursor/scripts/lib/detect-stack.py`.  
+Detecção: `packages/cursor/scripts/lib/profiles/ts/detect-stack.ts`.  
 Menu lista todos em `packages/cursor/profiles/`.  
 Opção **s** = bootstrap genérico (sem rule de projeto).
 

@@ -21,6 +21,11 @@ assert() {
   fi
 }
 
+hostdime_tsx() {
+  local root="${HOSTDIME_IA_ROOT:-$ROOT}"
+  "$root/node_modules/.bin/tsx" "$@"
+}
+
 run_test() {
   local name="$1"
   shift
@@ -37,6 +42,7 @@ test_link_symlinks() {
   assert "sem orquestrador no projeto" test ! -e "$project/.cursor/rules/skills-orchestrator-base.mdc"
   assert "sem command no projeto" test ! -e "$project/.cursor/commands/avaliar.md"
   assert "orquestrador global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-base.mdc"
+  assert "sem pasta review no projeto" test ! -d "$project/.cursor/review"
   assert "command avaliar global" test -L "$CURSOR_USER_DIR/commands/avaliar.md"
   assert "command memoria global" test -L "$CURSOR_USER_DIR/commands/memoria.md"
   assert "command hubspot-mcp global" test -L "$CURSOR_USER_DIR/commands/hubspot-mcp.md"
@@ -46,27 +52,24 @@ test_link_symlinks() {
   assert "command onboard global" test -L "$CURSOR_USER_DIR/commands/onboard.md"
   assert "rule hubspot global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-hubspot.mdc"
   assert "rule okf global" test -L "$CURSOR_USER_DIR/rules/skills-orchestrator-okf.mdc"
-  assert "review inbox" test -d "$project/.cursor/review/inbox"
-  assert "memoria v2" test -f "$project/.cursor/review/.memoria-version"
-  assert "sem memoria.md" test ! -f "$project/.cursor/review/memoria.md"
 }
 
-test_link_removes_legacy_orchestrator() {
+test_link_removes_project_orchestrator() {
   project="$(hostdime_make_project)"
   mkdir -p "$project/.cursor/rules"
   ln -sf "$HOSTDIME_IA_ROOT/packages/cursor/rules/skills-orchestrator-base.mdc" \
     "$project/.cursor/rules/skills-orchestrator-base.mdc"
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
-  assert "orquestrador legado removido" test ! -e "$project/.cursor/rules/skills-orchestrator-base.mdc"
+  assert "orquestrador não no projeto" test ! -e "$project/.cursor/rules/skills-orchestrator-base.mdc"
 }
 
-test_link_removes_legacy_command() {
+test_link_removes_project_command() {
   project="$(hostdime_make_project)"
   mkdir -p "$project/.cursor/commands"
   ln -sf "$HOSTDIME_IA_ROOT/packages/code-review/commands/avaliar.md" \
     "$project/.cursor/commands/avaliar.md"
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
-  assert "command legado removido" test ! -e "$project/.cursor/commands/avaliar.md"
+  assert "command não no projeto" test ! -e "$project/.cursor/commands/avaliar.md"
   assert "command global" test -L "$CURSOR_USER_DIR/commands/avaliar.md"
 }
 
@@ -78,16 +81,20 @@ test_gitignore_scrub_orphans() {
 .cursor/rules/skills-orchestrator-*.mdc
 .cursor/commands/avaliar.md
 .cursor/review/memoria.md
+.cursor/review/
+!.cursor/review/inbox/.gitkeep
 EOF
+  mkdir -p "$project/.cursor/review/inbox"
+  touch "$project/.cursor/review/inbox/.gitkeep"
   ln -sf "$HOSTDIME_IA_ROOT/packages/cursor/rules/skills-orchestrator-base.mdc" \
     "$project/.cursor/rules/skills-orchestrator-base.mdc"
   ln -sf "$HOSTDIME_IA_ROOT/packages/code-review/commands/avaliar.md" \
     "$project/.cursor/commands/avaliar.md"
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/ensure-project-gitignore.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/ensure-project-gitignore.sh"
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/link-from-repo.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/link-from-repo.sh"
   export HOSTDIME_IA_ROOT
   "$CURSOR_LINK_PROJECT_SCRIPT" --quiet "$project"
 
@@ -108,8 +115,12 @@ EOF
   else
     assert "ignore memoria.md scrub" true
   fi
-  assert "ignore context.yaml mantido" grep -qxF '.cursor/review/context.yaml' "$project/.gitignore"
-  assert "ignore decisions mantido" grep -qxF '.cursor/review/decisions.jsonl' "$project/.gitignore"
+  if grep -qE '^\.cursor/review(/|$)' "$project/.gitignore"; then
+    assert "sem ignore review no gitignore" false
+  else
+    assert "sem ignore review no gitignore" true
+  fi
+  assert "pasta review removida se existia" test ! -d "$project/.cursor/review"
 }
 
 test_link_preserves_real() {
@@ -132,7 +143,7 @@ test_link_preserves_real_command() {
 
 test_bootstrap_profile() {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=laravel "$project" >/dev/null
   assert "SKILLS-ROUTING" test -f "$project/.cursor/SKILLS-ROUTING.md"
   assert "laravel-project.mdc" test -f "$project/.cursor/rules/laravel-project.mdc"
@@ -141,7 +152,7 @@ test_bootstrap_profile() {
 
 test_bootstrap_invalid_profile() {
   project="$(hostdime_make_project)"
-  if bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  if bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=invalid "$project" >/dev/null 2>&1; then
     assert "perfil inválido falha" false
   else
@@ -152,9 +163,9 @@ test_bootstrap_invalid_profile() {
 
 test_detach() {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=react "$project" >/dev/null
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/detach-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/detach-project.sh" \
     --keep-registry "$project" >/dev/null
   assert "symlinks rules removidos" test "$(hostdime_count_orchestrator_symlinks "$project")" -eq 0
   assert "symlinks commands removidos" test "$(hostdime_count_command_symlinks "$project")" -eq 0
@@ -163,8 +174,8 @@ test_detach() {
 
 test_detach_registry() {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" "$project" >/dev/null
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/detach-project.sh" "$project" >/dev/null
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" "$project" >/dev/null
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/detach-project.sh" "$project" >/dev/null
   if grep -qF "$project" "$CURSOR_USER_DIR/hostdime-ia/projects.json"; then
     assert "desregistrado" false
   else
@@ -177,72 +188,59 @@ test_merge_hooks() {
   cat >"$hooks" <<'JSON'
 {"version":1,"hooks":{"beforeSubmitPrompt":[{"command":"./custom.sh"}]}}
 JSON
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-hooks-json.py"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/ts/merge-hooks-json.ts"
   example="$HOSTDIME_IA_ROOT/packages/cursor/scripts/hooks/hooks.json.example"
-  result="$(python3 "$py" "$hooks" "$example")"
+  result="$(hostdime_tsx "$ts" "$hooks" "$example")"
   assert "merge ok" test "$result" = "merged"
   assert "custom preservado" grep -q beforeSubmitPrompt "$hooks"
   assert "sessionStart" grep -q ensure-project-cursor "$hooks"
-  result2="$(python3 "$py" "$hooks" "$example")"
+  result2="$(hostdime_tsx "$ts" "$hooks" "$example")"
   assert "idempotente" test "$result2" = "ok"
 }
 
 test_hubspot_mcp_install() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot-mcp.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot/sh/hubspot-mcp.sh"
   mcp_file="$CURSOR_USER_DIR/mcp.json"
   printf '{"mcpServers":{"other":{"command":"echo"}}}\n' >"$mcp_file"
-  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-hubspot-mcp.sh" >/dev/null
+  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/install-hubspot-mcp.sh" >/dev/null
   assert "HubSpotDev no mcp.json" grep -q HubSpotDev "$mcp_file"
   assert "status installed" test "$(hubspot_mcp_read_status)" = "installed"
-  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-hubspot-mcp.sh" --decline >/dev/null
+  "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/install-hubspot-mcp.sh" --decline >/dev/null
   assert "status declined" test "$(hubspot_mcp_read_status)" = "declined"
 }
 
 test_hubspot_mcp_detect() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot-mcp.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/hubspot/sh/hubspot-mcp.sh"
   printf '{"mcpServers":{"HubSpotDev":{"command":"npx"}}}\n' >"$CURSOR_USER_DIR/mcp.json"
   assert "mcp instalado" hubspot_mcp_installed
-}
-
-test_finalizar_inbox() {
-  project="$(hostdime_make_project)"
-  export CURSOR_PROJECT_DIR="$project"
-  inbox="$project/.cursor/review/inbox"
-  reports="$project/.cursor/review/reports"
-  mkdir -p "$inbox" "$reports" "$project/.cursor/review/resultados"
-  echo '<?php echo 1;' >"$inbox/sample.php"
-  cat >"$reports/2026-06-30_review-sample.md" <<'MD'
-## `.cursor/review/inbox/sample.php`
-**Veredito:** OK
-MD
-  bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/finalizar-review.sh" \
-    "$inbox/sample.php" >/dev/null
-  assert "inbox limpo" test ! -f "$inbox/sample.php"
-  assert "relatorio empacotado" test -f "$project/.cursor/review/resultados/2026-06-30_review-sample/relatorio.md"
 }
 
 test_finalizar_repo() {
   project="$(hostdime_make_project)"
   export CURSOR_PROJECT_DIR="$project"
-  reports="$project/.cursor/review/reports"
+  export HOSTDIME_IA_ROOT
+  export HOSTDIME_REVIEW_WORKDIR
+  HOSTDIME_REVIEW_WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/hd-rev.XXXXXX")"
+  reports="$HOSTDIME_REVIEW_WORKDIR/reports"
   src="$project/app/Sample.php"
-  mkdir -p "$(dirname "$src")" "$reports" "$project/.cursor/review/resultados"
+  mkdir -p "$(dirname "$src")" "$reports"
   echo '<?php echo 1;' >"$src"
   cat >"$reports/2026-06-30_app-Sample.md" <<'MD'
 ## `app/Sample.php`
 **Veredito:** OK
 MD
-  bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/finalizar-review.sh" "$src" >/dev/null
+  bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/finalizar-review.sh" "$src" >/dev/null
   assert "arquivo repo preservado" test -f "$src"
   assert "report removido" test ! -f "$reports/2026-06-30_app-Sample.md"
-  assert "resultado criado" test -f "$project/.cursor/review/resultados/2026-06-30_app-Sample/relatorio.md"
+  assert "resultado criado" test -f "$HOSTDIME_REVIEW_WORKDIR/resultados/2026-06-30_app-Sample/relatorio.md"
+  assert "sem pasta review no projeto" test ! -d "$project/.cursor/review"
 }
 
 test_boot_sync_toggle() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/boot-sync.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/boot-sync.sh"
   boot_sync_disable
   assert "off após disable" test "$(boot_sync_read_mode)" = "off"
   boot_sync_write_state "on" "1"
@@ -253,7 +251,7 @@ test_boot_sync_toggle() {
 
 test_boot_sync_unset() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/boot-sync.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/boot-sync.sh"
   rm -f "$(boot_sync_state_file)"
   assert "unset sem state" test "$(boot_sync_read_mode)" = "unset"
   if boot_sync_was_asked; then
@@ -265,7 +263,7 @@ test_boot_sync_unset() {
 
 test_boot_sync_prompt_skip() {
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/boot-sync.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/boot-sync.sh"
   export HOSTDIME_BOOT_SYNC_PROMPT=skip
   rm -f "$(boot_sync_state_file)"
   boot_sync_prompt_if_needed
@@ -279,8 +277,8 @@ test_historico_validate() {
   cat >"$project/.cursor/history/watches.json" <<'JSON'
 {"version":1,"watches":[{"id":"domain","scope":"src/domain/**","scopeKind":"glob","historyFile":"docs/log.md","format":"okf-log","enabled":true}]}
 JSON
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.py"
-  result="$(python3 "$py" validate "$project")"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
+  result="$(hostdime_tsx "$ts" validate "$project")"
   assert "watches valid" test "$result" = "ok"
 }
 
@@ -288,8 +286,8 @@ test_historico_validate_invalid() {
   project="$(hostdime_make_project)"
   mkdir -p "$project/.cursor/history"
   echo '{"version":1,"watches":[{"id":"Bad Id","scope":"x"}]}' >"$project/.cursor/history/watches.json"
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.py"
-  if python3 "$py" validate "$project" >/dev/null 2>&1; then
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
+  if hostdime_tsx "$ts" validate "$project" >/dev/null 2>&1; then
     assert "watches invalid fails" false
   else
     assert "watches invalid fails" true
@@ -302,13 +300,13 @@ test_historico_scope_match() {
   cat >"$project/.cursor/history/watches.json" <<'JSON'
 {"version":1,"watches":[{"id":"domain","scope":"src/domain/**","scopeKind":"glob","historyFile":"docs/log.md","format":"okf-log","enabled":true}]}
 JSON
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.py"
-  if python3 "$py" scope-match "$project" "src/domain/order.ts" >/dev/null 2>&1; then
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
+  if hostdime_tsx "$ts" scope-match "$project" "src/domain/order.ts" >/dev/null 2>&1; then
     assert "scope match hit" true
   else
     assert "scope match hit" false
   fi
-  if python3 "$py" scope-match "$project" "src/other/x.ts" >/dev/null 2>&1; then
+  if hostdime_tsx "$ts" scope-match "$project" "src/other/x.ts" >/dev/null 2>&1; then
     assert "scope match miss" false
   else
     assert "scope match miss" true
@@ -321,12 +319,12 @@ test_historico_merge_hooks() {
   cat >"$project/.cursor/history/watches.json" <<'JSON'
 {"version":1,"watches":[{"id":"api","scope":"src/**","scopeKind":"glob","historyFile":"history.md","format":"markdown","enabled":true}]}
 JSON
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-historico-hooks.py"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/merge-historico-hooks.ts"
   hooks="$project/.cursor/hooks.json"
-  result="$(python3 "$py" "$hooks" "$project")"
+  result="$(hostdime_tsx "$ts" "$hooks" "$project")"
   assert "historico merge created" test "$result" = "created"
   assert "stop hook" grep -q historico-stop "$hooks"
-  result2="$(python3 "$py" "$hooks" "$project")"
+  result2="$(hostdime_tsx "$ts" "$hooks" "$project")"
   assert "historico merge idempotent" test "$result2" = "ok"
 }
 
@@ -356,15 +354,15 @@ JSON
   echo "change" >"$project/src/domain/order.ts"
   git -C "$project" add src/domain/order.ts
 
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history-watch-match.py"
-  pending="$(python3 "$py" pending "$project")"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
+  pending="$(hostdime_tsx "$ts" pending "$project")"
   assert "pending lists domain file" grep -q "src/domain/order.ts" <<<"$pending"
 
-  catchup="$(python3 "$py" catch-up "$project")"
+  catchup="$(hostdime_tsx "$ts" catch-up "$project")"
   assert "catch-up has draft" grep -q "docs/log.md" <<<"$catchup"
   assert "catch-up has placeholder" grep -q "<descreva" <<<"$catchup"
 
-  json="$(python3 "$py" catch-up --json "$project")"
+  json="$(hostdime_tsx "$ts" catch-up --json "$project")"
   assert "catch-up json pending" grep -q '"hasPending": true' <<<"$json"
 }
 
@@ -372,23 +370,23 @@ test_cursor_cli_merge_config() {
   project="$(hostdime_make_project)"
   config="$project/cli-config.json"
   tpl="$HOSTDIME_IA_ROOT/packages/cursor/templates/cli-config.auto.json"
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-cursor-cli-config.py"
-  result="$(python3 "$py" "$config" "$tpl")"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/ts/merge-cursor-cli-config.ts"
+  result="$(hostdime_tsx "$ts" "$config" "$tpl")"
   assert "cli config created" test "$result" = "created"
   assert "approval unrestricted" grep -q '"approvalMode": "unrestricted"' "$config"
   assert "deny rm" grep -q 'Shell(rm)' "$config"
   echo '{"version":1,"editor":{"vimMode":true},"permissions":{"allow":["Shell(ls)"],"deny":[]}}' >"$config"
-  result2="$(python3 "$py" "$config" "$tpl")"
+  result2="$(hostdime_tsx "$ts" "$config" "$tpl")"
   assert "cli config merged" test "$result2" = "merged"
   assert "vim preserved" grep -q '"vimMode": true' "$config"
   assert "allow ls preserved" grep -q 'Shell(ls)' "$config"
-  result3="$(python3 "$py" "$config" "$tpl")"
+  result3="$(hostdime_tsx "$ts" "$config" "$tpl")"
   assert "cli config idempotent" test "$result3" = "ok"
 }
 
 test_cursor_cli_dry_run() {
   export HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT"
-  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/install-cursor-cli.sh" install --dry-run 2>&1)"
+  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/install-cursor-cli.sh" install --dry-run 2>&1)"
   assert "dry-run install" grep -q 'dry-run' <<<"$out"
   if grep -q 'cursor.com/install' <<<"$out" || grep -q 'já instalado' <<<"$out"; then
     assert "dry-run install step" true
@@ -400,7 +398,7 @@ test_cursor_cli_dry_run() {
 test_agent_wrapper_dry_run() {
   project="$(hostdime_make_project)"
   mkdir -p "$project/.cursor/rules"
-  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/agent-cli.sh" --dry-run --project="$project" "fix lint" 2>&1)"
+  out="$(bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/agent-cli.sh" --dry-run --project="$project" "fix lint" 2>&1)"
   assert "agent dry-run project" grep -qF "$project" <<<"$out"
   assert "agent dry-run args" grep -q 'fix lint' <<<"$out"
   assert "agent dry-run approve mcps" grep -q 'approve-mcps' <<<"$out"
@@ -417,33 +415,33 @@ test_sync_inbox_scan() {
   git -C "$project" commit -q -m "initial"
   echo "wip" >>"$project/README.md"
   printf '{"projects":[{"path":"%s"}]}' "$project" >"$CURSOR_USER_DIR/hostdime-ia/projects.json"
-  py="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/scan-sync-inbox.py"
-  out="$(python3 "$py")"
+  ts="$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox/ts/scan-sync-inbox.ts"
+  out="$(hostdime_tsx "$ts")"
   assert "sync-inbox scan hit" grep -q '"changedCount"' <<<"$out"
   assert "sync-inbox scan project" grep -qF "$project" <<<"$out"
   assert "sync-inbox summary field" grep -q '"summary"' <<<"$out"
-  assert "sync-inbox cards script" test -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox-cards.py"
+  assert "sync-inbox cards script" test -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/sync-inbox/ts/sync-inbox-cards.ts"
 }
 
 test_profiles_detect_and_bootstrap() {
   project="$(hostdime_make_project)"
   echo '{"dependencies":{"next":"14.0.0"}}' >"$project/package.json"
-  out="$(python3 "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.py" "$project")"
+  out="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/ts/detect-stack.ts" "$project")"
   assert "detect next" test "$out" = "next"
 
   project2="$(hostdime_make_project)-py"
   mkdir -p "$project2/.git"
   touch "$project2/pyproject.toml"
-  out2="$(python3 "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/detect-stack.py" "$project2")"
+  out2="$(hostdime_tsx "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/ts/detect-stack.ts" "$project2")"
   assert "detect python" test "$out2" = "python"
 
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=next "$project" >/dev/null
   assert "next SKILLS-ROUTING" test -f "$project/.cursor/SKILLS-ROUTING.md"
   assert "next-project.mdc" test -f "$project/.cursor/rules/next-project.mdc"
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/profiles/sh/profiles.sh"
   list="$(profiles_list)"
   assert "profiles_list next" grep -q next <<<"$list"
   assert "profiles_list python" grep -q python <<<"$list"
@@ -453,7 +451,7 @@ test_profiles_detect_and_bootstrap() {
 test_onboard_noninteractive() {
   project="$(hostdime_make_project)"
   echo '{"dependencies":{"next":"14.0.0"}}' >"$project/package.json"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/onboard.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/onboard.sh" \
     --project="$project" \
     --profile=next \
     --yes \
@@ -463,44 +461,30 @@ test_onboard_noninteractive() {
   assert "onboard registry" grep -qF "$project" "$CURSOR_USER_DIR/hostdime-ia/projects.json"
 }
 
-test_memoria_migrar_restore() {
+test_memoria_init_backup_restore() {
   project="$(hostdime_make_project)"
-  mkdir -p "$project/.cursor/review"
-  cat >"$project/.cursor/review/memoria.md" <<'EOF'
-# Memória de review
-
-## Convenções validadas pelo time
-
-_(vazio)_
-
-## Histórico
-
-### 2026-07-02 — review-app-Foo
-
-- [rejeitado] L10 — Não usar Repository — padrão legado
-- [aceito] L20 — Validar com FormRequest
-EOF
-  python3 "$ROOT/packages/code-review/tools/review-memoria.py" backup "$project" >/dev/null
-  python3 "$ROOT/packages/code-review/tools/review-memoria.py" migrar --write "$project" >/dev/null
-  assert "memoria v2 marker" test -f "$project/.cursor/review/.memoria-version"
-  assert "context yaml" test -f "$project/.cursor/review/context.yaml"
-  assert "sem context.json" test ! -f "$project/.cursor/review/context.json"
-  assert "decisions jsonl" test -f "$project/.cursor/review/decisions.jsonl"
-  assert "sem memoria.md" test ! -f "$project/.cursor/review/memoria.md"
-  assert "sem legacy" test ! -f "$project/.cursor/review/memoria.legacy.md"
-  python3 "$ROOT/packages/code-review/tools/review-memoria.py" restore --write "$project" >/dev/null
-  assert "restore keeps v2" test -f "$project/.cursor/review/.memoria-version"
-  assert "restore sem memoria.md" test ! -f "$project/.cursor/review/memoria.md"
-  assert "backup kept" test -f "$project/.cursor/review/backups/memoria-original.md"
+  export HOSTDIME_REVIEW_WORKDIR
+  HOSTDIME_REVIEW_WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/hd-rev.XXXXXX")"
+  hostdime_tsx "$ROOT/packages/code-review/bin/review-memoria.ts" init --write "$project" >/dev/null
+  assert "memoria version" test -f "$HOSTDIME_REVIEW_WORKDIR/.memoria-version"
+  assert "context yaml" test -f "$HOSTDIME_REVIEW_WORKDIR/context.yaml"
+  assert "decisions jsonl" test -f "$HOSTDIME_REVIEW_WORKDIR/decisions.jsonl"
+  assert "convencoes" test -f "$HOSTDIME_REVIEW_WORKDIR/convencoes.md"
+  assert "sem pasta no projeto" test ! -d "$project/.cursor/review"
+  hostdime_tsx "$ROOT/packages/code-review/bin/review-memoria.ts" backup "$project" >/dev/null
+  assert "backup latest context" test -f "$HOSTDIME_REVIEW_WORKDIR/backups/latest/context.yaml"
+  hostdime_tsx "$ROOT/packages/code-review/bin/review-memoria.ts" restore --write "$project" >/dev/null
+  assert "restore version" test -f "$HOSTDIME_REVIEW_WORKDIR/.memoria-version"
+  assert "restore context" test -f "$HOSTDIME_REVIEW_WORKDIR/context.yaml"
 }
 
 test_health_multi_project() {
   project="$(hostdime_make_project)"
-  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/bootstrap-project.sh" \
+  bash "$HOSTDIME_IA_ROOT/packages/cursor/scripts/sh/bootstrap-project.sh" \
     --profile=python "$project" >/dev/null
 
   # shellcheck disable=SC1091
-  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/health-check.sh"
+  source "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/health-check.sh"
   out="$(health_check_project "$project" 2>&1 || true)"
   assert "health python label" grep -q 'perfil: python' <<<"$out"
   assert "health rules ok" grep -q 'rules do projeto ok' <<<"$out"
@@ -517,13 +501,13 @@ test_review_diff_and_ci_empty() {
 
   export CURSOR_PROJECT_DIR="$project"
   mapfile -t files < <(
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD 2>/dev/null || true
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-diff.sh" HEAD 2>/dev/null || true
   )
   assert "diff vazio em HEAD" test "${#files[@]}" -eq 0
 
   out="$(
     HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-ci.sh" HEAD 2>&1
   )"
   status=$?
   assert "review-ci exit 0 sem arquivos" test "$status" -eq 0
@@ -543,13 +527,13 @@ test_review_diff_and_ci_with_file() {
 
   export CURSOR_PROJECT_DIR="$project"
   diff_out="$(
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD~1 2>/dev/null
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-diff.sh" HEAD~1 2>/dev/null
   )"
   assert "diff lista ok.mjs" grep -qx 'src/ok.mjs' <<<"$diff_out"
 
   out="$(
     HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD~1 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-ci.sh" HEAD~1 2>&1
   )"
   status=$?
   assert "review-ci com arquivo limpo" test "$status" -eq 0
@@ -566,7 +550,7 @@ test_check_inbox_clean_js() {
   out="$(
     HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
       REVIEW_CHECK_CI=1 \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/check-inbox.sh" "$project/src/ok.mjs" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/check-inbox.sh" "$project/src/ok.mjs" 2>&1
   )"
   status=$?
   assert "check-inbox exit 0" test "$status" -eq 0
@@ -575,37 +559,40 @@ test_check_inbox_clean_js() {
 
 test_export_exclusions() {
   project="$(hostdime_make_git_project)"
-  mkdir -p "$project/.cursor/review"
+  export HOSTDIME_REVIEW_WORKDIR
+  HOSTDIME_REVIEW_WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/hd-rev.XXXXXX")"
+  mkdir -p "$HOSTDIME_REVIEW_WORKDIR"
   cp "$HOSTDIME_IA_ROOT/tests/fixtures/review/context.yaml" \
-    "$project/.cursor/review/context.yaml"
+    "$HOSTDIME_REVIEW_WORKDIR/context.yaml"
 
   out="$(
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-export-exclusions.sh" "$project" 2>&1
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-export-exclusions.sh" "$project" 2>&1
   )"
   status=$?
   assert "export exit 0" test "$status" -eq 0
-  assert "export file" test -f "$project/.cursor/review/exclusions.yaml"
+  assert "export file" test -f "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"
   assert "export count 2" grep -q '2 exclus' <<<"$out"
-  assert "export rejeitado" grep -q 'legacy-repo-pattern' "$project/.cursor/review/exclusions.yaml"
-  if grep -q 'still-pending' "$project/.cursor/review/exclusions.yaml"; then
+  assert "export rejeitado" grep -q 'accepted-repo-pattern' "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"
+  assert "sem pasta no projeto" test ! -d "$project/.cursor/review"
+  if grep -q 'still-pending' "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"; then
     assert "export nao inclui aceito" false
   else
     assert "export nao inclui aceito" true
   fi
 }
 
-test_smoke_ingest_python() {
-  out="$(python3 "$HOSTDIME_IA_ROOT/tests/smoke_review_ingest.py" 2>&1)"
+test_smoke_ingest() {
+  out="$(hostdime_tsx "$HOSTDIME_IA_ROOT/tests/smoke_review_ingest.ts" 2>&1)"
   status=$?
   assert "ingest smoke exit 0" test "$status" -eq 0
   assert "ingest smoke ok" grep -q 'smoke_review_ingest: OK' <<<"$out"
 }
 
-test_lint_python_tools() {
-  out="$(bash "$HOSTDIME_IA_ROOT/tests/lint-python.sh" 2>&1)"
+test_lint_ts() {
+  out="$(bash "$HOSTDIME_IA_ROOT/tests/lint-ts.sh" 2>&1)"
   status=$?
-  assert "lint python exit 0" test "$status" -eq 0
-  assert "lint python ok" grep -q 'py_compile: OK' <<<"$out"
+  assert "lint ts exit 0" test "$status" -eq 0
+  assert "lint ts ok" grep -q 'tsc: OK' <<<"$out"
 }
 
 test_pre_commit_skip_and_clean() {
@@ -617,7 +604,7 @@ test_pre_commit_skip_and_clean() {
 
   out="$(
     cd "$project" && HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" HOSTDIME_SKIP_PRE_COMMIT=1 \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-pre-commit.sh" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-pre-commit.sh" 2>&1
   )"
   st=$?
   assert "pre-commit skip env" test "$st" -eq 0
@@ -625,7 +612,7 @@ test_pre_commit_skip_and_clean() {
 
   out="$(
     cd "$project" && HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-pre-commit.sh" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-pre-commit.sh" 2>&1
   )"
   st=$?
   assert "pre-commit sem stage" test "$st" -eq 0
@@ -636,7 +623,7 @@ test_pre_commit_skip_and_clean() {
   git -C "$project" add src/ok.mjs
   out="$(
     cd "$project" && HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-pre-commit.sh" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-pre-commit.sh" 2>&1
   )"
   st=$?
   assert "pre-commit clean js" test "$st" -eq 0
@@ -651,7 +638,7 @@ test_install_pre_commit_hook() {
 
   out="$(
     HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/install-pre-commit.sh" "$project" 2>&1
+      bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/install-pre-commit.sh" "$project" 2>&1
   )"
   st=$?
   git_dir="$(git -C "$project" rev-parse --git-dir)"
@@ -665,8 +652,8 @@ test_install_pre_commit_hook() {
 echo "HostDime IA — testes (runner embutido)"
 
 run_test "link symlinks" test_link_symlinks
-run_test "link remove legado orquestrador" test_link_removes_legacy_orchestrator
-run_test "link remove legado command" test_link_removes_legacy_command
+run_test "link remove orquestrador do projeto" test_link_removes_project_orchestrator
+run_test "link remove command do projeto" test_link_removes_project_command
 run_test "link preserva real" test_link_preserves_real
 run_test "link preserva command real" test_link_preserves_real_command
 run_test "gitignore scrub orphans" test_gitignore_scrub_orphans
@@ -677,7 +664,6 @@ run_test "detach registry" test_detach_registry
 run_test "merge hooks" test_merge_hooks
 run_test "hubspot mcp install" test_hubspot_mcp_install
 run_test "hubspot mcp detect" test_hubspot_mcp_detect
-run_test "finalizar inbox" test_finalizar_inbox
 run_test "finalizar repo" test_finalizar_repo
 run_test "boot sync toggle" test_boot_sync_toggle
 run_test "boot sync unset" test_boot_sync_unset
@@ -695,13 +681,13 @@ run_test "sync-inbox scan" test_sync_inbox_scan
 run_test "profiles detect bootstrap" test_profiles_detect_and_bootstrap
 run_test "onboard noninteractive" test_onboard_noninteractive
 run_test "health multi-project" test_health_multi_project
-run_test "memoria migrar restore" test_memoria_migrar_restore
+run_test "memoria init backup restore" test_memoria_init_backup_restore
 run_test "review-diff/ci empty" test_review_diff_and_ci_empty
 run_test "review-diff/ci with file" test_review_diff_and_ci_with_file
 run_test "check-inbox clean js" test_check_inbox_clean_js
 run_test "export exclusions" test_export_exclusions
-run_test "smoke ingest python" test_smoke_ingest_python
-run_test "lint python tools" test_lint_python_tools
+run_test "smoke ingest" test_smoke_ingest
+run_test "lint ts" test_lint_ts
 run_test "pre-commit skip and clean" test_pre_commit_skip_and_clean
 run_test "install pre-commit hook" test_install_pre_commit_hook
 

@@ -20,7 +20,7 @@ for ($i = 0; $i -lt $args.Count; $i++) {
         Write-Host 'Uso: npm run detach -- <repo> [--keep-registry]'
         Write-Host ''
         Write-Host 'Remove symlinks gerenciados (orquestrador + commands).'
-        Write-Host 'Preserva arquivos reais, SKILLS-ROUTING.md, skills/ e review/.'
+        Write-Host 'Preserva arquivos reais, SKILLS-ROUTING.md e skills/ do projeto.'
         Write-Host 'Por padrão remove o projeto do registry (npm run sync não relinka).'
         exit 0
     } elseif (-not $projectPath) {

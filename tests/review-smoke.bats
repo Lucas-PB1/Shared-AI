@@ -16,12 +16,12 @@ teardown() {
   git -C "$project" commit -q -m "init non-reviewable"
 
   export CURSOR_PROJECT_DIR="$project"
-  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD
+  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-diff.sh" HEAD
   [ "$status" -eq 0 ]
   [[ -z "${output//$'\n'/}" ]] || [[ "$output" != *".js"* && "$output" != *".mjs"* ]]
 
   run env HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-ci.sh" HEAD
   [ "$status" -eq 0 ]
   [[ "$output" == *"Nenhum arquivo revisável"* ]]
 }
@@ -38,12 +38,12 @@ teardown() {
   git -C "$project" commit -q -m "add reviewable js"
 
   export CURSOR_PROJECT_DIR="$project"
-  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-diff.sh" HEAD~1
+  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-diff.sh" HEAD~1
   [ "$status" -eq 0 ]
   [[ "$output" == *"src/ok.mjs"* ]]
 
   run env HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" \
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh" HEAD~1
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-ci.sh" HEAD~1
   [ "$status" -eq 0 ]
   [[ "$output" == *"CI review: OK"* ]]
 }
@@ -56,30 +56,34 @@ teardown() {
   export CURSOR_PROJECT_DIR="$project"
 
   run env HOSTDIME_IA_ROOT="$HOSTDIME_IA_ROOT" REVIEW_CHECK_CI=1 \
-    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/check-inbox.sh" "$project/src/ok.mjs"
+    bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/check-inbox.sh" "$project/src/ok.mjs"
   [ "$status" -eq 0 ]
 }
 
-@test "export exclusions a partir de context.yaml" {
+@test "export exclusions a partir de context no workdir" {
   project="$(hostdime_make_git_project)"
-  mkdir -p "$project/.cursor/review"
+  export HOSTDIME_REVIEW_WORKDIR
+  HOSTDIME_REVIEW_WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/hd-rev.XXXXXX")"
+  mkdir -p "$HOSTDIME_REVIEW_WORKDIR"
   cp "$HOSTDIME_IA_ROOT/tests/fixtures/review/context.yaml" \
-    "$project/.cursor/review/context.yaml"
+    "$HOSTDIME_REVIEW_WORKDIR/context.yaml"
 
-  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-export-exclusions.sh" "$project"
+  run bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-export-exclusions.sh" "$project"
   [ "$status" -eq 0 ]
-  [ -f "$project/.cursor/review/exclusions.yaml" ]
-  grep -q 'legacy-repo-pattern' "$project/.cursor/review/exclusions.yaml"
-  ! grep -q 'still-pending' "$project/.cursor/review/exclusions.yaml"
+  [ -f "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml" ]
+  grep -q 'accepted-repo-pattern' "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"
+  ! grep -q 'still-pending' "$HOSTDIME_REVIEW_WORKDIR/exclusions.yaml"
+  [[ ! -d "$project/.cursor/review" ]]
 }
 
-@test "smoke ingest python sem gh" {
-  run python3 "$HOSTDIME_IA_ROOT/tests/smoke_review_ingest.py"
+@test "smoke ingest sem gh" {
+  run "$HOSTDIME_IA_ROOT/node_modules/.bin/tsx" "$HOSTDIME_IA_ROOT/tests/smoke_review_ingest.ts"
   [ "$status" -eq 0 ]
   [[ "$output" == *"smoke_review_ingest: OK"* ]]
 }
 
-@test "lint python tools py_compile" {
-  run bash "$HOSTDIME_IA_ROOT/tests/lint-python.sh"
+@test "lint ts tsc noEmit" {
+  run bash "$HOSTDIME_IA_ROOT/tests/lint-ts.sh"
   [ "$status" -eq 0 ]
+  [[ "$output" == *"tsc: OK"* ]]
 }

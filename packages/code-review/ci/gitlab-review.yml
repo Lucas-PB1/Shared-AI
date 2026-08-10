@@ -22,7 +22,7 @@ variables:
   script:
     - cd "$CI_PROJECT_DIR"
     - export CURSOR_PROJECT_DIR="$CI_PROJECT_DIR"
-    - bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-ci.sh"
+    - bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-ci.sh"
 
 hostdime-review:
   extends: .hostdime-review-base

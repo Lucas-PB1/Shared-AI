@@ -26,5 +26,5 @@
 
 ## Evitar
 
-- `links:` (legado) — a rede default já resolve nomes
+- `links:` (deprecated) — a rede default já resolve nomes
 - Publicar banco/cache no host sem necessidade (superfície exposta)

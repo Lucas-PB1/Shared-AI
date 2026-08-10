@@ -1,28 +1,44 @@
 # Merge idempotente do sessionStart hostdime-ia em ~/.cursor/hooks.json
 
+function Get-HostdimeTsx {
+    param([string]$Root)
+    if ($Root) {
+        $tsx = Join-Path $Root 'node_modules/.bin/tsx.cmd'
+        if (Test-Path -LiteralPath $tsx) { return $tsx }
+        $tsx = Join-Path $Root 'node_modules/.bin/tsx'
+        if (Test-Path -LiteralPath $tsx) { return $tsx }
+    }
+    $cmd = Get-Command tsx -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    return $null
+}
+
 function Merge-HostdimeHooksJson {
     param([Parameter(Mandatory)][string]$CursorPkg)
 
     $cursorDir = if ($env:CURSOR_USER_DIR) { $env:CURSOR_USER_DIR } else { Join-Path $env:USERPROFILE '.cursor' }
     $hooksFile = Join-Path $cursorDir 'hooks.json'
     $example = Join-Path $CursorPkg 'scripts/hooks/hooks.json.example'
-    $mergePy = Join-Path $CursorPkg 'scripts/lib/merge-hooks-json.py'
+    $mergeTs = Join-Path $CursorPkg 'scripts/lib/install/ts/merge-hooks-json.ts'
 
-    if (-not (Test-Path $mergePy)) {
-        Write-Error 'merge-hooks-json.py não encontrado'
+    if (-not (Test-Path $mergeTs)) {
+        Write-Error 'merge-hooks-json.ts não encontrado'
         return $false
     }
 
-    $python = $null
-    foreach ($cmd in @('python', 'python3', 'py')) {
-        if (Get-Command $cmd -ErrorAction SilentlyContinue) {
-            $python = $cmd
-            break
+    $root = $env:HOSTDIME_IA_ROOT
+    if (-not $root) {
+        $envFile = Join-Path $env:USERPROFILE '.cursor/hostdime-ia.env'
+        if (Test-Path -LiteralPath $envFile) {
+            Get-Content -LiteralPath $envFile | ForEach-Object {
+                if ($_ -match '^HOSTDIME_IA_ROOT=(.+)$') { $root = $Matches[1].Trim('"') }
+            }
         }
     }
 
-    if (-not $python) {
-        Write-Error 'Python não encontrado (necessário para merge de hooks.json)'
+    $tsx = Get-HostdimeTsx -Root $root
+    if (-not $tsx) {
+        Write-Error 'tsx não encontrado (npm install na raiz do monorepo)'
         return $false
     }
 
@@ -31,7 +47,7 @@ function Merge-HostdimeHooksJson {
         New-Item -ItemType Directory -Path $hooksDir -Force | Out-Null
     }
 
-    $result = & $python $mergePy $hooksFile $example 2>&1
+    $result = & $tsx $mergeTs $hooksFile $example 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Error 'hooks.json — merge falhou'
         return $false

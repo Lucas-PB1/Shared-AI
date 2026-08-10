@@ -24,7 +24,7 @@ Ler skill **`history-watch`** antes de setup ou append.
 3. **Nome do arquivo** — sugerir:
    - OKF → `log.md` no escopo ou `<escopo>/log.md`
    - MD → `history.md` ou `memory.md` (usuário pode customizar)
-4. **Versionado** — default **sim** (git); **não** adicionar ao `project-gitignore.fragment`.
+4. **Versionado** — default **sim** (git); não colocar path de history no gitignore do projeto.
 5. **Gerar artefatos** (passos abaixo).
 6. Resumo: escopo, path do histórico, id do watch, hook ativo.
 
@@ -46,7 +46,7 @@ projeto/
 │   ├── hooks/
 │   │   ├── historico-stop.sh      # Unix (copiar do pacote)
 │   │   ├── historico-stop.ps1       # Windows (copiar do pacote)
-│   │   ├── history-watch-match.py # helper (copiar do pacote)
+│   │   ├── history-watch-match.ts # helper (copiar do pacote)
 │   │   └── hooks.json             # merge hook stop (projeto)
 │   └── commands/
 │       └── historico.md             # em ~/.cursor/commands/ (global)
@@ -60,9 +60,9 @@ Templates do pacote hostdime-ia (`$HOSTDIME_IA_ROOT` ou clone):
 | Histórico OKF | `packages/cursor/templates/history-log.okf.md` |
 | Histórico MD | `packages/cursor/templates/history-log.md` |
 | Rule | `packages/cursor/templates/history-watch-rule.mdc` |
-| Hook stop sh | `packages/cursor/scripts/hooks/historico-stop.sh` |
-| Hook stop ps1 | `packages/cursor/scripts/hooks/historico-stop.ps1` |
-| Matcher | `packages/cursor/scripts/lib/history-watch-match.py` |
+| Hook stop sh | `packages/cursor/scripts/hooks/sh/historico-stop.sh` |
+| Hook stop ps1 | `packages/cursor/scripts/hooks/ps1/historico-stop.ps1` |
+| Matcher | `packages/cursor/scripts/lib/history/history-watch-match.ts` |
 
 ### 1. `watches.json`
 
@@ -89,7 +89,7 @@ Criar `.cursor/history/watches.json` se não existir. Schema v1:
 - `format`: `okf-log` | `markdown`
 - Vários watches permitidos; setup adiciona um por vez.
 
-Validar: `npm run historico -- validate` ou `bash packages/cursor/scripts/historico-cli.sh validate`.
+Validar: `npm run historico -- validate` ou `bash packages/cursor/scripts/sh/historico-cli.sh validate`.
 
 ### 2. Arquivo de histórico
 
@@ -115,11 +115,11 @@ A partir de `packages/cursor/templates/history-watch-rule.mdc`, substituir:
 1. Copiar para `.cursor/hooks/`:
    - `historico-stop.sh` + `chmod +x`
    - `historico-stop.ps1`
-   - `history-watch-match.py`
+   - `history-watch-match.ts`
 2. Merge idempotente em `.cursor/hooks.json`:
 
 ```bash
-python3 "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/merge-historico-hooks.py" \
+"$HOSTDIME_IA_ROOT/node_modules/.bin/tsx" "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/merge-historico-hooks.ts" \
   "$PROJECT/.cursor/hooks.json"
 ```
 

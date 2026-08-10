@@ -56,7 +56,7 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
 }
 
 if (Get-Command node -ErrorAction SilentlyContinue) {
-    $runMjs = Join-Path $root 'packages/cursor/scripts/run.mjs'
+    $runMjs = Join-Path $root 'packages/cursor/scripts/mjs/run.mjs'
     try {
         $syncOut = node $runMjs sync 2>&1
         $syncOut | Out-File -FilePath $logFile -Append -Encoding UTF8

@@ -37,6 +37,7 @@ env:
   REVIEW_AVALIAR_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'both' }}
   REVIEW_AVALIAR_SOFT: "true"
   REVIEW_LLM_PROVIDER: cursor
+  HOSTDIME_REVIEW_WORKDIR: ${{ runner.temp }}/hostdime-review
 
 jobs:
   avaliar:
@@ -141,6 +142,15 @@ jobs:
       - name: Instalar deps do projeto
         run: npm ci
 
+      - name: Pull memory from store
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          REVIEW_PROJECT_SLUG: ${{ vars.REVIEW_PROJECT_SLUG || github.event.repository.name }}
+        run: |
+          bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-memory-pull.sh" \
+            --project "${{ github.workspace }}"
+
       - name: /avaliar — estático + LLM + comentários no PR
         env:
           GH_TOKEN: ${{ github.token }}
@@ -154,12 +164,31 @@ jobs:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           REVIEW_LLM_MODEL: ${{ vars.REVIEW_LLM_MODEL || 'composer-2.5' }}
           REVIEW_LLM_API_KEY: ${{ secrets.REVIEW_LLM_API_KEY }}
-        run: bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/review-github-pr.sh"
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          REVIEW_PROJECT_SLUG: ${{ vars.REVIEW_PROJECT_SLUG || github.event.repository.name }}
+        run: bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-github-pr.sh"
+
+      - name: Publish run to store
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          REVIEW_PROJECT_SLUG: ${{ vars.REVIEW_PROJECT_SLUG || github.event.repository.name }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head }}
+          GITHUB_REF_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          bash "$HOSTDIME_IA_ROOT/packages/code-review/tools/sh/review-store-publish.sh" \
+            --project "${{ github.workspace }}" \
+            --pr "${{ steps.pr.outputs.number }}" \
+            --sha "${{ steps.pr.outputs.head }}" \
+            --source ci
 
       - name: Upload relatórios CI
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: avaliar-reports-pr-${{ steps.pr.outputs.number }}
-          path: .cursor/review/reports/
+          path: ${{ runner.temp }}/hostdime-review/reports/
           if-no-files-found: ignore

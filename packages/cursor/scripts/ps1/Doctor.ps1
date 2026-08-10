@@ -129,9 +129,10 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
 }
 Test-CommandExists 'npm' 'npm'
 Test-CommandExists 'PowerShell' 'powershell'
-Test-CommandExists 'Python (hooks JSON merge)' 'python'
-if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-    Test-CommandExists 'Python 3 (hooks JSON merge)' 'python3'
+if (Get-Command node -ErrorAction SilentlyContinue) {
+    Write-Ok 'tsx/Node (hooks JSON)'
+} else {
+    Write-Fail 'tsx/Node — rode: npm install (tsx para scripts/hooks JSON)'
 }
 Test-CommandExists 'PHP (code-review)' 'php'
 Test-CommandExists 'Composer (code-review)' 'composer'

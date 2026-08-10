@@ -9,7 +9,7 @@
 
 | Recurso | Uso |
 | --- | --- |
-| `X \| Y` | Unions (preferir a `Optional`/`Union` legado) |
+| `X \| Y` | Unions (preferir a `Optional`/`Union` pré-3.10) |
 | `list[str]`, `dict[str, int]` | Coleções genéricas built-in |
 | `TypedDict` / `@dataclass` | Shape estável de dict ou registro |
 | `Protocol` | Structural typing (duck typing tipado) |
