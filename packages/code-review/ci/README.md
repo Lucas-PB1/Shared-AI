@@ -85,8 +85,8 @@ Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
 
 ### Comportamento
 
-- Dispara em `pull_request` (`opened`, `synchronize`, `reopened`)
-- **Incremental:** blob SHA por arquivo (estado em comentário oculto)
+- No **hostdime-hub**: dispara via `workflow_run` **após** o workflow **Review** (quality gate) passar; o template genérico ainda pode usar `pull_request` direto
+- **Incremental (Avaliar):** blob SHA por arquivo (estado em comentário oculto) — não reavalia arquivo sem mudança no head
 - Por arquivo:
   1. `review-check.sh` (Semgrep, ESLint, PHPStan, tsc)
   2. `review-llm.ts` → relatório `/avaliar` (skills/rules por path + convencoes + exclusions + diff)
