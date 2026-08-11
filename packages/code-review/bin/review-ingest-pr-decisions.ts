@@ -97,10 +97,17 @@ query($owner: String!, $repo: String!, $number: Int!) {
 }
 
 function runExportExclusions(project: string): void {
-  const script = path.join(toolsDir, "review-export-exclusions.sh");
-  const proc = spawnSync("bash", [script, project], { encoding: "utf8" });
+  const script = path.join(toolsDir, "sh", "review-export-exclusions.sh");
+  const proc = spawnSync("bash", [script, project], {
+    encoding: "utf8",
+    env: process.env,
+  });
   if (proc.status !== 0) {
-    throw new Error(proc.stderr || "review-export-exclusions.sh falhou");
+    throw new Error(
+      proc.stderr ||
+        proc.stdout ||
+        `review-export-exclusions.sh falhou (exit ${String(proc.status)})`,
+    );
   }
 }
 
