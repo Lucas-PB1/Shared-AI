@@ -4,6 +4,8 @@
 
 name: Avaliar PR
 
+# Preferível: disparar só após quality gate (ex. workflow_run Review success).
+# Projetos com job Review separado podem copiar o padrão do hostdime-hub.
 on:
   pull_request:
     types: [opened, synchronize, reopened]
