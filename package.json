@@ -4,7 +4,14 @@
   "private": true,
   "description": "Pacotes públicos de configuração de IA da HostDime",
   "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
+    "dev:web": "npm run dev -w @hostdime-ia/web",
+    "build:web": "npm run build -w @hostdime-ia/web",
+    "start:web": "npm run start -w @hostdime-ia/web",
+    "lint:web": "npm run lint -w @hostdime-ia/web",
     "setup:skills": "node packages/cursor/scripts/mjs/run.mjs install",
     "setup:code-review": "npm install && composer install && node packages/cursor/scripts/mjs/run.mjs setup-code-review",
     "bootstrap": "node packages/cursor/scripts/mjs/run.mjs bootstrap",

@@ -1,0 +1,31 @@
+---
+description: Nunca resetar o banco Supabase remoto/cloud — só local Docker
+alwaysApply: true
+---
+
+# Supabase — sem reset remoto
+
+## Proibido
+
+- `supabase db reset` contra projeto **linkado / cloud / remoto**
+- `supabase db reset --linked`
+- Qualquer drop/recreate do banco HostDime cloud (`toekmpljxeulcquqhkxt`)
+- “Reset” como atalho para aplicar migration no remoto
+
+## Permitido
+
+| Ambiente | Comando |
+| --- | --- |
+| **Local** (Docker) | `npm run supabase:reset` / `npx supabase db reset` — só o stack local |
+| **Cloud** | `npm run supabase:db-push` / `npx supabase db push` — aplica migrations **sem** apagar dados |
+
+## Se o agente precisar do schema no cloud
+
+1. Escrever migration em `supabase/migrations/`
+2. Aplicar com **`db push`** (nunca reset)
+3. Não rodar seed destrutivo no remoto
+
+## Scripts do monorepo
+
+- `supabase:reset` = **apenas local**
+- `supabase:db-push` = cloud/remoto seguro para schema

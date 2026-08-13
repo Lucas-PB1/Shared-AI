@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/*
+  HostDime theme — brand.tokens.js (theme-hub) + UI scale (organograma / hdbr)
+*/
+
+:root {
+  --hd-primary: #ff5800;
+  --hd-primary-alt: #ff7303;
+  --hd-primary-strong: #e64e00;
+  --hd-primary-hover: #ea580c;
+  --hd-primary-soft: #fff7ed;
+  --hd-primary-rgb: 255, 88, 0;
+
+  --hd-secondary: #4e5159;
+  --hd-muted: #64748b;
+  --hd-surface: #f5f5f5;
+  --hd-accent-purple: #9013fe;
+  --hd-accent-cyan: #50e3dc;
+
+  --hd-ink: #0f172a;
+  --hd-text: #374151;
+  --hd-text-strong: #1f2937;
+  --hd-border: #e5e7eb;
+  --hd-canvas: #ffffff;
+  --hd-danger: #b91c1c;
+  --hd-success: #5bd49e;
+  --hd-focus: #2563eb;
+
+  --hd-container: 80rem;
+  --hd-radius-md: 0.5rem;
+  --hd-radius-xl: 1rem;
+  --hd-radius-2xl: 1.25rem;
+  --hd-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --hd-shadow-accent: 0 2px 8px rgba(var(--hd-primary-rgb), 0.35);
+}
+
+@theme inline {
+  --color-hd-primary: var(--hd-primary);
+  --color-hd-primary-alt: var(--hd-primary-alt);
+  --color-hd-primary-strong: var(--hd-primary-strong);
+  --color-hd-primary-hover: var(--hd-primary-hover);
+  --color-hd-primary-soft: var(--hd-primary-soft);
+  --color-hd-secondary: var(--hd-secondary);
+  --color-hd-muted: var(--hd-muted);
+  --color-hd-surface: var(--hd-surface);
+  --color-hd-accent-purple: var(--hd-accent-purple);
+  --color-hd-accent-cyan: var(--hd-accent-cyan);
+  --color-hd-ink: var(--hd-ink);
+  --color-hd-text: var(--hd-text);
+  --color-hd-text-strong: var(--hd-text-strong);
+  --color-hd-border: var(--hd-border);
+  --color-hd-canvas: var(--hd-canvas);
+  --color-hd-danger: var(--hd-danger);
+  --color-hd-success: var(--hd-success);
+  --color-hd-focus: var(--hd-focus);
+
+  --font-sans: var(--font-hostdime-body), system-ui, sans-serif;
+  --font-display: var(--font-hostdime-display), system-ui, sans-serif;
+
+  --radius-hd-md: var(--hd-radius-md);
+  --radius-hd-xl: var(--hd-radius-xl);
+  --radius-hd-2xl: var(--hd-radius-2xl);
+
+  --shadow-hd-md: var(--hd-shadow-md);
+  --shadow-hd-accent: var(--hd-shadow-accent);
+
+  --max-width-hd: var(--hd-container);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-hd-surface font-sans text-hd-text antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display font-light text-hd-ink;
+  }
+
+  a {
+    @apply text-hd-primary transition-colors hover:text-hd-primary-hover;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-hd-focus;
+  }
+}

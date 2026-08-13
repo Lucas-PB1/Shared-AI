@@ -8,6 +8,7 @@ Thumbs.db
 # Segredos locais
 .env
 .env.*
+!.env.example
 
 # Dependências
 node_modules/
@@ -15,5 +16,7 @@ vendor/
 __pycache__/
 *.py[cod]
 
-# Cursor local — symlinks do setup; fonte em packages/
-.cursor/
+# Next.js (apps/web)
+apps/web/.next/
+apps/web/out/
+*.tsbuildinfo

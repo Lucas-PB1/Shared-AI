@@ -1,5 +1,9 @@
 # Directory Update Log
 
+## 2026-08-13
+
+* **Creation**: Dashboard Next.js em `apps/web` — Auth Supabase (sem confirmação de e-mail), FSD, membership (`profiles` / `project_members`), claim owner e listagem de runs. Concept [dashboard-web](dashboard-web.md). Migration `20260813140000_dashboard_auth.sql`.
+
 ## 2026-08-10
 
 * **Update**: Store grava resultados só pós-merge (ingest); limpa runs/findings/decisions/exclusions/conventions de teste; projects mantidos.

@@ -19,6 +19,7 @@ Cada arquivo abaixo (exceto este índice e [log.md](log.md)) é um **concept** c
 * [Código do store](review-store-code.md) - port, CLIs, dual-write
 * [Supabase local](supabase-local.md) - Docker + smoke
 * [Supabase cloud](supabase-cloud.md) - go-live HostDime + secrets CI
+* [Dashboard web](dashboard-web.md) - Next.js Auth + membership + runs
 
 ## Plataformas
 
