@@ -5,9 +5,19 @@ Pacotes de skills/rules do Cursor, code-review e **dashboard Next.js** (Auth Sup
 ## Dashboard
 
 ```bash
-npm install
-npm run supabase:start   # opcional / local
-npm run dev              # http://localhost:3000
+npm run setup              # .env vazio + npm install (não preenche secrets)
+# edite o .env  OU:
+npm run env:switch -- local --refresh-keys
+npm run connections:seed
+npm run supabase:start     # opcional / local
+npm run dev                # http://localhost:3000
+```
+
+Só recriar o `.env` (sem `npm install`):
+
+```bash
+npm run setup -- --env-only
+# sobrescrever .env existente: npm run setup -- --env-only --force
 ```
 
 Detalhes: [`docs/okf/dashboard-web.md`](docs/okf/dashboard-web.md).
@@ -71,6 +81,8 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run review:ci -- [base]` | Projeto | Mesmo review-check do `/avaliar` nos arquivos do diff |
 | `npm run pre-commit` | Projeto | Review estático nos **arquivos do stage** (sem LLM) |
 | `npm run hooks:pre-commit -- [dir]` | Projeto | Instala `.git/hooks/pre-commit` |
+| `npm run setup` | Dev | Cria `.env` vazio (de `.env.example`) + `npm install` |
+| `npm run setup -- --env-only` | Dev | Só cria/recria `.env` (use `--force` para sobrescrever) |
 | `npm run lint:shell` | Dev | ShellCheck nos `*.sh` versionados (skip se não instalado) |
 | `npm run lint:ts` | Dev | `tsc --noEmit` em `packages/code-review` |
 | `npm run test` | Dev | Suite de testes (`tests/`; bats se disponível, senão runner embutido) |

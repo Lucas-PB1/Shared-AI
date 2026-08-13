@@ -17,7 +17,8 @@ Pares em tabelas `app_connections` + `app_settings` (UI `/settings`).
 `.env` só bootstrap (`NEXT_PUBLIC_SUPABASE_*` + `SUPABASE_SECRET_KEY`).
 
 ```bash
-npm run env:switch -- local --refresh-keys   # bootstrap .env
+npm run setup                                # .env vazio + npm install
+npm run env:switch -- local --refresh-keys   # preenche bootstrap do .env
 npm run connections:seed                     # grava/espelha tabela local+cloud
 npm run dev
 ```
