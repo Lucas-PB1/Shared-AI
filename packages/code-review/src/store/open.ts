@@ -14,16 +14,16 @@ export const STORE_VERDICTS = new Set([
 ]);
 
 export const STORE_REQUIRED_MSG =
-  "Store obrigatório: defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (ou SUPABASE_KEY)";
+  "Store obrigatório: defina SUPABASE_URL e SUPABASE_SECRET_KEY (ou SUPABASE_SERVICE_ROLE_KEY)";
 
 export function isStoreConfigured(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env
 ): boolean {
   const url = String(env.SUPABASE_URL ?? "").trim();
   const key = String(
-    env.SUPABASE_SERVICE_ROLE_KEY ??
+    env.SUPABASE_SECRET_KEY ??
+      env.SUPABASE_SERVICE_ROLE_KEY ??
       env.SUPABASE_KEY ??
-      env.SUPABASE_ANON_KEY ??
       ""
   ).trim();
   return Boolean(url && key);

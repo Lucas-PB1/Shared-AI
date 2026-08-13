@@ -1,1 +1,5 @@
-export { getCurrentProfile, updateDisplayName } from './api';
+export {
+  getCurrentProfile,
+  requireAppAdmin,
+  updateDisplayName,
+} from './api';

@@ -9,7 +9,11 @@ export default async function AppLayout({
   const profile = await getCurrentProfile();
 
   return (
-    <AppShell displayName={profile?.display_name} email={profile?.email}>
+    <AppShell
+      displayName={profile?.display_name}
+      email={profile?.email}
+      isAdmin={Boolean(profile?.is_admin)}
+    >
       {children}
     </AppShell>
   );

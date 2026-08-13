@@ -40,4 +40,5 @@ export type Profile = {
   display_name: string | null;
   email: string | null;
   created_at: string;
+  is_admin?: boolean;
 };

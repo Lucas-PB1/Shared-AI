@@ -21,7 +21,7 @@ export function LoginForm() {
     <Card className="w-full max-w-md">
       <CardTitle>Entrar</CardTitle>
       <CardDescription>
-        Review store HostDime — e-mail e senha, sem confirmação.
+        Use seu e-mail HostDime — sem confirmação de e-mail.
       </CardDescription>
 
       <form action={action} className="mt-6 flex flex-col gap-4">

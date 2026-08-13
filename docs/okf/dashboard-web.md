@@ -1,47 +1,58 @@
 ---
 type: Playbook
 title: Dashboard web (Next.js)
-description: App Next.js na raiz — Auth Supabase JWT, membership e review runs.
+description: App Next.js na raiz — Auth, membership, switch local/cloud e sync.
 tags: [dashboard, nextjs, auth, supabase]
-timestamp: 2026-08-13T14:00:00Z
+timestamp: 2026-08-13T18:30:00Z
 ---
 
 ## Onde vive
 
-Na **raiz** do monorepo (`app/`, `src/`, `middleware.ts`) — Next.js App Router + Feature-Sliced Design, convivendo com `packages/cursor` e `packages/code-review`.  
-Service role **não** entra no browser (só anon key + JWT).
+Na **raiz** (`app/`, `src/`, `middleware.ts`) — FSD + tokens HostDime.  
+Service role **nunca** no browser.
 
-## Pré-requisitos
+## Ambientes (switch)
 
-1. Schema com migration `20260813140000_dashboard_auth.sql` aplicada (`npm run supabase:reset` **só no Docker local**; no cloud use `npm run supabase:db-push` — nunca reset remoto).
-2. No [`.env`](../../.env.example) da raiz:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. **Sem confirmação de e-mail:**
-   - Local: [`supabase/config.toml`](../../supabase/config.toml) → `[auth.email] enable_confirmations = false`
-   - Cloud: Dashboard → Authentication → Providers → Email → **Confirm email OFF**
+Pares no [`.env`](../../.env.example):
 
-## Comandos
+| Prefixo | Uso |
+| --- | --- |
+| `SUPABASE_LOCAL_*` | Docker (`PUBLISHABLE`/`SECRET`; local ainda pode ser JWT) |
+| `SUPABASE_CLOUD_*` | HostDime cloud (`sb_publishable_` / `sb_secret_`) |
+| `SUPABASE_TARGET` | `local` \| `cloud` |
 
 ```bash
-npm install
-npm run dev      # http://localhost:3000
-npm run build
+npm run env:switch -- local --refresh-keys
+npm run env:switch -- cloud --refresh-keys
+# depois reinicie
+npm run dev
 ```
 
-Aliases: `dev:web` / `build:web` / `start:web`.
+O script resolve só keys **publishable/secret**. Alias `SUPABASE_SERVICE_ROLE_KEY` (= secret) permanece para CLIs/CI.
 
-## Fluxo
+## Permissões
 
-| Rota | Papel |
+| Nível | Escopo |
 | --- | --- |
-| `/signup`, `/login` | Auth e-mail/senha (sessão cookie via `@supabase/ssr`) |
-| `/` | Projetos do membership + claim de projetos sem owner |
-| `/projects/[slug]` | Membros (owner convida por e-mail) + `review_runs` |
-| `/account` | `profiles.display_name` |
+| `viewer` | Lê projeto/runs |
+| `member` | + escreve runs/decisions |
+| `owner` | + convida/gerencia members |
+| `profiles.is_admin` | + `/settings`, sync cloud→local |
 
-Primeiro owner de um projeto seedado: botão **Reivindicar** (RPC `claim_project_owner`).  
-Convite: a pessoa precisa já ter conta (`profiles.email`).
+## Config na UI
+
+Rota `/settings` (só admin):
+
+- Trocar target local/cloud (grava `.env` se `ALLOW_ENV_WRITE=1`)
+- Atualizar URLs / publishable / secret dos pares
+- **Sincronizar do remoto** (só com target `local`): projects, exclusions, conventions, memberships por e-mail
+
+Reinicie o Next após mudar `NEXT_PUBLIC_*`.
+
+## Auth
+
+- Local: `enable_confirmations = false` no config.toml
+- Cloud: Confirm email **OFF** no dashboard Auth
 
 ## Relacionados
 

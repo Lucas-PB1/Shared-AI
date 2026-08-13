@@ -16,14 +16,14 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-start gap-3 rounded-hd-xl border border-dashed border-hd-border bg-hd-canvas p-6',
+        'flex flex-col items-start gap-3 rounded-hd-2xl border border-dashed border-hd-border bg-hd-canvas/70 px-6 py-8',
         className,
       )}
     >
       <div>
-        <h3 className="text-base font-semibold text-hd-ink">{title}</h3>
+        <h3 className="font-display text-base font-semibold text-hd-ink">{title}</h3>
         {description ? (
-          <p className="mt-1 text-sm text-hd-muted">{description}</p>
+          <p className="mt-1 max-w-lg text-sm text-hd-muted">{description}</p>
         ) : null}
       </div>
       {children}

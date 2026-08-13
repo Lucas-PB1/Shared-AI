@@ -9,7 +9,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-hd-xl border border-hd-border bg-hd-canvas p-5 shadow-hd-md',
+        'rounded-hd-2xl border border-hd-border bg-hd-canvas p-5 shadow-hd-md',
         className,
       )}
       {...props}
@@ -22,7 +22,10 @@ export function CardTitle({
   ...props
 }: React.ComponentProps<'h2'>) {
   return (
-    <h2 className={cn('text-lg font-semibold text-hd-ink', className)} {...props} />
+    <h2
+      className={cn('font-display text-lg font-semibold text-hd-ink', className)}
+      {...props}
+    />
   );
 }
 

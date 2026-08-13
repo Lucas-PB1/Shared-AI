@@ -7,3 +7,4 @@ export {
   listProjectRuns,
   listUnclaimedProjects,
 } from './api';
+export { ProjectCard } from './ui/project-card';

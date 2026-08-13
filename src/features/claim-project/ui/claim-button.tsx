@@ -29,8 +29,14 @@ export function ClaimProjectButton({
   return (
     <form action={action}>
       <input type="hidden" name="projectId" value={projectId} />
-      <Button type="submit" variant="secondary" size="sm" disabled={pending}>
-        {pending ? 'Reivindicando…' : `Reivindicar ${projectName}`}
+      <Button
+        type="submit"
+        variant="secondary"
+        size="sm"
+        disabled={pending}
+        aria-label={`Reivindicar ${projectName}`}
+      >
+        {pending ? '…' : 'Reivindicar'}
       </Button>
     </form>
   );

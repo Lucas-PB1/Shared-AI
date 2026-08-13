@@ -30,9 +30,9 @@ export function loadConfig(opts: LoadConfigOpts = {}): StoreConfig {
   const url = String(opts.url ?? e.SUPABASE_URL ?? "").trim();
   const apiKey = String(
     opts.apiKey ??
+      e.SUPABASE_SECRET_KEY ??
       e.SUPABASE_SERVICE_ROLE_KEY ??
       e.SUPABASE_KEY ??
-      e.SUPABASE_ANON_KEY ??
       ""
   ).trim();
   const projectSlug = String(
@@ -46,7 +46,7 @@ export function loadConfig(opts: LoadConfigOpts = {}): StoreConfig {
   }
   if (!apiKey) {
     throw new StoreError(
-      "Chave Supabase ausente (SUPABASE_SERVICE_ROLE_KEY). Local: npm run supabase:status"
+      "Chave Supabase ausente (SUPABASE_SECRET_KEY ou SUPABASE_SERVICE_ROLE_KEY). Local: npm run supabase:status"
     );
   }
   if (!projectSlug) {

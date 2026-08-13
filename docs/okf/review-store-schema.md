@@ -56,7 +56,7 @@ Assim um run **OK com 0 findings** ainda registra quais arquivos/relatórios for
 ### profiles e project_members
 
 Tooling local/CI usa **service_role** e ignora estas tabelas no write path de review.  
-O dashboard Next na raiz usa **anon key + JWT**: `profiles` espelha `auth.users` (trigger), `project_members` decide ACL via RLS. Bootstrap: RPC `claim_project_owner` quando o projeto ainda não tem membros; projetos novos pelo dashboard ganham auto-owner.
+O dashboard Next na raiz usa **publishable key + JWT**: `profiles` espelha `auth.users` (trigger), `project_members` decide ACL via RLS. Bootstrap: RPC `claim_project_owner` quando o projeto ainda não tem membros; projetos novos pelo dashboard ganham auto-owner.
 
 **Não** são memória de review (isso é `exclusions` / `conventions`).
 
@@ -66,9 +66,13 @@ O dashboard Next na raiz usa **anon key + JWT**: `profiles` espelha `auth.users`
 | --- | --- |
 | `SUPABASE_URL` | API REST (obrigatória tooling) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Tooling/CI (obrigatória) — nunca no browser |
-| `NEXT_PUBLIC_SUPABASE_URL` | Dashboard Next.js |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Dashboard Next.js (JWT/RLS) |
-| `SUPABASE_KEY` / `SUPABASE_ANON_KEY` | legado/alternativo ao service role no tooling |
+| `NEXT_PUBLIC_SUPABASE_URL` | Dashboard Next.js (resolvido pelo `env:switch`) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Dashboard (`sb_publishable_…`) |
+| `NEXT_PUBLIC_SUPABASE_TARGET` | `local` \| `cloud` (banner / sync) |
+| `SUPABASE_TARGET` | Mesmo target para tooling |
+| `SUPABASE_LOCAL_*` / `SUPABASE_CLOUD_*` | Pares URL + publishable + secret |
+| `SUPABASE_SECRET_KEY` | Secret ativo (tooling/sync); alias `SUPABASE_SERVICE_ROLE_KEY` |
+| `ALLOW_ENV_WRITE` | `1` permite `/settings` gravar `.env` |
 | `REVIEW_PROJECT_SLUG` | default monorepo; repos ligados usam basename / `--slug` |
 
 ## Relacionados
