@@ -46,7 +46,9 @@
     "review:dual-write": "tsx packages/code-review/bin/review-dual-write.ts",
     "review:store-publish": "tsx packages/code-review/bin/review-store-publish.ts",
     "review:memory-pull": "tsx packages/code-review/bin/review-memory-pull.ts",
-    "review:memory-push": "tsx packages/code-review/bin/review-memory-push.ts"
+    "review:memory-push": "tsx packages/code-review/bin/review-memory-push.ts",
+    "review:backfill-pr-people": "tsx packages/code-review/bin/review-backfill-pr-people.ts",
+    "review:purge-non-ci": "tsx packages/code-review/bin/review-purge-non-ci-runs.ts"
   },
   "engines": {
     "node": ">=20"
@@ -65,6 +67,7 @@
     "nuqs": "^2.4.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "recharts": "^3.10.1",
     "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1",
     "zod": "^3.25.76"

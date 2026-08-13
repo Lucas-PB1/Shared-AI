@@ -43,6 +43,9 @@ export async function restCreateRun(
     branch: fields.branch ?? null,
     pr_number: fields.prNumber ?? null,
     review_slug: fields.reviewSlug ?? null,
+    pr_author: fields.prAuthor ?? null,
+    pr_author_is_bot: fields.prAuthorIsBot ?? false,
+    reviewers: fields.reviewers ?? [],
     meta: fields.meta ?? {},
   };
   const url = `${rest.config.restBase}/review_runs`;

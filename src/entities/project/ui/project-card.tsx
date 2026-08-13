@@ -1,10 +1,10 @@
-import { ArrowUpRight, FolderGit2 } from 'lucide-react';
+import { ArrowUpRight, FolderGit2, GitPullRequest } from 'lucide-react';
 import Link from 'next/link';
 
-import type { Project } from '@/entities/project';
+import type { ProjectListItem } from '@/entities/project';
 import { cn } from '@/shared/lib/cn';
 
-function githubLabel(project: Project) {
+function githubLabel(project: ProjectListItem) {
   if (project.github_owner && project.github_repo) {
     return `${project.github_owner}/${project.github_repo}`;
   }
@@ -15,9 +15,10 @@ function projectInitial(name: string) {
   return (name.trim()[0] ?? 'P').toUpperCase();
 }
 
-export function ProjectCard({ project }: { project: Project }) {
+export function ProjectCard({ project }: { project: ProjectListItem }) {
   const repo = githubLabel(project);
   const hasRepo = Boolean(project.github_owner && project.github_repo);
+  const runs = project.runs_count;
 
   return (
     <Link
@@ -44,7 +45,9 @@ export function ProjectCard({ project }: { project: Project }) {
               <h2 className="line-clamp-1 font-display text-lg font-semibold leading-snug text-hd-ink">
                 {project.name}
               </h2>
-              <p className="mt-0.5 font-mono text-xs text-hd-muted">{project.slug}</p>
+              <p className="mt-0.5 font-mono text-xs text-hd-muted">
+                {project.slug}
+              </p>
             </div>
           </div>
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-hd-surface text-hd-secondary transition-colors group-hover:bg-hd-primary group-hover:text-white">
@@ -52,9 +55,23 @@ export function ProjectCard({ project }: { project: Project }) {
           </span>
         </div>
 
+        <div className="mt-4 flex flex-wrap items-center gap-2 pl-2">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold',
+              runs > 0
+                ? 'border-hd-primary/25 bg-hd-primary-soft text-hd-primary-strong'
+                : 'border-hd-border bg-hd-surface text-hd-muted',
+            )}
+          >
+            <GitPullRequest className="h-3.5 w-3.5" aria-hidden />
+            {runs} review{runs === 1 ? '' : 's'}
+          </span>
+        </div>
+
         <p
           className={cn(
-            'mt-auto flex items-center gap-2 pl-2 pt-5 text-xs',
+            'mt-auto flex items-center gap-2 pl-2 pt-4 text-xs',
             hasRepo ? 'text-hd-secondary' : 'text-hd-muted',
           )}
           title={repo}

@@ -6,9 +6,27 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/shared/lib/cn';
 
 const links = [
-  { href: '/', label: 'Projetos', match: (path: string) => path === '/' || path.startsWith('/projects') },
-  { href: '/account', label: 'Conta', match: (path: string) => path.startsWith('/account') },
-  { href: '/settings', label: 'Config', match: (path: string) => path.startsWith('/settings'), adminOnly: true },
+  {
+    href: '/',
+    label: 'Dashboard',
+    match: (path: string) => path === '/',
+  },
+  {
+    href: '/projects',
+    label: 'Projetos',
+    match: (path: string) => path.startsWith('/projects'),
+  },
+  {
+    href: '/account',
+    label: 'Conta',
+    match: (path: string) => path.startsWith('/account'),
+  },
+  {
+    href: '/settings',
+    label: 'Config',
+    match: (path: string) => path.startsWith('/settings'),
+    adminOnly: true,
+  },
 ] as const;
 
 export function AppNav({ isAdmin = false }: { isAdmin?: boolean }) {

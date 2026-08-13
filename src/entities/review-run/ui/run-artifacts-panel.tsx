@@ -219,8 +219,12 @@ function DecisionTabs({ decisions }: { decisions: Decision[] }) {
 }
 
 function PrPeople({ run }: { run: ReviewRun }) {
-  const author = run.meta?.pr_author;
-  const reviewers = run.meta?.reviewers ?? [];
+  const author = (run.pr_author ?? run.meta?.pr_author)?.trim() || null;
+  const reviewers =
+    Array.isArray(run.reviewers) && run.reviewers.length > 0
+      ? run.reviewers
+      : (run.meta?.reviewers ?? []);
+  const authorIsBot = Boolean(run.pr_author_is_bot ?? run.meta?.pr_author_is_bot);
   if (!author && reviewers.length === 0) return null;
 
   return (
@@ -229,7 +233,7 @@ function PrPeople({ run }: { run: ReviewRun }) {
         <p>
           <span className="font-semibold text-hd-muted">Autor do PR </span>
           <span className="font-mono font-semibold text-hd-ink">@{author}</span>
-          {run.meta?.pr_author_is_bot ? (
+          {authorIsBot ? (
             <Badge className="ml-2 normal-case tracking-normal bg-hd-surface text-hd-muted">
               bot
             </Badge>

@@ -8,11 +8,13 @@ export type {
   MemberRole,
   Profile,
   Project,
+  ProjectListItem,
   ProjectMember,
   ReviewRun,
   ReviewRunMeta,
 } from './types';
 export {
+  CANONICAL_RUN_SOURCE,
   getMyRole,
   getProjectBySlug,
   getProjectRun,
@@ -27,3 +29,4 @@ export {
   listUnclaimedProjects,
 } from './api';
 export { ProjectCard } from './ui/project-card';
+export { ProjectsGrid } from './ui/projects-grid';

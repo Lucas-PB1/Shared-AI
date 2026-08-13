@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useQueryStates, parseAsString } from 'nuqs';
 
 import type { Project, ReviewRun } from '@/entities/project';
 import { RunDetailModal } from '@/entities/review-run/ui/run-detail-modal';
@@ -9,14 +8,27 @@ import { Badge } from '@/shared/ui/badge';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { githubPullRequestUrl } from '@/shared/lib/github';
 
-const STATUS_OPTIONS = ['', 'running', 'completed', 'failed', 'cancelled'] as const;
-const SOURCE_OPTIONS = ['', 'local', 'ci', 'pre_commit', 'agent'] as const;
-
 function branchLabel(run: ReviewRun) {
   if (run.branch) return run.branch;
   if (run.review_slug) return run.review_slug;
   if (run.pr_number) return `PR #${run.pr_number}`;
   return '—';
+}
+
+function prAuthor(run: ReviewRun): string | null {
+  const login = (run.pr_author ?? run.meta?.pr_author)?.trim();
+  return login || null;
+}
+
+function prReviewers(run: ReviewRun): string[] {
+  if (Array.isArray(run.reviewers) && run.reviewers.length > 0) {
+    return run.reviewers;
+  }
+  return run.meta?.reviewers ?? [];
+}
+
+function prAuthorIsBot(run: ReviewRun): boolean {
+  return Boolean(run.pr_author_is_bot ?? run.meta?.pr_author_is_bot);
 }
 
 function VerdictSummary({ run }: { run: ReviewRun }) {
@@ -49,72 +61,32 @@ export function RunsTable({
   runs: ReviewRun[];
   project: Project;
 }) {
-  const [filters, setFilters] = useQueryStates({
-    status: parseAsString.withDefault(''),
-    source: parseAsString.withDefault(''),
-  });
   const [selected, setSelected] = useState<ReviewRun | null>(null);
-
-  const filtered = runs.filter((run) => {
-    if (filters.status && run.status !== filters.status) return false;
-    if (filters.source && run.source !== filters.source) return false;
-    return true;
-  });
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3">
-        <label className="flex flex-col gap-1 text-xs font-medium text-hd-muted">
-          Status
-          <select
-            className="h-9 rounded-hd-md border border-hd-border bg-hd-canvas px-2 text-sm text-hd-text-strong"
-            value={filters.status}
-            onChange={(e) => setFilters({ status: e.target.value })}
-          >
-            {STATUS_OPTIONS.map((value) => (
-              <option key={value || 'all'} value={value}>
-                {value || 'todos'}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-hd-muted">
-          Source
-          <select
-            className="h-9 rounded-hd-md border border-hd-border bg-hd-canvas px-2 text-sm text-hd-text-strong"
-            value={filters.source}
-            onChange={(e) => setFilters({ source: e.target.value })}
-          >
-            {SOURCE_OPTIONS.map((value) => (
-              <option key={value || 'all'} value={value}>
-                {value || 'todos'}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      {filtered.length === 0 ? (
+      {runs.length === 0 ? (
         <EmptyState
-          title="Nenhum run"
-          description="Ainda não há execuções de review neste projeto (ou o filtro está vazio)."
+          title="Nenhum run de CI"
+          description="Só entram runs remotos (CI) após merge do PR. Testes locais não alimentam a memória."
         />
       ) : (
         <div className="overflow-x-auto rounded-hd-xl border border-hd-border bg-hd-canvas">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-hd-border bg-hd-surface text-hd-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Ref</th>
+                <th className="px-4 py-3 font-medium">Autor</th>
                 <th className="px-4 py-3 font-medium">PR</th>
                 <th className="px-4 py-3 font-medium">Vereditos</th>
-                <th className="px-4 py-3 font-medium">Source</th>
                 <th className="px-4 py-3 font-medium">Início</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((run) => {
+              {runs.map((run) => {
                 const prUrl = githubPullRequestUrl(project, run.pr_number);
+                const author = prAuthor(run);
+                const reviewers = prReviewers(run);
                 return (
                   <tr
                     key={run.id}
@@ -131,34 +103,40 @@ export function RunsTable({
                     aria-label={`Abrir artefatos do run ${branchLabel(run)}`}
                   >
                     <td className="px-4 py-3">
-                      <Badge
-                        className={
-                          run.status === 'failed'
-                            ? 'bg-red-50 text-hd-danger'
-                            : run.status === 'completed'
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : undefined
-                        }
-                      >
-                        {run.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
                       <span className="font-mono text-xs font-semibold text-hd-ink group-hover:text-hd-primary group-hover:underline">
                         {branchLabel(run)}
                       </span>
-                      {run.meta?.pr_author ? (
-                        <p className="mt-0.5 text-[11px] text-hd-muted">
-                          por @{run.meta.pr_author}
-                          {run.meta.reviewers && run.meta.reviewers.length > 0
-                            ? ` · rev. ${run.meta.reviewers.map((r) => `@${r}`).join(' ')}`
-                            : ''}
-                        </p>
-                      ) : run.git_sha ? (
+                      {run.git_sha ? (
                         <p className="mt-0.5 font-mono text-[11px] text-hd-muted">
                           {run.git_sha.slice(0, 7)}
                         </p>
                       ) : null}
+                    </td>
+                    <td className="px-4 py-3">
+                      {author ? (
+                        <div>
+                          <span className="font-mono text-xs font-semibold text-hd-ink">
+                            @{author}
+                          </span>
+                          {prAuthorIsBot(run) ? (
+                            <Badge className="ml-1.5 normal-case tracking-normal bg-hd-surface text-hd-muted">
+                              bot
+                            </Badge>
+                          ) : null}
+                          {reviewers.length > 0 ? (
+                            <p className="mt-0.5 text-[11px] text-hd-muted">
+                              rev. {reviewers.map((r) => `@${r}`).join(' ')}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span
+                          className="text-hd-muted"
+                          title="Disponível após re-ingest do PR"
+                        >
+                          —
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {run.pr_number ? (
@@ -184,7 +162,6 @@ export function RunsTable({
                     <td className="px-4 py-3">
                       <VerdictSummary run={run} />
                     </td>
-                    <td className="px-4 py-3">{run.source}</td>
                     <td className="px-4 py-3 text-hd-muted">
                       {new Date(run.started_at).toLocaleString('pt-BR')}
                     </td>

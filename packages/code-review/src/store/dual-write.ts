@@ -142,6 +142,7 @@ export async function dualWriteDecisions(
     let runId: string | undefined;
 
     if (opts.createRun !== false) {
+      const runMeta = { ...(opts.run?.meta ?? {}), dual_write: true };
       const run = await port.createRun(projectId, {
         source: opts.run?.source ?? "local",
         status: "running",
@@ -151,7 +152,10 @@ export async function dualWriteDecisions(
         branch: opts.run?.branch ?? null,
         prNumber: opts.run?.prNumber ?? null,
         reviewSlug: opts.run?.reviewSlug ?? null,
-        meta: { ...(opts.run?.meta ?? {}), dual_write: true },
+        prAuthor: opts.run?.prAuthor ?? null,
+        prAuthorIsBot: opts.run?.prAuthorIsBot ?? false,
+        reviewers: opts.run?.reviewers ?? [],
+        meta: runMeta,
       });
       runId = String(run.id);
     }

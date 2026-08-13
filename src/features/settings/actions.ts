@@ -247,8 +247,9 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
     const { data: cloudRuns, error: runsErr } = await cloud
       .from('review_runs')
       .select(
-        'id, project_id, source, status, actor_kind, actor_ref, git_sha, branch, pr_number, review_slug, started_at, finished_at, meta',
-      );
+        'id, project_id, source, status, actor_kind, actor_ref, git_sha, branch, pr_number, review_slug, pr_author, pr_author_is_bot, reviewers, started_at, finished_at, meta',
+      )
+      .eq('source', 'ci');
     if (runsErr) throw runsErr;
 
     const cloudRunIdToLocalProject = new Map<string, string>();
@@ -270,6 +271,9 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
           branch: run.branch ?? null,
           pr_number: run.pr_number ?? null,
           review_slug: run.review_slug ?? null,
+          pr_author: run.pr_author ?? null,
+          pr_author_is_bot: run.pr_author_is_bot ?? false,
+          reviewers: run.reviewers ?? [],
           started_at: run.started_at,
           finished_at: run.finished_at ?? null,
           meta: run.meta ?? {},
@@ -278,6 +282,23 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
       );
       if (error) throw error;
       runsUpserted += 1;
+    }
+
+    // Local só espelha CI: apaga runs de teste (local/agent/pre_commit/smoke).
+    const { data: localJunkRuns, error: junkErr } = await local
+      .from('review_runs')
+      .select('id')
+      .neq('source', 'ci');
+    if (junkErr) throw junkErr;
+    let junkPurged = 0;
+    if (localJunkRuns && localJunkRuns.length > 0) {
+      const junkIds = localJunkRuns.map((r) => r.id as string);
+      const { error: delErr } = await local
+        .from('review_runs')
+        .delete()
+        .in('id', junkIds);
+      if (delErr) throw delErr;
+      junkPurged = junkIds.length;
     }
 
     const syncedRunIds = [...cloudRunIdToLocalProject.keys()];
@@ -358,13 +379,16 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
 
     const report = [
       `${projectsUpserted} projects`,
-      `${runsUpserted} runs`,
+      `${runsUpserted} runs CI`,
       `${findingsUpserted} findings`,
       `${decisionsUpserted} decisions`,
       `${exclusionsUpserted} exclusions`,
       `${conventionsUpserted} conventions`,
       `${membersUpserted} memberships`,
-    ].join(' · ');
+      junkPurged > 0 ? `${junkPurged} runs locais removidos` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
 
     revalidatePath('/', 'layout');
     revalidatePath('/settings');

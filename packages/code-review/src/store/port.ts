@@ -12,6 +12,9 @@ export type CreateRunFields = {
   branch?: string | null;
   prNumber?: number | null;
   reviewSlug?: string | null;
+  prAuthor?: string | null;
+  prAuthorIsBot?: boolean | null;
+  reviewers?: string[] | null;
   meta?: Record<string, unknown>;
 };
 

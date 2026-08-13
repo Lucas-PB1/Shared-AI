@@ -55,6 +55,7 @@ query($owner: String!, $repo: String!, $number: Int!) {
       mergedAt
       baseRefOid
       headRefOid
+      headRefName
       mergeCommit { oid }
       title
       author { login }
@@ -172,9 +173,16 @@ async function cmdIngest(
     extractPrParticipants(pr),
     proposed
   );
+  const headRefOid = String(pr.headRefOid ?? "").trim() || null;
+  const mergeOidStored = mergeOid.trim() || null;
+  const gitSha = headRefOid || mergeOidStored;
+  const branchName = String(pr.headRefName ?? "").trim() || null;
 
   console.log(`=== ingest PR #${prNumber} (${owner}/${repo}) ===`);
   console.log(`Merge: ${mergeOid ? mergeOid.slice(0, 7) : "?"}`);
+  console.log(
+    `Branch: ${branchName ?? "?"} · SHA: ${gitSha ? gitSha.slice(0, 7) : "?"}`
+  );
   console.log(
     `Autor: ${participants.pr_author ?? "?"} · Revisores: ${
       participants.reviewers.length
@@ -227,12 +235,19 @@ async function cmdIngest(
       reviewSlug: `pr-${prNumber}`,
       actorKind: "tool",
       actorRef: "review-ingest-pr",
+      gitSha,
+      branch: branchName,
+      prAuthor: participants.pr_author,
+      prAuthorIsBot: participants.pr_author_is_bot,
+      reviewers: participants.reviewers,
       meta: {
         kind: "pr-ingest",
         pr_author: participants.pr_author,
         pr_author_is_bot: participants.pr_author_is_bot,
         reviewers: participants.reviewers,
         reviews: participants.reviews,
+        head_sha: headRefOid,
+        merge_sha: mergeOidStored,
       },
     },
     replaceSource: `github-pr-${prNumber}`,

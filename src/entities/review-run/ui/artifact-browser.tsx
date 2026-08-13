@@ -258,7 +258,7 @@ export function ArtifactBrowser({
           onClick={() => setOpen(true)}
           disabled={empty}
           className={cn(
-            'group flex min-h-[4.25rem] w-full flex-col justify-center rounded-hd-xl border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-45',
+            'group flex min-h-17 w-full flex-col justify-center rounded-hd-xl border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-45',
             !empty &&
               'cursor-pointer hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hd-primary/40',
             tone === 'primary' &&

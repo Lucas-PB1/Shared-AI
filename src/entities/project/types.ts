@@ -10,6 +10,11 @@ export type Project = {
   updated_at?: string;
 };
 
+/** Projeto na home, com contagem de review runs. */
+export type ProjectListItem = Project & {
+  runs_count: number;
+};
+
 export type ProjectMember = {
   project_id: string;
   user_id: string;
@@ -47,6 +52,9 @@ export type ReviewRun = {
   branch: string | null;
   pr_number: number | null;
   review_slug?: string | null;
+  pr_author?: string | null;
+  pr_author_is_bot?: boolean;
+  reviewers?: string[];
   started_at: string;
   finished_at: string | null;
   meta?: ReviewRunMeta | null;

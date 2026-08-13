@@ -262,9 +262,8 @@ export function SettingsPanel({
       <Card>
         <CardTitle>Sync cloud → local</CardTitle>
         <CardDescription>
-          Copia projects, review runs, findings, decisions, exclusions,
-          conventions e memberships (por e-mail) do remoto para o Docker local.
-          Só disponível com target local.
+          Espelha do remoto só a memória canônica (runs CI + findings/decisions
+          de PR). Apaga runs locais de teste no Docker. Só com target local.
         </CardDescription>
         <form action={syncAction} className="mt-4">
           <Button

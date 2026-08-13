@@ -24,7 +24,7 @@ export function ProjectHeader({
       <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
         <div className="min-w-0">
           <p className="text-xs text-hd-muted">
-            <Link href="/" className="font-medium no-underline hover:text-hd-primary">
+            <Link href="/projects" className="font-medium no-underline hover:text-hd-primary">
               Projetos
             </Link>
             <span className="mx-1.5 text-hd-border">/</span>

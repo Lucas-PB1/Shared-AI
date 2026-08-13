@@ -34,5 +34,6 @@ export async function claimProjectOwner(
   if (error) return { error: error.message };
 
   revalidatePath('/');
+  revalidatePath('/projects');
   return { success: 'Você é o owner deste projeto' };
 }

@@ -6,19 +6,45 @@ import type {
   Exclusion,
   Finding,
   Project,
+  ProjectListItem,
   ProjectMember,
   ReviewRun,
 } from './types';
 
-export async function listMemberProjects(): Promise<Project[]> {
+/** Única origem canônica de review runs / memória de PR. */
+export const CANONICAL_RUN_SOURCE = 'ci' as const;
+
+export async function listMemberProjects(): Promise<ProjectListItem[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('projects')
-    .select('id, slug, name, github_owner, github_repo, created_at, updated_at')
-    .order('name');
+  const [{ data, error }, { data: ciRuns, error: runsError }] =
+    await Promise.all([
+      supabase
+        .from('projects')
+        .select(
+          'id, slug, name, github_owner, github_repo, created_at, updated_at',
+        )
+        .order('name'),
+      supabase.from('review_runs').select('project_id').eq('source', CANONICAL_RUN_SOURCE),
+    ]);
 
   if (error) throw error;
-  return (data ?? []) as Project[];
+  if (runsError) throw runsError;
+
+  const countByProject = new Map<string, number>();
+  for (const row of ciRuns ?? []) {
+    const id = row.project_id as string;
+    countByProject.set(id, (countByProject.get(id) ?? 0) + 1);
+  }
+
+  return ((data ?? []) as Project[])
+    .map((project) => ({
+      ...project,
+      runs_count: countByProject.get(project.id) ?? 0,
+    }))
+    .sort((a, b) => {
+      if (b.runs_count !== a.runs_count) return b.runs_count - a.runs_count;
+      return a.name.localeCompare(b.name, 'pt-BR');
+    });
 }
 
 export async function listUnclaimedProjects(): Promise<Project[]> {
@@ -76,20 +102,23 @@ export async function listProjectMembers(
 
 export async function listProjectRuns(
   projectId: string,
-  filters?: { status?: string; source?: string },
+  filters?: { source?: string },
 ): Promise<ReviewRun[]> {
   const supabase = await createClient();
   let query = supabase
     .from('review_runs')
     .select(
-      'id, project_id, source, status, actor_kind, actor_ref, git_sha, branch, pr_number, review_slug, started_at, finished_at, meta',
+      'id, project_id, source, status, actor_kind, actor_ref, git_sha, branch, pr_number, review_slug, pr_author, pr_author_is_bot, reviewers, started_at, finished_at, meta',
     )
     .eq('project_id', projectId)
+    .eq('source', CANONICAL_RUN_SOURCE)
     .order('started_at', { ascending: false })
     .limit(50);
 
-  if (filters?.status) query = query.eq('status', filters.status);
-  if (filters?.source) query = query.eq('source', filters.source);
+  // source extra só se for ci (fonte canônica); outros valores ignorados
+  if (filters?.source && filters.source !== CANONICAL_RUN_SOURCE) {
+    return [];
+  }
 
   const { data, error } = await query;
   if (error) throw error;
@@ -104,7 +133,7 @@ export async function getProjectRun(
   const { data, error } = await supabase
     .from('review_runs')
     .select(
-      'id, project_id, source, status, actor_kind, actor_ref, git_sha, branch, pr_number, review_slug, started_at, finished_at, meta',
+      'id, project_id, source, status, actor_kind, actor_ref, git_sha, branch, pr_number, review_slug, pr_author, pr_author_is_bot, reviewers, started_at, finished_at, meta',
     )
     .eq('project_id', projectId)
     .eq('id', runId)
