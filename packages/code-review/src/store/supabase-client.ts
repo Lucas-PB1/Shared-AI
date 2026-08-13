@@ -14,6 +14,7 @@ import type {
 } from "./port.js";
 import {
   restCreateDecision,
+  restDeleteConvention,
   restDeleteDecisionsBySource,
   restListConventions,
   restListDecisions,
@@ -126,6 +127,13 @@ export class ReviewStore extends SupabaseRest implements ReviewStorePort {
     fields: ConventionFields
   ): Promise<Record<string, unknown>> {
     return restUpsertConvention(this, projectId, fields);
+  }
+
+  deleteConvention(
+    projectId: string,
+    conventionId: string
+  ): Promise<void> {
+    return restDeleteConvention(this, projectId, conventionId);
   }
 
   refreshDashboardMviews(): Promise<void> {

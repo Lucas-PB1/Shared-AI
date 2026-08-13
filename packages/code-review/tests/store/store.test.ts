@@ -180,9 +180,12 @@ function mockPort(calls: string[]): ReviewStorePort {
     async listConventions() {
       return [
         {
+          id: "cv-existing",
           scope_glob: "src/**",
           body: "Prefer const",
           source: "test",
+          finding_key: "prefer-const",
+          meta: {},
         },
       ];
     },
@@ -192,9 +195,12 @@ function mockPort(calls: string[]): ReviewStorePort {
     },
     async upsertConvention(_pid: string, fields: ConventionFields) {
       calls.push(
-        `upsertConvention:${fields.findingKey ?? ""}:${fields.body}`
+        `upsertConvention:${fields.id ?? fields.findingKey ?? ""}:${fields.body}`
       );
-      return { id: "cv1" };
+      return { id: fields.id ?? "cv1", finding_key: fields.findingKey };
+    },
+    async deleteConvention(_pid: string, id: string) {
+      calls.push(`deleteConvention:${id}`);
     },
     async refreshDashboardMviews() {
       calls.push("refreshDashboardMviews");
@@ -277,6 +283,7 @@ describe("dualWriteDecisions", () => {
       {
         port: mockPort(calls),
         run: { source: "ci", prNumber: 1 },
+        env: { REVIEW_CONVENTION_LLM: "0" },
       }
     );
     assert.equal(r.attempted, true);
@@ -321,7 +328,7 @@ describe("dualWriteDecisions", () => {
           line: 45,
         },
       ],
-      { port }
+      { port, env: { REVIEW_CONVENTION_LLM: "0" } }
     );
     assert.equal(r.written, 2);
     assert.equal(r.conventions, 1);
@@ -329,6 +336,48 @@ describe("dualWriteDecisions", () => {
     assert.ok(
       calls.some((c) =>
         c.startsWith("upsertConvention:doc-type-fallback:")
+      )
+    );
+  });
+
+  it("merges via LLM when semantic duplicate already exists", async () => {
+    const calls: string[] = [];
+    const port = mockPort(calls);
+    const r = await dualWriteDecisions(
+      [
+        {
+          finding_id: "use-const-everywhere",
+          decision: "aceito",
+          summary: "prefer const over let",
+          file: "src/a.ts",
+          line: 1,
+        },
+        {
+          finding_id: "use-const-everywhere",
+          decision: "aceito",
+          summary: "prefer const over let",
+          file: "src/b.ts",
+          line: 2,
+        },
+      ],
+      {
+        port,
+        env: { REVIEW_CONVENTION_LLM: "1" },
+        callLlm: async () =>
+          JSON.stringify({
+            action: "merge",
+            body: "Prefira const; evite let quando o valor não muda.",
+            scope_glob: "src/**",
+            match_id: "cv-existing",
+            also_absorb_ids: [],
+            rationale: "mesmo sentido de Prefer const",
+          }),
+      }
+    );
+    assert.equal(r.conventions, 1);
+    assert.ok(
+      calls.some((c) =>
+        c.includes("upsertConvention:cv-existing:Prefira const")
       )
     );
   });

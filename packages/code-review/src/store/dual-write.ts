@@ -4,11 +4,20 @@
  * - findings: comentário materializado se summary/file e sem finding_id
  * - decisions: ledger
  * - rejeitado | nao-aplicavel → exclusions
- * - aceito ×≥2 no mesmo finding_key → conventions
+ * - aceito ×≥2 → convention (LLM reúne fatos + dedupe semântico; slug só dispara)
  */
 
 import { inferScopeFromFile } from "../memory/merge.js";
 import { StoreError } from "./config.js";
+import {
+  applyConventionPromotion,
+  factsFromAceitoDecisions,
+} from "./convention-promote.js";
+import {
+  CONVENTION_PROMOTE_THRESHOLD,
+  conventionBodyFromDecision,
+  countAceitoVerdicts,
+} from "./dual-write-helpers.js";
 import type { CreateRunFields, ReviewStorePort } from "./port.js";
 import {
   STORE_REQUIRED_MSG,
@@ -17,17 +26,11 @@ import {
 } from "./open.js";
 import { buildFinalizeCoverageMeta } from "./run-summary.js";
 
-/** Mínimo de `aceito` com o mesmo finding_key para virar convention. */
-export const CONVENTION_PROMOTE_THRESHOLD = 2;
-
-const POLICY_SKIP_REASON_PREFIXES = [
-  "suggestion / Para",
-  "código De removido",
-  "indicador `",
-  "thread resolvido",
-  "merge sem resposta",
-  "resposta humana no thread",
-];
+export {
+  CONVENTION_PROMOTE_THRESHOLD,
+  conventionBodyFromDecision,
+  countAceitoVerdicts,
+} from "./dual-write-helpers.js";
 
 export type DualWriteResult = {
   attempted: boolean;
@@ -61,32 +64,6 @@ function uuidish(value: unknown): string | null {
   return null;
 }
 
-/** Texto de convention a partir de summary (+ reason se útil). */
-export function conventionBodyFromDecision(d: {
-  summary?: string | null;
-  reason?: string | null;
-  findingKey: string;
-}): string {
-  const summary =
-    String(d.summary ?? "").trim() ||
-    d.findingKey.replace(/-/g, " ").trim() ||
-    d.findingKey;
-  const reason = String(d.reason ?? "").trim();
-  if (
-    reason &&
-    !POLICY_SKIP_REASON_PREFIXES.some((p) => reason.startsWith(p))
-  ) {
-    return `${summary} — ${reason.slice(0, 100)}`;
-  }
-  return summary;
-}
-
-export function countAceitoVerdicts(
-  rows: Array<Record<string, unknown>>
-): number {
-  return rows.filter((r) => String(r.verdict ?? "").trim() === "aceito").length;
-}
-
 export async function dualWriteDecisions(
   decisions: Array<Record<string, unknown>>,
   opts: {
@@ -98,6 +75,13 @@ export async function dualWriteDecisions(
     decidedBy?: string;
     /** Se setado, apaga decisões desse source antes de gravar (re-ingest idempotente). */
     replaceSource?: string;
+    /** Injeta LLM de promote (testes). */
+    callLlm?: (system: string, user: string) => Promise<string>;
+    /**
+     * Promove conventions (aceito ≥2 → LLM/heurística).
+     * Default true. Ingest CI promove no merge; passe false só para ledger-only.
+     */
+    promoteConventions?: boolean;
   } = {}
 ): Promise<DualWriteResult> {
   const env = opts.env ?? process.env;
@@ -170,8 +154,7 @@ export async function dualWriteDecisions(
 
       const line = lineFromDecision(d);
       const filePath = d.file != null ? String(d.file) : null;
-      const summary =
-        d.summary != null ? String(d.summary) : null;
+      const summary = d.summary != null ? String(d.summary) : null;
       const reason = d.reason != null ? String(d.reason) : null;
       const scopeGlob = inferScopeFromFile(filePath ?? "");
 
@@ -182,10 +165,8 @@ export async function dualWriteDecisions(
         reason ||
         (d.body != null ? String(d.body) : null) ||
         summary;
-      const severity =
-        d.severity != null ? String(d.severity) : null;
-      const category =
-        d.category != null ? String(d.category) : null;
+      const severity = d.severity != null ? String(d.severity) : null;
+      const category = d.category != null ? String(d.category) : null;
       const deCode =
         d.de_code != null
           ? String(d.de_code)
@@ -199,7 +180,6 @@ export async function dualWriteDecisions(
             ? String(d.paraCode)
             : null;
 
-      // Materialize finding (comentário) no run se temos conteúdo e ainda sem UUID.
       if (
         !findingId &&
         runId &&
@@ -279,24 +259,36 @@ export async function dualWriteDecisions(
           source: "finalize",
         });
         exclusions += 1;
-      } else if (verdict === "aceito") {
+      } else if (
+        verdict === "aceito" &&
+        opts.promoteConventions !== false
+      ) {
         const prior = await port.listDecisions(projectId, {
           findingKey,
           limit: 200,
         });
         const aceitoCount = countAceitoVerdicts(prior);
         if (aceitoCount >= CONVENTION_PROMOTE_THRESHOLD) {
-          const body = conventionBodyFromDecision({
+          const fallbackBody = conventionBodyFromDecision({
             summary,
             reason,
             findingKey,
           });
-          await port.upsertConvention(projectId, {
-            scopeGlob,
-            body,
-            source: "finalize",
+          const existingRows = await port.listConventions(projectId, {
+            limit: 500,
+          });
+          await applyConventionPromotion({
+            port,
+            projectId,
             findingKey,
+            facts: factsFromAceitoDecisions(prior, findingKey, scopeGlob),
+            existingRows,
+            fallbackBody,
+            fallbackScopeGlob: scopeGlob,
+            source: "finalize",
             occurrences: aceitoCount,
+            env,
+            callLlm: opts.callLlm,
           });
           conventions += 1;
         }

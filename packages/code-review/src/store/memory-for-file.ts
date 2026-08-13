@@ -9,6 +9,7 @@ import { StoreError } from "./config.js";
 import { scopeMatchesFile } from "../skill-routing/index.js";
 import type { ReviewStorePort } from "./port.js";
 import { fetchStoreMemory } from "./memory-sync.js";
+import { supersededByFromMeta } from "./convention-promote.js";
 
 export async function storeMemoryForFile(
   relFile: string,
@@ -27,6 +28,7 @@ export async function storeMemoryForFile(
   const convSeen = new Set<string>();
   const convBullets: string[] = [];
   for (const c of mem.conventions) {
+    if (supersededByFromMeta((c as { meta?: unknown }).meta)) continue;
     if (!scopeMatchesFile(c.scopeGlob, relFile)) continue;
     const body = c.body.trim();
     if (!body) continue;

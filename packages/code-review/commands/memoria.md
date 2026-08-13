@@ -13,7 +13,7 @@ Ler skill **`review-inbox`** para o fluxo `/avaliar` + `/finalizar`.
 | `/memoria` ou `/memoria status` | Estado (workdir tmp + dica store) |
 | `/memoria init [--write]` | Scaffold no workdir (rascunho local) |
 | `/memoria backup` / `restore` | Backup do workdir |
-| `/memoria compactar` / `promover` | decisions → context → convencoes (workdir; push via store tools) |
+| `/memoria compactar` / `promover` | decisions → context → convencoes (LLM reúne fatos + dedupe semântico; marca `promoted`) |
 
 Após **merge de PR** com `/avaliar` no GitHub (workflow `avaliar-pr-memoria`):
 

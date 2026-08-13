@@ -61,11 +61,14 @@ export type ExclusionFields = {
 };
 
 export type ConventionFields = {
+  /** Patch por id (merge/skip/bump). */
+  id?: string;
   scopeGlob?: string;
   body: string;
   source?: string | null;
   findingKey?: string | null;
   occurrences?: number;
+  meta?: Record<string, unknown>;
 };
 
 /** Contrato U0–U3. */
@@ -126,6 +129,8 @@ export interface ReviewStorePort {
     projectId: string,
     fields: ConventionFields
   ): Promise<Record<string, unknown>>;
+  /** Remove convenção (ex.: duplicata absorvida no merge LLM). */
+  deleteConvention?(projectId: string, conventionId: string): Promise<void>;
   /** Atualiza MVs do dashboard; falha deve ser tratada pelo caller (não abortar ingest). */
   refreshDashboardMviews(): Promise<void>;
 }

@@ -126,7 +126,7 @@ async function cmdIngest(
   prNumber: number,
   repository: string,
   write: boolean,
-  promoteAll: boolean
+  opts: { promoteAll?: boolean } = {}
 ): Promise<number> {
   let owner: string;
   let repo: string;
@@ -208,7 +208,7 @@ async function cmdIngest(
 
   if (!write) {
     console.log(
-      "\nDry-run. Use --write para gravar decisions + compactar + promover + export."
+      "\nDry-run. Use --write para gravar decisions + dual-write + promover conventions + export."
     );
     return 0;
   }
@@ -229,6 +229,8 @@ async function cmdIngest(
       resolveProjectSlug(project) ||
       String(process.env.REVIEW_PROJECT_SLUG ?? "").trim() ||
       undefined,
+    // Ingest CI: ledger + promoção LLM de conventions (aceito ≥2).
+    promoteConventions: true,
     run: {
       source: "ci",
       prNumber,
@@ -267,7 +269,7 @@ async function cmdIngest(
   writeContext(rd, context);
   console.log("context.yaml atualizado (cache local)");
 
-  cmdPromover(project, true, promoteAll);
+  await cmdPromover(project, true, Boolean(opts.promoteAll));
 
   runExportExclusions(project);
   console.log("exclusions.yaml exportado (cache local; fonte de verdade = store)");
@@ -319,7 +321,7 @@ async function main(): Promise<number> {
     repository = (proc.stdout ?? "").trim();
   }
 
-  return cmdIngest(resolved, prNumber, repository, write, promoteAll);
+  return cmdIngest(resolved, prNumber, repository, write, { promoteAll });
 }
 
 main().then(

@@ -96,7 +96,7 @@ async function main(): Promise<number> {
     case "compactar":
       return cmdCompactar(project, args.write);
     case "promover":
-      return cmdPromover(project, args.write, args.all);
+      return await cmdPromover(project, args.write, args.all);
     case "restore":
       return cmdRestore(project, args.write);
     case "diff":

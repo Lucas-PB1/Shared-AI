@@ -41,6 +41,18 @@ export {
 } from "./dual-write.js";
 
 export {
+  META_ABSORBED_FINDING_KEYS,
+  META_LLM_PROMOTED,
+  META_SUPERSEDED_BY,
+  applyConventionPromotion,
+  decideConventionPromotion,
+  findCoveringConvention,
+  isConventionLlmEnabled,
+  parseConventionPromoteDecision,
+  type ConventionPromoteDecision,
+} from "./convention-promote.js";
+
+export {
   logPublishResult,
   publishRun,
   type PublishRunResult,

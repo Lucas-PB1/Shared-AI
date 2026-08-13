@@ -175,6 +175,35 @@ export async function restUpsertConvention(
   if (fields.occurrences != null) {
     payload.occurrences = fields.occurrences;
   }
+  if (fields.meta != null) {
+    payload.meta = fields.meta;
+  }
+
+  const patchBody = {
+    body: fields.body,
+    scope_glob: fields.scopeGlob ?? "**/*",
+    source: fields.source ?? null,
+    occurrences: fields.occurrences ?? 1,
+    updated_at: payload.updated_at,
+    ...(fields.meta != null ? { meta: fields.meta } : {}),
+    ...(fields.findingKey != null && fields.findingKey !== ""
+      ? { finding_key: fields.findingKey }
+      : {}),
+  };
+
+  if (fields.id) {
+    const patchUrl = `${rest.config.restBase}/conventions?id=eq.${fields.id}`;
+    const patched = (await rest.request(
+      "PATCH",
+      patchUrl,
+      rest.headers({ prefer: "return=representation" }),
+      patchBody
+    )) as Array<Record<string, unknown>> | null;
+    if (!patched?.length) {
+      throw new StoreError("upsertConvention: patch por id vazio");
+    }
+    return patched[0];
+  }
 
   // Partial unique index on (project_id, finding_key) is not always
   // addressable via PostgREST on_conflict — select then patch/insert.
@@ -197,13 +226,7 @@ export async function restUpsertConvention(
         "PATCH",
         patchUrl,
         rest.headers({ prefer: "return=representation" }),
-        {
-          body: fields.body,
-          scope_glob: fields.scopeGlob ?? "**/*",
-          source: fields.source ?? null,
-          occurrences: fields.occurrences ?? 1,
-          updated_at: payload.updated_at,
-        }
+        patchBody
       )) as Array<Record<string, unknown>> | null;
       if (!patched?.length) {
         throw new StoreError("upsertConvention: patch vazio");
@@ -220,6 +243,17 @@ export async function restUpsertConvention(
   )) as Array<Record<string, unknown>> | null;
   if (!rows?.length) throw new StoreError("upsertConvention: resposta vazia");
   return rows[0];
+}
+
+export async function restDeleteConvention(
+  rest: SupabaseRest,
+  _projectId: string,
+  conventionId: string
+): Promise<void> {
+  const id = String(conventionId ?? "").trim();
+  if (!id) throw new StoreError("deleteConvention: id vazio");
+  const url = `${rest.config.restBase}/conventions?id=eq.${id}`;
+  await rest.request("DELETE", url, rest.headers());
 }
 
 export async function restListMemory(

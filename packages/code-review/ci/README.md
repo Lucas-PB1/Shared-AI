@@ -30,10 +30,13 @@ Cache efêmero: `HOSTDIME_REVIEW_WORKDIR` (default no template: `${{ runner.temp
 **Aprendizado automático pós-merge (CI):**
 
 1. Dev mergeia PR com threads de review
-2. Workflow `avaliar-pr-memoria` classifica cada thread e **grava no store** (decisions + exclusions/conventions):
+2. Workflow `avaliar-pr-memoria` classifica cada thread e **grava no store** (decisions + exclusions + conventions):
    - `/avaliar` (root com marker `avaliar-inline`)
    - **review humano top-level** (comentário de dev sem marker; reply / Resolve decide aceito vs rejeitado)
+   - `aceito` ×≥2 → **promoção LLM** no próprio ingest (reunir fatos + merge semântico; `REVIEW_CONVENTION_LLM=0` = heurística)
 3. Memória só no store (sem pasta de review no cliente)
+
+O job de ingest precisa de `CURSOR_API_KEY` ou `REVIEW_LLM_API_KEY` para a promoção (senão cai na heurística).
 
 Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-ia apontando `--project` pro hub.
 
@@ -45,6 +48,7 @@ Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-
 | `REVIEW_LLM_API_KEY` | Secret | Fallback | OpenAI/Anthropic direto (se não usar Cursor). Sem este **nem** `CURSOR_API_KEY`, o workflow roda só a **Fase 1 (estático)** |
 | `REVIEW_LLM_MODEL` | Variable | Não | Modelo do `agent` (ex. `gpt-5`) ou OpenAI |
 | `REVIEW_LLM_PROVIDER` | Variable | Não | `cursor` (default), `openai`, `anthropic` |
+| `REVIEW_CONVENTION_LLM` | Variable | Não | `0` desliga LLM na promoção de convenções (só heurística) |
 | `SUPABASE_URL` | Secret | **Sim** | Store review |
 | `SUPABASE_SERVICE_ROLE_KEY` | Secret | **Sim** | CI publish/pull |
 | `REVIEW_PROJECT_SLUG` | Variable | Não | slug em `projects` (ex. tema HubSpot: `hostdime-hub`; default: nome do repo) |

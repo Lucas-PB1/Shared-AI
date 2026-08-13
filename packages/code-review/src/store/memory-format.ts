@@ -2,6 +2,8 @@
  * Formato de export de memória store (yaml/md slim).
  */
 
+import { supersededByFromMeta } from "./convention-promote.js";
+
 export type StoreExclusion = {
   findingKey: string;
   reason: string;
@@ -10,9 +12,12 @@ export type StoreExclusion = {
 };
 
 export type StoreConvention = {
+  id?: string;
   scopeGlob: string;
   body: string;
   source: string | null;
+  findingKey?: string | null;
+  meta?: Record<string, unknown> | null;
 };
 
 export type ParsedExclusionYaml = {
@@ -57,6 +62,7 @@ export function formatExclusionsYaml(
 export function formatConventionsMd(items: StoreConvention[]): string {
   const byScope = new Map<string, string[]>();
   for (const c of items) {
+    if (supersededByFromMeta(c.meta)) continue;
     const scope = c.scopeGlob || "**/*";
     const body = c.body.trim();
     if (!body) continue;
@@ -112,9 +118,16 @@ export function rowToExclusion(row: Record<string, unknown>): StoreExclusion {
 
 export function rowToConvention(row: Record<string, unknown>): StoreConvention {
   return {
+    id: row.id != null ? String(row.id) : undefined,
     scopeGlob: String(row.scope_glob ?? "**/*").trim() || "**/*",
     body: String(row.body ?? "").trim(),
     source: row.source != null ? String(row.source) : null,
+    findingKey:
+      row.finding_key != null ? String(row.finding_key).trim() || null : null,
+    meta:
+      row.meta && typeof row.meta === "object" && !Array.isArray(row.meta)
+        ? (row.meta as Record<string, unknown>)
+        : null,
   };
 }
 

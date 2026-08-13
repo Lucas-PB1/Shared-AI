@@ -11,6 +11,12 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { stableFindingId } from "../shared/index.js";
+import {
+  decideConventionPromotion,
+  isConventionLlmEnabled,
+  type ConventionPromoteDecision,
+  type ExistingConventionView,
+} from "../store/convention-promote.js";
 import { loadContext, writeContext } from "./context-yaml.js";
 import {
   buildContext,
@@ -19,7 +25,11 @@ import {
   mode,
   readMergedDecisions,
 } from "./decisions-io.js";
-import { mergePromotedIntoConvencoes } from "./merge.js";
+import {
+  mergePromotedIntoConvencoes,
+  parseConvencoesSections,
+  renderConvencoesSections,
+} from "./merge.js";
 import { localStamp, reviewDir } from "./paths.js";
 
 export function cmdStatus(project: string): number {
@@ -172,11 +182,87 @@ export function cmdCompactar(project: string, write: boolean): number {
   return 0;
 }
 
-export function cmdPromover(
+function existingFromConvencoesMd(raw: string): ExistingConventionView[] {
+  const [, sections] = parseConvencoesSections(raw);
+  const out: ExistingConventionView[] = [];
+  let i = 0;
+  for (const section of sections) {
+    for (const bullet of section.bullets) {
+      const body = bullet.replace(/^- /, "").trim();
+      if (!body) continue;
+      out.push({
+        id: `local-${i}`,
+        findingKey: null,
+        body,
+        scopeGlob: section.glob || section.label || "**/*",
+        occurrences: 1,
+        absorbedFindingKeys: [],
+        supersededBy: null,
+      });
+      i += 1;
+    }
+  }
+  return out;
+}
+
+function applyLocalPromoteDecision(
+  existingMd: string,
+  decision: {
+    action: string;
+    body: string;
+    scopeGlob: string;
+    matchId: string | null;
+  },
+  existingViews: ExistingConventionView[]
+): { md: string; added: number } {
+  if (decision.action === "skip" && decision.matchId) {
+    return { md: existingMd, added: 0 };
+  }
+  if (decision.action === "merge" && decision.matchId) {
+    const match = existingViews.find((c) => c.id === decision.matchId);
+    if (!match) {
+      const [md, added] = mergePromotedIntoConvencoes(existingMd, {
+        [decision.scopeGlob]: [decision.body],
+      });
+      return { md, added };
+    }
+    const [preamble, sections] = parseConvencoesSections(existingMd);
+    let replaced = false;
+    for (const section of sections) {
+      for (let bi = 0; bi < section.bullets.length; bi++) {
+        const text = section.bullets[bi].replace(/^- /, "").trim();
+        if (text === match.body) {
+          section.bullets[bi] = decision.body.startsWith("- ")
+            ? decision.body
+            : `- ${decision.body}`;
+          replaced = true;
+          break;
+        }
+      }
+      if (replaced) break;
+    }
+    if (!replaced) {
+      const [md, added] = mergePromotedIntoConvencoes(existingMd, {
+        [decision.scopeGlob || match.scopeGlob]: [decision.body],
+      });
+      return { md, added };
+    }
+    return {
+      md: renderConvencoesSections(preamble, sections),
+      added: 0,
+    };
+  }
+  const [md, added] = mergePromotedIntoConvencoes(existingMd, {
+    [decision.scopeGlob || "**/*"]: [decision.body],
+  });
+  return { md, added };
+}
+
+export async function cmdPromover(
   project: string,
   write: boolean,
   allCandidates: boolean
-): number {
+): Promise<number> {
   ensureV2Scaffold(project);
   const rd = reviewDir(project);
   let context = loadContext(rd);
@@ -189,60 +275,115 @@ export function cmdPromover(
       console.error("Erro: context.yaml ausente — rode compactar");
       return 1;
     }
-  } else if (write) {
-    writeContext(rd, context);
   }
 
-  let sections: Record<string, string[]> = {};
+  const candidates = (
+    (context.candidates as Array<Record<string, unknown>>) ?? []
+  ).map((c) => ({ ...c }));
+  const conventionRules =
+    (context.convention_rules as Array<Record<string, unknown>>) ?? [];
 
-  for (const r of (context.convention_rules as Array<Record<string, unknown>>) ??
-    []) {
-    const scope = String(r.scope ?? "**/*");
-    const rule = String("rule" in r ? r.rule : r.summary ?? "");
-    sections[scope] = sections[scope] ?? [];
-    sections[scope].push(rule);
-  }
+  const pending = [
+    ...conventionRules.map((r) => ({
+      id: String(r.id ?? stableFindingId(String(r.rule ?? r.summary ?? ""))),
+      scope: String(r.scope ?? "**/*"),
+      rule: String("rule" in r ? r.rule : r.summary ?? ""),
+      occurrences: 2,
+      promoted: Boolean(r.promoted),
+    })),
+    ...candidates.filter((c) => {
+      if (c.promoted) return false;
+      if (!allCandidates && Number(c.occurrences ?? 1) < 2) return false;
+      return true;
+    }),
+  ].filter((c) => String(c.rule ?? "").trim());
 
-  for (const c of (context.candidates as Array<Record<string, unknown>>) ?? []) {
-    if (!allCandidates && Number(c.occurrences ?? 1) < 2) continue;
-    if (c.promoted) continue;
-    const scope = String(c.scope ?? "**/*");
-    sections[scope] = sections[scope] ?? [];
-    sections[scope].push(String(c.rule));
-  }
-
-  sections = Object.fromEntries(
-    Object.entries(sections)
-      .map(([k, v]) => [k, v.filter(Boolean)] as const)
-      .filter(([, v]) => v.length)
-  );
-
-  if (!Object.keys(sections).length) {
+  if (!pending.length) {
     console.log("Nenhuma regra para promover.");
     return 0;
   }
 
   const out = path.join(rd, "convencoes.md");
-  const existing = existsSync(out) ? readFileSync(out, "utf8") : "";
-  const [merged, added] = mergePromotedIntoConvencoes(existing, sections);
+  let md = existsSync(out) ? readFileSync(out, "utf8") : "";
+  let addedTotal = 0;
+  const useLlm = isConventionLlmEnabled();
+  const promotedIds = new Set<string>();
 
   console.log("=== promover (proposta) ===");
-  console.log(`Escopos: ${Object.keys(sections).length}`);
-  console.log(`Bullets novos: ${added}`);
-  console.log(`Tamanho: ${merged.length} bytes`);
+  console.log(`Candidatos: ${pending.length}`);
+  console.log(`LLM: ${useLlm ? "sim" : "não (heurística / REVIEW_CONVENTION_LLM=0)"}`);
+
+  for (const c of pending) {
+    const findingKey = String(c.id ?? "");
+    const rule = String(c.rule ?? "").trim();
+    const scope = String(c.scope ?? "**/*");
+    const existingViews = existingFromConvencoesMd(md);
+
+    // Já presente por texto exato → marca promoted, sem reconverter.
+    if (
+      existingViews.some(
+        (e) => e.body.trim() === rule || e.body.trim() === rule.replace(/^- /, "")
+      )
+    ) {
+      promotedIds.add(findingKey);
+      continue;
+    }
+
+    let decision: ConventionPromoteDecision = {
+      action: "create",
+      body: rule,
+      scopeGlob: scope,
+      matchId: null,
+      alsoAbsorbIds: [],
+      rationale: "heuristic",
+    };
+
+    if (useLlm) {
+      try {
+        decision = await decideConventionPromotion({
+          facts: [
+            {
+              findingKey,
+              summary: rule,
+              scopeGlob: scope,
+            },
+          ],
+          existing: existingViews,
+          fallbackBody: rule,
+          fallbackScopeGlob: scope,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`promover LLM falhou (${findingKey}): ${msg} — heurística`);
+      }
+    }
+
+    const applied = applyLocalPromoteDecision(md, decision, existingViews);
+    md = applied.md;
+    addedTotal += applied.added;
+    promotedIds.add(findingKey);
+    console.log(
+      `  [${decision.action}] ${findingKey.slice(0, 40)} → ${decision.body.slice(0, 60)}`
+    );
+  }
+
+  console.log(`Bullets novos/alterados: ${addedTotal}`);
+  console.log(`Tamanho: ${md.length} bytes`);
 
   if (!write) {
-    console.log("\nDry-run. Use --write para gravar convencoes.md.");
+    console.log("\nDry-run. Use --write para gravar convencoes.md + promoted.");
     return 0;
   }
-  if (added === 0) {
-    console.log(
-      "\nNenhum bullet novo em convencoes.md (já presentes ou abaixo do limiar)."
-    );
-    return 0;
-  }
-  writeFileSync(out, merged, "utf8");
-  console.log(`\nGravado: ${out} (+${added} bullet(s))`);
+
+  writeFileSync(out, md, "utf8");
+  context.candidates = candidates.map((c) =>
+    promotedIds.has(String(c.id ?? ""))
+      ? { ...c, promoted: true }
+      : c
+  );
+  writeContext(rd, context);
+  console.log(`\nGravado: ${out}`);
+  console.log(`context.yaml: ${promotedIds.size} candidate(s) marked promoted`);
   return 0;
 }
 
