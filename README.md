@@ -26,11 +26,12 @@ Detalhes: [`docs/okf/dashboard-web.md`](docs/okf/dashboard-web.md).
 
 | Modo | Quando usar | Comandos |
 | --- | --- | --- |
+| **Atualizar + pronto** | Pull, sync, `.env` vazio, bootstrap | `npm run onboard -- --yes` ou `/onboard` no Cursor |
 | **Só skills** | Orquestrador, skills e rules — sem `/avaliar` | `npm run setup:skills` → `npm run bootstrap -- <repo>` |
 | **Skills + code-review** | Setup completo (recomendado) | `npm run onboard` **ou** `setup:skills` + `setup:code-review` + `bootstrap` |
 | **Só code-review** | Máquina já tem skills; falta inbox/review | `npm run setup:code-review` → `npm run bootstrap -- <repo>` |
 
-`setup:code-review` instala deps (`npm`/`composer`) e commands `/avaliar`, `/avaliar-diff`, `/finalizar`, etc. Sem ele as ferramentas e commands globais do review podem faltar — use `npm run doctor`. Memória/decisões vivem no **store Supabase**.
+`/onboard` (e `npm run onboard`) faz **git pull**, **sync**, cria **`.env` vazio** (não preenche secrets) e bootstrap. Depois: `env:switch` / `connections:seed` / `dev`.
 
 Wizard (setup + perfil + bootstrap + extras):
 

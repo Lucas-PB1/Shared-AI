@@ -19,6 +19,7 @@ Mapear **palavras ou objetivo** do pedido → ler SKILL.md (localização em `sk
 | deploy, upload, build remoto, CLI do projeto | skill de tooling no projeto ou em `~/.cursor/skills/` (ex.: `hubspot-cli`, `git`) |
 | HubSpot, `hs project`, CMS dev, portal HubSpot, MCP HubSpot | `hubspot-cli` + rule `skills-orchestrator-hubspot.mdc`; `/hubspot-mcp` para instalar MCP |
 | OKF, Open Knowledge Format, knowledge bundle, concept OKF, LLM wiki | `okf` + rule `skills-orchestrator-okf.mdc` |
+| `/onboard`, onboard, atualizar monorepo, pull e sync hostdime | command `/onboard` |
 | `/historico`, historico, history watch, log.md escopo, history.md escopo | `history-watch` + command `/historico` |
 | `/cursor-cli`, cursor cli, agent cli, cursor agent terminal | command `/cursor-cli` |
 | `/sync-inbox`, sync inbox, inbox boot, continuar projeto, trabalho pendente | command `/sync-inbox` |
