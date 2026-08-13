@@ -160,6 +160,10 @@ function mockPort(calls: string[]): ReviewStorePort {
       }
       return rows;
     },
+    async deleteDecisionsBySource(_pid: string, source: string) {
+      calls.push(`deleteDecisionsBySource:${source}`);
+      return 0;
+    },
     async listMemory() {
       return { projectId: "proj-1", decisions: [] };
     },

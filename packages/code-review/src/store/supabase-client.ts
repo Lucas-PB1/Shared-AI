@@ -14,6 +14,7 @@ import type {
 } from "./port.js";
 import {
   restCreateDecision,
+  restDeleteDecisionsBySource,
   restListConventions,
   restListDecisions,
   restListExclusions,
@@ -82,6 +83,13 @@ export class ReviewStore extends SupabaseRest implements ReviewStorePort {
     opts?: ListDecisionsOpts
   ): Promise<Array<Record<string, unknown>>> {
     return restListDecisions(this, projectId, opts);
+  }
+
+  deleteDecisionsBySource(
+    projectId: string,
+    source: string
+  ): Promise<number> {
+    return restDeleteDecisionsBySource(this, projectId, source);
   }
 
   listMemory(projectSlug?: string): Promise<{

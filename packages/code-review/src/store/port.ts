@@ -98,6 +98,11 @@ export interface ReviewStorePort {
     projectId: string,
     opts?: ListDecisionsOpts
   ): Promise<Array<Record<string, unknown>>>;
+  /** Remove decisões de um source (ex.: re-ingest `github-pr-69`). */
+  deleteDecisionsBySource(
+    projectId: string,
+    source: string
+  ): Promise<number>;
   listMemory(projectSlug?: string): Promise<{
     projectId: string;
     decisions: Array<Record<string, unknown>>;

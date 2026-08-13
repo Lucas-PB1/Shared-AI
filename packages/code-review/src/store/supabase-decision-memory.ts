@@ -64,6 +64,26 @@ export async function restListDecisions(
   return rows ?? [];
 }
 
+export async function restDeleteDecisionsBySource(
+  rest: SupabaseRest,
+  projectId: string,
+  source: string
+): Promise<number> {
+  const trimmed = source.trim();
+  if (!trimmed) return 0;
+  const q = new URLSearchParams({
+    project_id: `eq.${projectId}`,
+    source: `eq.${trimmed}`,
+  });
+  const url = `${rest.config.restBase}/decisions?${q}`;
+  const rows = (await rest.request(
+    "DELETE",
+    url,
+    rest.headers({ prefer: "return=representation" })
+  )) as Array<Record<string, unknown>> | null;
+  return rows?.length ?? 0;
+}
+
 export async function restListExclusions(
   rest: SupabaseRest,
   projectId: string,

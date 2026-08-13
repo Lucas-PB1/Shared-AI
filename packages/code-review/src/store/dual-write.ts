@@ -96,6 +96,8 @@ export async function dualWriteDecisions(
     createRun?: boolean;
     run?: CreateRunFields;
     decidedBy?: string;
+    /** Se setado, apaga decisões desse source antes de gravar (re-ingest idempotente). */
+    replaceSource?: string;
   } = {}
 ): Promise<DualWriteResult> {
   const env = opts.env ?? process.env;
@@ -124,6 +126,19 @@ export async function dualWriteDecisions(
 
   try {
     const projectId = await port.getProjectId(opts.projectSlug);
+
+    if (opts.replaceSource && typeof port.deleteDecisionsBySource === "function") {
+      const removed = await port.deleteDecisionsBySource(
+        projectId,
+        opts.replaceSource
+      );
+      if (removed > 0) {
+        console.log(
+          `dual-write: removidas ${removed} decisão(ões) anteriores de source=${opts.replaceSource}`
+        );
+      }
+    }
+
     let runId: string | undefined;
 
     if (opts.createRun !== false) {

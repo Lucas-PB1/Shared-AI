@@ -209,6 +209,7 @@ async function cmdIngest(
       meta: { kind: "pr-ingest" },
     },
     decidedBy: "review-ingest-pr",
+    replaceSource: `github-pr-${prNumber}`,
   });
   logDualWriteResult("review-ingest-pr", dual);
   if (dual.error) {
