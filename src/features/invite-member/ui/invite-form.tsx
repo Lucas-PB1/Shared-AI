@@ -28,11 +28,11 @@ export function InviteMemberForm({
   }, [state]);
 
   return (
-    <form action={action} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+    <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="projectSlug" value={projectSlug} />
-      <div className="min-w-0 flex-1 space-y-2">
-        <Label htmlFor="email">Convidar por e-mail</Label>
+      <div className="space-y-2">
+        <Label htmlFor="email">E-mail</Label>
         <Input
           id="email"
           name="email"
@@ -47,13 +47,13 @@ export function InviteMemberForm({
           id="role"
           name="role"
           defaultValue="member"
-          className="flex h-10 rounded-hd-md border border-hd-border bg-hd-canvas px-3 text-sm"
+          className="flex h-11 w-full rounded-hd-md border border-hd-border bg-hd-canvas px-3 text-sm"
         >
           <option value="member">member</option>
           <option value="viewer">viewer</option>
         </select>
       </div>
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} className="w-full">
         {pending ? 'Convidando…' : 'Convidar'}
       </Button>
     </form>

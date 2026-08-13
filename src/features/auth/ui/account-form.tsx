@@ -9,8 +9,19 @@ import {
   savePassword,
   type AccountActionState,
 } from '@/features/auth/ui/account-form-actions';
+import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
-import { Card, CardDescription, CardTitle } from '@/shared/ui/card';
+import { Card } from '@/shared/ui/card';
+import {
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/ui/dialog';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 
@@ -23,6 +34,60 @@ function initialsFrom(displayName: string | null, email: string | null) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
+}
+
+function Avatar({
+  src,
+  initials,
+  size = 'md',
+}: {
+  src: string | null;
+  initials: string;
+  size?: 'md' | 'lg';
+}) {
+  const dim = size === 'lg' ? 'h-16 w-16 text-lg' : 'h-12 w-12 text-sm';
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt=""
+        className={`${dim} rounded-full border border-hd-border object-cover`}
+      />
+    );
+  }
+  return (
+    <div
+      className={`flex ${dim} items-center justify-center rounded-full bg-hd-secondary font-bold text-white`}
+      aria-hidden
+    >
+      {initials || 'U'}
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  action,
+}: {
+  label: string;
+  value: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hd-border/70 py-3 first:border-t-0 first:pt-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-hd-muted">
+          {label}
+        </p>
+        <div className="mt-0.5 truncate text-sm font-medium text-hd-ink">
+          {value}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
 }
 
 export function AccountForm({
@@ -40,6 +105,10 @@ export function AccountForm({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+
   const [profileState, profileAction, profilePending] = useActionState(
     saveAccount,
     initial,
@@ -64,165 +133,244 @@ export function AccountForm({
     if (avatarState.success) {
       setPreview(null);
       if (fileRef.current) fileRef.current.value = '';
+      setPhotoOpen(false);
     }
   }, [avatarState]);
 
-  const shownAvatar = preview || avatarUrl;
+  useEffect(() => {
+    if (profileState.success) setProfileOpen(false);
+  }, [profileState]);
+
+  useEffect(() => {
+    if (passwordState.success) setPasswordOpen(false);
+  }, [passwordState]);
+
   const initials = initialsFrom(displayName, email);
   const memberSince = createdAt
     ? new Date(createdAt).toLocaleDateString('pt-BR', {
         day: '2-digit',
-        month: 'long',
+        month: 'short',
         year: 'numeric',
       })
     : null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <Card className="space-y-5">
-        <div>
-          <CardTitle>Foto de perfil</CardTitle>
-          <CardDescription>
-            JPEG, PNG, WebP ou GIF · até 2 MB. Aparece no header e nesta página.
-          </CardDescription>
+    <>
+      <Card className="p-5">
+        <div className="flex flex-wrap items-center gap-4">
+          <Avatar src={avatarUrl} initials={initials} size="lg" />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-display text-xl font-semibold text-hd-ink">
+                {displayName || 'Sem nome'}
+              </h2>
+              {isAdmin ? <Badge>Admin</Badge> : null}
+            </div>
+            <p className="truncate text-sm text-hd-muted">{email}</p>
+            {memberSince ? (
+              <p className="mt-1 text-xs text-hd-muted">Desde {memberSince}</p>
+            ) : null}
+          </div>
         </div>
 
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-          <div className="relative">
-            {shownAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={shownAvatar}
-                alt=""
-                className="h-28 w-28 rounded-full border-2 border-hd-border object-cover shadow-hd-md"
-              />
-            ) : (
-              <div
-                className="flex h-28 w-28 items-center justify-center rounded-full bg-hd-secondary text-2xl font-bold text-white shadow-hd-md"
-                aria-hidden
+        <div className="mt-5">
+          <DetailRow
+            label="Foto"
+            value={avatarUrl ? 'Definida' : 'Usando iniciais'}
+            action={
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setPhotoOpen(true)}
               >
-                {initials || 'U'}
+                Alterar
+              </Button>
+            }
+          />
+          <DetailRow
+            label="Nome de exibição"
+            value={displayName || '—'}
+            action={
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setProfileOpen(true)}
+              >
+                Editar
+              </Button>
+            }
+          />
+          <DetailRow label="E-mail" value={email || '—'} />
+          <DetailRow
+            label="Senha"
+            value="••••••••"
+            action={
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setPasswordOpen(true)}
+              >
+                Trocar
+              </Button>
+            }
+          />
+        </div>
+      </Card>
+
+      <Dialog
+        open={photoOpen}
+        onOpenChange={(open) => {
+          setPhotoOpen(open);
+          if (!open) {
+            setPreview(null);
+            if (fileRef.current) fileRef.current.value = '';
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Foto de perfil</DialogTitle>
+            <DialogDescription>
+              JPEG, PNG, WebP ou GIF · até 2 MB.
+            </DialogDescription>
+          </DialogHeader>
+          <form action={avatarAction}>
+            <DialogBody className="space-y-4">
+              <div className="flex justify-center">
+                <Avatar
+                  src={preview || avatarUrl}
+                  initials={initials}
+                  size="lg"
+                />
               </div>
-            )}
-          </div>
-          <div className="min-w-0 flex-1 space-y-3 text-center sm:text-left">
-            <div>
-              <p className="font-display text-xl font-semibold text-hd-ink">
-                {displayName || 'Sem nome'}
-              </p>
-              <p className="text-sm text-hd-muted">{email}</p>
-              <div className="mt-2 flex flex-wrap justify-center gap-2 sm:justify-start">
-                {isAdmin ? (
-                  <span className="rounded-full bg-hd-primary-soft px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-hd-primary-strong">
-                    Admin
-                  </span>
-                ) : null}
-                {memberSince ? (
-                  <span className="rounded-full border border-hd-border px-2.5 py-1 text-[11px] font-semibold text-hd-muted">
-                    Desde {memberSince}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <form action={avatarAction} className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="avatar">Escolher imagem</Label>
+                <Label htmlFor="avatar">Arquivo</Label>
                 <Input
                   ref={fileRef}
                   id="avatar"
                   name="avatar"
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
+                  required
                   onChange={(event) => {
                     const file = event.target.files?.[0];
-                    if (!file) {
-                      setPreview(null);
-                      return;
-                    }
-                    setPreview(URL.createObjectURL(file));
+                    setPreview(file ? URL.createObjectURL(file) : null);
                   }}
                 />
               </div>
+            </DialogBody>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  Cancelar
+                </Button>
+              </DialogClose>
               <Button type="submit" disabled={avatarPending || !preview}>
                 {avatarPending ? 'Enviando…' : 'Salvar foto'}
               </Button>
-            </form>
-          </div>
-        </div>
-      </Card>
-
-      <div className="space-y-6">
-        <Card>
-          <CardTitle>Dados da conta</CardTitle>
-          <CardDescription>
-            Nome usado no dashboard, convites e comentários de membership.
-          </CardDescription>
-          <form action={profileAction} className="mt-5 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input id="email" value={email ?? ''} disabled readOnly />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="display_name">Nome de exibição</Label>
-              <Input
-                id="display_name"
-                name="display_name"
-                defaultValue={displayName ?? ''}
-                minLength={2}
-                required
-              />
-            </div>
-            <Button type="submit" disabled={profilePending}>
-              {profilePending ? 'Salvando…' : 'Salvar perfil'}
-            </Button>
+            </DialogFooter>
           </form>
-        </Card>
+        </DialogContent>
+      </Dialog>
 
-        <Card>
-          <CardTitle>Senha</CardTitle>
-          <CardDescription>
-            Troque a senha desta conta. Depois do save, use a nova senha no
-            próximo login.
-          </CardDescription>
-          <form action={passwordAction} className="mt-5 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="current_password">Senha atual</Label>
-              <Input
-                id="current_password"
-                name="current_password"
-                type="password"
-                autoComplete="current-password"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new_password">Nova senha</Label>
-              <Input
-                id="new_password"
-                name="new_password"
-                type="password"
-                autoComplete="new-password"
-                minLength={8}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm_password">Confirmar nova senha</Label>
-              <Input
-                id="confirm_password"
-                name="confirm_password"
-                type="password"
-                autoComplete="new-password"
-                minLength={8}
-                required
-              />
-            </div>
-            <Button type="submit" disabled={passwordPending}>
-              {passwordPending ? 'Atualizando…' : 'Trocar senha'}
-            </Button>
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar perfil</DialogTitle>
+            <DialogDescription>
+              Nome usado no dashboard e nos convites.
+            </DialogDescription>
+          </DialogHeader>
+          <form action={profileAction}>
+            <DialogBody className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input id="email" value={email ?? ''} disabled readOnly />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="display_name">Nome de exibição</Label>
+                <Input
+                  id="display_name"
+                  name="display_name"
+                  defaultValue={displayName ?? ''}
+                  minLength={2}
+                  required
+                />
+              </div>
+            </DialogBody>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={profilePending}>
+                {profilePending ? 'Salvando…' : 'Salvar'}
+              </Button>
+            </DialogFooter>
           </form>
-        </Card>
-      </div>
-    </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Trocar senha</DialogTitle>
+            <DialogDescription>
+              Use a nova senha no próximo login.
+            </DialogDescription>
+          </DialogHeader>
+          <form action={passwordAction}>
+            <DialogBody className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current_password">Senha atual</Label>
+                <Input
+                  id="current_password"
+                  name="current_password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_password">Nova senha</Label>
+                <Input
+                  id="new_password"
+                  name="new_password"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm_password">Confirmar nova senha</Label>
+                <Input
+                  id="confirm_password"
+                  name="confirm_password"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                />
+              </div>
+            </DialogBody>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={passwordPending}>
+                {passwordPending ? 'Atualizando…' : 'Trocar senha'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

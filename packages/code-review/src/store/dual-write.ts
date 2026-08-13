@@ -218,11 +218,21 @@ export async function dualWriteDecisions(
             from_finalize: true,
             verdict,
             reason,
+            root_author: d.root_author ?? null,
+            root_is_bot: d.root_is_bot ?? null,
+            root_kind: d.root_kind ?? null,
+            comments: d.comments ?? null,
+            origin: d.origin ?? null,
           },
         });
         findingId = String(created.id ?? "");
         findings += 1;
       }
+
+      const decidedByLogin =
+        d.decided_by_login != null && String(d.decided_by_login).trim()
+          ? String(d.decided_by_login).trim()
+          : null;
 
       await port.upsertDecision(projectId, {
         findingKey,
@@ -230,7 +240,10 @@ export async function dualWriteDecisions(
         runId: runId ?? null,
         findingId: findingId || null,
         reason,
-        decidedBy: opts.decidedBy ?? String(d.source ?? "dual-write"),
+        decidedBy:
+          opts.decidedBy ??
+          decidedByLogin ??
+          String(d.source ?? "dual-write"),
         source: d.source != null ? String(d.source) : null,
         filePath,
         summary,
@@ -242,6 +255,13 @@ export async function dualWriteDecisions(
           severity,
           source: d.source ?? null,
           body: body ? body.slice(0, 2000) : null,
+          root_author: d.root_author ?? null,
+          root_is_bot: d.root_is_bot ?? null,
+          root_kind: d.root_kind ?? null,
+          comments: d.comments ?? null,
+          origin: d.origin ?? null,
+          decided_by_login: decidedByLogin,
+          decided_by_kind: d.decided_by_kind ?? null,
         },
       });
       written += 1;

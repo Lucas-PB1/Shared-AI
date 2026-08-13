@@ -8,6 +8,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   classifyThread,
+  extractPrParticipants,
+  mergeThreadReviewers,
   parseRepo,
   resolvePrCommitRange,
   upsertPrDecisions,
@@ -55,6 +57,13 @@ query($owner: String!, $repo: String!, $number: Int!) {
       headRefOid
       mergeCommit { oid }
       title
+      author { login }
+      reviews(first: 100) {
+        nodes {
+          state
+          author { login }
+        }
+      }
       reviewThreads(first: 100) {
         nodes {
           isResolved
@@ -159,8 +168,20 @@ async function cmdIngest(
     if (decision) proposed.push(decision);
   }
 
+  const participants = mergeThreadReviewers(
+    extractPrParticipants(pr),
+    proposed
+  );
+
   console.log(`=== ingest PR #${prNumber} (${owner}/${repo}) ===`);
   console.log(`Merge: ${mergeOid ? mergeOid.slice(0, 7) : "?"}`);
+  console.log(
+    `Autor: ${participants.pr_author ?? "?"} · Revisores: ${
+      participants.reviewers.length
+        ? participants.reviewers.join(", ")
+        : "(nenhum humano)"
+    }`
+  );
   console.log(
     `Threads classificadas: ${proposed.length} decisão(ões) proposta(s) (/avaliar + review humano)`
   );
@@ -206,9 +227,14 @@ async function cmdIngest(
       reviewSlug: `pr-${prNumber}`,
       actorKind: "tool",
       actorRef: "review-ingest-pr",
-      meta: { kind: "pr-ingest" },
+      meta: {
+        kind: "pr-ingest",
+        pr_author: participants.pr_author,
+        pr_author_is_bot: participants.pr_author_is_bot,
+        reviewers: participants.reviewers,
+        reviews: participants.reviews,
+      },
     },
-    decidedBy: "review-ingest-pr",
     replaceSource: `github-pr-${prNumber}`,
   });
   logDualWriteResult("review-ingest-pr", dual);

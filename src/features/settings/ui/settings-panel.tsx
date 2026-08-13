@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 
 import {
   saveConnection,
-  switchTarget,
   syncFromCloud,
   testConnectionsAction,
   type SettingsActionState,
@@ -149,10 +148,6 @@ export function SettingsPanel({
   snapshot: Snapshot;
 }) {
   const [editOpen, setEditOpen] = useState(false);
-  const [switchState, switchAction, switchPending] = useActionState(
-    switchTarget,
-    initial,
-  );
   const [saveState, saveAction, savePending] = useActionState(
     saveConnection,
     initial,
@@ -167,7 +162,7 @@ export function SettingsPanel({
   );
 
   useEffect(() => {
-    for (const state of [switchState, saveState, testState, syncState]) {
+    for (const state of [saveState, testState, syncState]) {
       if (state.error) {
         toast.error(
           state.report ? `${state.error} — ${state.report}` : state.error,
@@ -179,7 +174,7 @@ export function SettingsPanel({
         );
       }
     }
-  }, [switchState, saveState, testState, syncState]);
+  }, [saveState, testState, syncState]);
 
   useEffect(() => {
     if (saveState.success) setEditOpen(false);
@@ -190,40 +185,12 @@ export function SettingsPanel({
   return (
     <div className="space-y-6">
       <Card>
-        <CardTitle>Target ativo</CardTitle>
-        <CardDescription>
-          Agora: <strong>{snapshot.target}</strong> — gravado em{' '}
-          <code>app_settings</code> + cookies (sem .env).
-        </CardDescription>
-        <form action={switchAction} className="mt-4 flex flex-wrap gap-2">
-          <input type="hidden" name="target" value="local" />
-          <Button
-            type="submit"
-            variant={snapshot.target === 'local' ? 'primary' : 'secondary'}
-            disabled={switchPending}
-          >
-            Usar local
-          </Button>
-        </form>
-        <form action={switchAction} className="mt-2 flex flex-wrap gap-2">
-          <input type="hidden" name="target" value="cloud" />
-          <Button
-            type="submit"
-            variant={snapshot.target === 'cloud' ? 'primary' : 'secondary'}
-            disabled={switchPending}
-          >
-            Usar cloud
-          </Button>
-        </form>
-      </Card>
-
-      <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <CardTitle>Conexão</CardTitle>
             <CardDescription>
-              Pares em <code>app_connections</code>. Secrets não aparecem na
-              tela — só o status.
+              Pares em <code>app_connections</code>. Target ativo pelo toggle no
+              header (local ↔ cloud).
             </CardDescription>
           </div>
           <Badge
@@ -295,8 +262,9 @@ export function SettingsPanel({
       <Card>
         <CardTitle>Sync cloud → local</CardTitle>
         <CardDescription>
-          Copia projects, exclusions, conventions e memberships (por e-mail) do
-          remoto para o Docker local. Só disponível com target local.
+          Copia projects, review runs, findings, decisions, exclusions,
+          conventions e memberships (por e-mail) do remoto para o Docker local.
+          Só disponível com target local.
         </CardDescription>
         <form action={syncAction} className="mt-4">
           <Button

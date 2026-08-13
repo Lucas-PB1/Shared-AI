@@ -124,6 +124,15 @@ describe("ingest rules", () => {
     assert.ok(d);
     assert.equal(d!.decision, "rejeitado");
     assert.equal(d!.finding_id, "test-finding");
+    assert.equal(d!.root_kind, "bot");
+    assert.equal(d!.root_is_bot, true);
+    assert.equal(d!.decided_by_kind, "human");
+    assert.equal(d!.decided_by_login, "dev-user");
+    const comments = d!.comments as Array<Record<string, unknown>>;
+    assert.equal(comments.length, 2);
+    assert.equal(comments[0].kind, "bot");
+    assert.equal(comments[1].kind, "human");
+    assert.equal(comments[1].login, "dev-user");
   });
 
   it("human nao-aplicavel", () => {

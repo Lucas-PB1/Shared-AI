@@ -38,10 +38,9 @@ export async function switchTarget(
     await requireAppAdmin();
     const target = targetSchema.parse(String(formData.get('target') || ''));
     await switchActiveTarget(target);
-    revalidatePath('/settings');
-    revalidatePath('/');
+    revalidatePath('/', 'layout');
     return {
-      success: `Target ativo: ${target}. Faça login de novo se a sessão for do outro ambiente.`,
+      success: `Ambiente: ${target}. Faça login de novo se a sessão for do outro lado.`,
     };
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Falha ao trocar target' };
@@ -245,14 +244,129 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
       membersUpserted += 1;
     }
 
+    const { data: cloudRuns, error: runsErr } = await cloud
+      .from('review_runs')
+      .select(
+        'id, project_id, source, status, actor_kind, actor_ref, git_sha, branch, pr_number, review_slug, started_at, finished_at, meta',
+      );
+    if (runsErr) throw runsErr;
+
+    const cloudRunIdToLocalProject = new Map<string, string>();
+    let runsUpserted = 0;
+    for (const run of cloudRuns ?? []) {
+      const slug = cloudIdToSlug.get(run.project_id);
+      const localProjectId = slug ? slugToLocalId.get(slug) : undefined;
+      if (!localProjectId) continue;
+      cloudRunIdToLocalProject.set(run.id, localProjectId);
+      const { error } = await local.from('review_runs').upsert(
+        {
+          id: run.id,
+          project_id: localProjectId,
+          source: run.source,
+          status: run.status,
+          actor_kind: run.actor_kind ?? 'human',
+          actor_ref: run.actor_ref ?? null,
+          git_sha: run.git_sha ?? null,
+          branch: run.branch ?? null,
+          pr_number: run.pr_number ?? null,
+          review_slug: run.review_slug ?? null,
+          started_at: run.started_at,
+          finished_at: run.finished_at ?? null,
+          meta: run.meta ?? {},
+        },
+        { onConflict: 'id' },
+      );
+      if (error) throw error;
+      runsUpserted += 1;
+    }
+
+    const syncedRunIds = [...cloudRunIdToLocalProject.keys()];
+    let findingsUpserted = 0;
+    if (syncedRunIds.length > 0) {
+      const { data: cloudFindings, error: findErr } = await cloud
+        .from('findings')
+        .select(
+          'id, run_id, finding_key, file_path, line_start, line_end, severity, category, summary, body, de_code, para_code, meta, created_at',
+        )
+        .in('run_id', syncedRunIds);
+      if (findErr) throw findErr;
+
+      for (const finding of cloudFindings ?? []) {
+        if (!cloudRunIdToLocalProject.has(finding.run_id)) continue;
+        const { error } = await local.from('findings').upsert(
+          {
+            id: finding.id,
+            run_id: finding.run_id,
+            finding_key: finding.finding_key,
+            file_path: finding.file_path ?? null,
+            line_start: finding.line_start ?? null,
+            line_end: finding.line_end ?? null,
+            severity: finding.severity ?? null,
+            category: finding.category ?? null,
+            summary: finding.summary,
+            body: finding.body ?? null,
+            de_code: finding.de_code ?? null,
+            para_code: finding.para_code ?? null,
+            meta: finding.meta ?? {},
+            created_at: finding.created_at,
+          },
+          { onConflict: 'id' },
+        );
+        if (error) throw error;
+        findingsUpserted += 1;
+      }
+    }
+
+    const { data: cloudDecisions, error: decErr } = await cloud
+      .from('decisions')
+      .select(
+        'id, project_id, run_id, finding_id, finding_key, verdict, reason, decided_by, source, file_path, summary, schema_version, finalized_at, meta',
+      );
+    if (decErr) throw decErr;
+
+    let decisionsUpserted = 0;
+    for (const decision of cloudDecisions ?? []) {
+      const slug = cloudIdToSlug.get(decision.project_id);
+      const localProjectId = slug ? slugToLocalId.get(slug) : undefined;
+      if (!localProjectId) continue;
+      const runId =
+        decision.run_id && cloudRunIdToLocalProject.has(decision.run_id)
+          ? decision.run_id
+          : null;
+      const { error } = await local.from('decisions').upsert(
+        {
+          id: decision.id,
+          project_id: localProjectId,
+          run_id: runId,
+          finding_id: decision.finding_id ?? null,
+          finding_key: decision.finding_key,
+          verdict: decision.verdict,
+          reason: decision.reason ?? null,
+          decided_by: decision.decided_by ?? null,
+          source: decision.source ?? null,
+          file_path: decision.file_path ?? null,
+          summary: decision.summary ?? null,
+          schema_version: decision.schema_version ?? '1',
+          finalized_at: decision.finalized_at,
+          meta: decision.meta ?? {},
+        },
+        { onConflict: 'id' },
+      );
+      if (error) throw error;
+      decisionsUpserted += 1;
+    }
+
     const report = [
       `${projectsUpserted} projects`,
+      `${runsUpserted} runs`,
+      `${findingsUpserted} findings`,
+      `${decisionsUpserted} decisions`,
       `${exclusionsUpserted} exclusions`,
       `${conventionsUpserted} conventions`,
-      `${membersUpserted} memberships (por e-mail)`,
+      `${membersUpserted} memberships`,
     ].join(' · ');
 
-    revalidatePath('/');
+    revalidatePath('/', 'layout');
     revalidatePath('/settings');
     return { success: 'Sync cloud→local concluído', report };
   } catch (err) {

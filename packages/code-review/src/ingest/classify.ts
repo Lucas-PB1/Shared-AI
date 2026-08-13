@@ -4,6 +4,8 @@
  * Aceita:
  * - threads do `/avaliar` (root com marker `avaliar-inline`)
  * - threads de review humano top-level (root humano, sem marker)
+ *
+ * Persiste atribuição: root (bot vs humano), replies e quem decidiu.
  */
 
 import {
@@ -19,17 +21,14 @@ import {
 } from "./extract.js";
 import { gitLogCommits, gitShow, type ListCommitsFn, type ShowFileFn } from "./git.js";
 import { fixAppliedInPr } from "./fix.js";
-
-const BOT_LOGINS = new Set([
-  "github-actions",
-  "github-actions[bot]",
-  "dependabot[bot]",
-]);
+import { isBotLogin } from "./participants.js";
 
 const REJECT_PATTERNS =
   /intencional|won'?t fix|wont fix|n[aã]o se aplica|nao se aplica|false positive|falso positivo|pode ignorar|ignorar|rejeit|decline|deixa assim|sem necessidade|n[aã]o precisa|nao precisa|descart/i;
 const NAO_APLICAVEL_PATTERNS =
   /s[oó] preview|so preview|s[oó] editor|so editor|edge case|raro no preview|n[aã]o afeta produ|nao afeta produ|fora do escopo/i;
+
+const COMMENT_BODY_MAX = 800;
 
 type ThreadNode = {
   body?: string;
@@ -39,8 +38,26 @@ type ThreadNode = {
   author?: { login?: string };
 };
 
-function isBotLogin(login: string | undefined): boolean {
-  return Boolean(login && BOT_LOGINS.has(login));
+export type ThreadCommentMeta = {
+  login: string;
+  is_bot: boolean;
+  kind: "bot" | "human";
+  role: "root" | "reply";
+  body: string;
+};
+
+function serializeComments(nodes: ThreadNode[]): ThreadCommentMeta[] {
+  return nodes.map((node, index) => {
+    const login = (node.author?.login ?? "").trim() || "unknown";
+    const bot = isBotLogin(login);
+    return {
+      login,
+      is_bot: bot,
+      kind: bot ? "bot" : "human",
+      role: index === 0 ? "root" : "reply",
+      body: (node.body ?? "").trim().slice(0, COMMENT_BODY_MAX),
+    };
+  });
 }
 
 export function classifyThread(
@@ -67,7 +84,9 @@ export function classifyThread(
   const root = nodes[0];
   const body = root.body ?? "";
   const hasMarker = bodyHasInlineMarker(body);
-  const rootIsHuman = !isBotLogin(root.author?.login);
+  const rootLogin = (root.author?.login ?? "").trim() || null;
+  const rootIsBot = isBotLogin(rootLogin);
+  const rootIsHuman = !rootIsBot;
 
   // Bot sem marker (ruído) — ignora. Humano top-level sem marker — ingere.
   if (!hasMarker && !rootIsHuman) return null;
@@ -83,11 +102,24 @@ export function classifyThread(
   const summary = extractFindingTheme(rawSummary);
   const [deCode, paraCode] = extractDeParaFromBody(body);
 
+  const comments = serializeComments(nodes);
   const human = nodes.slice(1).filter((c) => !isBotLogin(c.author?.login));
 
   const stamp =
     opts.now ?? new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
   const resolvedLine = Number.isFinite(line) && line > 0 ? line : 1;
+
+  const rootKind: "bot" | "human" =
+    hasMarker || rootIsBot ? "bot" : "human";
+
+  const attribution = {
+    root_author: rootLogin,
+    root_is_bot: rootIsBot || hasMarker,
+    root_kind: rootKind,
+    comments,
+    origin: hasMarker ? "avaliar" : "human-review",
+  };
+
   const base = {
     schema: SCHEMA_VERSION,
     finalized_at: stamp,
@@ -98,37 +130,58 @@ export function classifyThread(
     category: hasMarker ? "pr-ingest" : "pr-ingest-human",
     summary,
     source: `github-pr-${prNumber}`,
-    origin: hasMarker ? "avaliar" : "human-review",
+    ...attribution,
   };
 
+  function withDecision(
+    decision: string,
+    reason: string,
+    decidedByLogin: string | null,
+    decidedByKind: "human" | "bot" | "auto"
+  ): Record<string, unknown> {
+    return {
+      ...base,
+      decision,
+      reason,
+      decided_by_login: decidedByLogin,
+      decided_by_kind: decidedByKind,
+    };
+  }
+
   let humanReason = "";
+  let humanLogin: string | null = null;
   for (const reply of human) {
     const text = reply.body ?? "";
+    const login = (reply.author?.login ?? "").trim() || null;
     if (NAO_APLICAVEL_PATTERNS.test(text)) {
-      return {
-        ...base,
-        decision: "nao-aplicavel",
-        reason: text.trim().slice(0, 200),
-      };
+      return withDecision(
+        "nao-aplicavel",
+        text.trim().slice(0, 200),
+        login,
+        "human"
+      );
     }
     if (REJECT_PATTERNS.test(text)) {
-      return {
-        ...base,
-        decision: "rejeitado",
-        reason: text.trim().slice(0, 200),
-      };
+      return withDecision(
+        "rejeitado",
+        text.trim().slice(0, 200),
+        login,
+        "human"
+      );
     }
     if (text.trim() && !humanReason) {
       humanReason = text.trim().slice(0, 200);
+      humanLogin = login;
     }
   }
 
   if (human.length) {
-    return {
-      ...base,
-      decision: "aceito",
-      reason: humanReason || "resposta humana no thread (sem objeção)",
-    };
+    return withDecision(
+      "aceito",
+      humanReason || "resposta humana no thread (sem objeção)",
+      humanLogin,
+      "human"
+    );
   }
 
   if (!merged) return null;
@@ -146,37 +199,33 @@ export function classifyThread(
     listCommits,
   });
   if (applied) {
-    return {
-      ...base,
-      decision: "aceito",
-      reason: appliedReason,
-    };
+    return withDecision("aceito", appliedReason, null, "auto");
   }
 
   const fileContent =
     filePath && mergeOid ? showFile(project, mergeOid, filePath) : "";
 
   if (thread.isResolved && fileContent && paraCode) {
-    return {
-      ...base,
-      decision: "aceito",
-      reason: "thread resolvido no PR",
-    };
+    return withDecision("aceito", "thread resolvido no PR", null, "auto");
   }
 
   if (thread.isResolved && !human.length) {
-    return {
-      ...base,
-      decision: "aceito",
-      reason: hasMarker
+    return withDecision(
+      "aceito",
+      hasMarker
         ? "thread resolvido sem objeção"
         : "review humano resolvido sem objeção",
-    };
+      rootIsHuman ? rootLogin : null,
+      rootIsHuman ? "human" : "auto"
+    );
   }
 
-  return {
-    ...base,
-    decision: "rejeitado",
-    reason: "merge sem resposta no thread — achado ignorado",
-  };
+  return withDecision(
+    "rejeitado",
+    "merge sem resposta no thread — achado ignorado",
+    null,
+    "auto"
+  );
 }
+
+export { isBotLogin } from "./participants.js";

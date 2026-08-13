@@ -4,6 +4,7 @@ import { signOut } from '@/features/auth/actions';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
 import { AppNav } from '@/widgets/app-shell/ui/app-nav';
+import { TargetToggle } from '@/widgets/app-shell/ui/target-toggle';
 
 function BrandMark({ className }: { className?: string }) {
   return (
@@ -59,17 +60,7 @@ export function AppShell({
             <AppNav isAdmin={isAdmin} />
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <span
-              className={cn(
-                'rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide',
-                target === 'cloud'
-                  ? 'bg-hd-secondary text-white'
-                  : 'bg-hd-primary-soft text-hd-primary-strong',
-              )}
-              title="Supabase target ativo"
-            >
-              {target}
-            </span>
+            {isAdmin ? <TargetToggle target={target} /> : null}
             <div className="hidden items-center gap-2 rounded-full border border-hd-border bg-hd-surface/80 py-1 pl-1 pr-3 sm:flex">
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
