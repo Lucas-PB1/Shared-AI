@@ -12,6 +12,6 @@ if [[ ! -x "$TSC" ]]; then
   exit 1
 fi
 
-echo "tsc --noEmit — monorepo (tsconfig.json)"
-"$TSC" -p tsconfig.json --noEmit
+echo "tsc --noEmit — tooling (tsconfig.tooling.json)"
+"$TSC" -p tsconfig.tooling.json --noEmit
 echo "tsc: OK"

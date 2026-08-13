@@ -16,7 +16,8 @@ vendor/
 __pycache__/
 *.py[cod]
 
-# Next.js (apps/web)
-apps/web/.next/
-apps/web/out/
+# Next.js (raiz)
+.next/
+out/
 *.tsbuildinfo
+next-env.d.ts

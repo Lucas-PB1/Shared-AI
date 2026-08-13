@@ -1,6 +1,16 @@
 # HostDime IA
 
-Dois pacotes e uma família de comandos npm para skills/rules do Cursor e code-review.
+Pacotes de skills/rules do Cursor, code-review e **dashboard Next.js** (Auth Supabase) na raiz do monorepo.
+
+## Dashboard
+
+```bash
+npm install
+npm run supabase:start   # opcional / local
+npm run dev              # http://localhost:3000
+```
+
+Detalhes: [`docs/okf/dashboard-web.md`](docs/okf/dashboard-web.md).
 
 ## Onboarding: só skills vs skills + code-review
 

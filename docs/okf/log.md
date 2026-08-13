@@ -2,7 +2,8 @@
 
 ## 2026-08-13
 
-* **Creation**: Dashboard Next.js em `apps/web` — Auth Supabase (sem confirmação de e-mail), FSD, membership (`profiles` / `project_members`), claim owner e listagem de runs. Concept [dashboard-web](dashboard-web.md). Migration `20260813140000_dashboard_auth.sql`.
+* **Update**: Dashboard Next.js movido de `apps/web` para a **raiz** (`app/`, `src/`), convivendo com packages/tooling.
+* **Creation**: Dashboard Next.js — Auth Supabase (sem confirmação de e-mail), FSD, membership (`profiles` / `project_members`), claim owner e listagem de runs. Concept [dashboard-web](dashboard-web.md). Migration `20260813140000_dashboard_auth.sql`.
 
 ## 2026-08-10
 

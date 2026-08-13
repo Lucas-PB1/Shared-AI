@@ -46,7 +46,7 @@ Dev local opcional: [Supabase local](supabase-local.md). Contrato: [Review store
    | Dev `.env` monorepo | mesma URL + service role |
 
 6. Service role **só** em CI/tooling — nunca no browser público.
-7. Dashboard Next (`npm run dev:web`): preencher `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`; em **Authentication → Providers → Email** desligar **Confirm email**. Ver [Dashboard web](dashboard-web.md).
+7. Dashboard Next (`npm run dev`): preencher `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`; em **Authentication → Providers → Email** desligar **Confirm email**. Ver [Dashboard web](dashboard-web.md).
 8. **Nunca** `db reset` no cloud — só `db push` para schema. Reset é exclusivo do Docker local.
 
 ## CLI

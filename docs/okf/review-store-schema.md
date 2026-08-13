@@ -56,7 +56,7 @@ Assim um run **OK com 0 findings** ainda registra quais arquivos/relatórios for
 ### profiles e project_members
 
 Tooling local/CI usa **service_role** e ignora estas tabelas no write path de review.  
-O dashboard ([`apps/web`](../../apps/web)) usa **anon key + JWT**: `profiles` espelha `auth.users` (trigger), `project_members` decide ACL via RLS. Bootstrap: RPC `claim_project_owner` quando o projeto ainda não tem membros; projetos novos pelo dashboard ganham auto-owner.
+O dashboard Next na raiz usa **anon key + JWT**: `profiles` espelha `auth.users` (trigger), `project_members` decide ACL via RLS. Bootstrap: RPC `claim_project_owner` quando o projeto ainda não tem membros; projetos novos pelo dashboard ganham auto-owner.
 
 **Não** são memória de review (isso é `exclusions` / `conventions`).
 

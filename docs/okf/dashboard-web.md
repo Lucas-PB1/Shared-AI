@@ -1,15 +1,15 @@
 ---
 type: Playbook
 title: Dashboard web (Next.js)
-description: App apps/web — Auth Supabase JWT, membership e review runs.
+description: App Next.js na raiz — Auth Supabase JWT, membership e review runs.
 tags: [dashboard, nextjs, auth, supabase]
 timestamp: 2026-08-13T14:00:00Z
 ---
 
 ## Onde vive
 
-[`apps/web`](../../apps/web) — Next.js App Router + Feature-Sliced Design.  
-Tooling (`packages/cursor`, `code-review`) permanece na raiz; service role **não** entra no browser.
+Na **raiz** do monorepo (`app/`, `src/`, `middleware.ts`) — Next.js App Router + Feature-Sliced Design, convivendo com `packages/cursor` e `packages/code-review`.  
+Service role **não** entra no browser (só anon key + JWT).
 
 ## Pré-requisitos
 
@@ -25,9 +25,11 @@ Tooling (`packages/cursor`, `code-review`) permanece na raiz; service role **nã
 
 ```bash
 npm install
-npm run dev:web    # http://localhost:3000
-npm run build:web
+npm run dev      # http://localhost:3000
+npm run build
 ```
+
+Aliases: `dev:web` / `build:web` / `start:web`.
 
 ## Fluxo
 
