@@ -41,4 +41,5 @@ export type Profile = {
   email: string | null;
   created_at: string;
   is_admin?: boolean;
+  avatar_url?: string | null;
 };

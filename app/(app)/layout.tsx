@@ -14,6 +14,7 @@ export default async function AppLayout({
     <AppShell
       displayName={profile?.display_name}
       email={profile?.email}
+      avatarUrl={profile?.avatar_url}
       isAdmin={Boolean(profile?.is_admin)}
       target={target}
     >

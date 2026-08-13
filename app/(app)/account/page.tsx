@@ -1,6 +1,5 @@
 import { getCurrentProfile } from '@/entities/profile';
 import { AccountForm } from '@/features/auth/ui/account-form';
-import { Card } from '@/shared/ui/card';
 
 export default async function AccountPage() {
   const profile = await getCurrentProfile();
@@ -14,16 +13,18 @@ export default async function AccountPage() {
         <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
           Conta
         </h1>
-        <p className="mt-2 text-hd-secondary">
-          Nome de exibição usado no dashboard e nos convites.
+        <p className="mt-2 max-w-2xl text-hd-secondary">
+          Foto, nome de exibição e senha — tudo neste lugar.
         </p>
       </section>
-      <Card className="max-w-lg">
-        <AccountForm
-          displayName={profile?.display_name ?? null}
-          email={profile?.email ?? null}
-        />
-      </Card>
+
+      <AccountForm
+        displayName={profile?.display_name ?? null}
+        email={profile?.email ?? null}
+        avatarUrl={profile?.avatar_url ?? null}
+        isAdmin={Boolean(profile?.is_admin)}
+        createdAt={profile?.created_at ?? null}
+      />
     </div>
   );
 }

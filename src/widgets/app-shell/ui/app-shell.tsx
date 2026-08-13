@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { signOut } from '@/features/auth/actions';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
+import { AppNav } from '@/widgets/app-shell/ui/app-nav';
 
 function BrandMark({ className }: { className?: string }) {
   return (
@@ -22,12 +23,14 @@ export function AppShell({
   children,
   displayName,
   email,
+  avatarUrl,
   isAdmin = false,
   target = 'local',
 }: {
   children: React.ReactNode;
   displayName?: string | null;
   email?: string | null;
+  avatarUrl?: string | null;
   isAdmin?: boolean;
   target?: 'local' | 'cloud';
 }) {
@@ -53,28 +56,7 @@ export function AppShell({
                 HostDime <span className="text-hd-primary">Review</span>
               </span>
             </Link>
-            <nav className="hidden items-center gap-1 text-sm font-semibold sm:flex">
-              <Link
-                href="/"
-                className="rounded-full px-3 py-1.5 text-hd-text-strong no-underline hover:bg-hd-primary-soft hover:text-hd-primary"
-              >
-                Projetos
-              </Link>
-              <Link
-                href="/account"
-                className="rounded-full px-3 py-1.5 text-hd-text-strong no-underline hover:bg-hd-primary-soft hover:text-hd-primary"
-              >
-                Conta
-              </Link>
-              {isAdmin ? (
-                <Link
-                  href="/settings"
-                  className="rounded-full px-3 py-1.5 text-hd-text-strong no-underline hover:bg-hd-primary-soft hover:text-hd-primary"
-                >
-                  Config
-                </Link>
-              ) : null}
-            </nav>
+            <AppNav isAdmin={isAdmin} />
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <span
@@ -89,9 +71,18 @@ export function AppShell({
               {target}
             </span>
             <div className="hidden items-center gap-2 rounded-full border border-hd-border bg-hd-surface/80 py-1 pl-1 pr-3 sm:flex">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-hd-secondary text-[11px] font-bold text-white">
-                {initials || 'U'}
-              </span>
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="h-7 w-7 rounded-full object-cover"
+                />
+              ) : (
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-hd-secondary text-[11px] font-bold text-white">
+                  {initials || 'U'}
+                </span>
+              )}
               <span className="max-w-40 truncate text-sm font-medium text-hd-text-strong">
                 {label}
               </span>
