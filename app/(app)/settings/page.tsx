@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { getCurrentProfile } from '@/entities/profile';
 import { getSettingsSnapshot, SettingsPanel } from '@/features/settings';
-import { getConnectionPublicSnapshot } from '@/shared/config/env';
+import { getConnectionPublicSnapshot } from '@/shared/config/connection';
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile();
@@ -24,9 +24,9 @@ export default async function SettingsPage() {
           Configuração
         </h1>
         <p className="mt-2 max-w-2xl text-hd-secondary">
-          Switch local/cloud com keys novas (
-          <code className="text-hd-ink">sb_publishable_*</code> /{' '}
-          <code className="text-hd-ink">sb_secret_*</code>), sync cloud→local.
+          Conexões em <code className="text-hd-ink">app_connections</code>,
+          target em <code className="text-hd-ink">app_settings</code>. Bootstrap{' '}
+          <code className="text-hd-ink">.env</code> só para subir o app.
         </p>
       </section>
 

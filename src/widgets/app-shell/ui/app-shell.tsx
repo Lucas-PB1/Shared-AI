@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { signOut } from '@/features/auth/actions';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
-import { getTarget } from '@/shared/config/env';
 
 function BrandMark({ className }: { className?: string }) {
   return (
@@ -24,11 +23,13 @@ export function AppShell({
   displayName,
   email,
   isAdmin = false,
+  target = 'local',
 }: {
   children: React.ReactNode;
   displayName?: string | null;
   email?: string | null;
   isAdmin?: boolean;
+  target?: 'local' | 'cloud';
 }) {
   const label = displayName || email || 'Conta';
   const initials = (displayName || email || 'U')
@@ -37,7 +38,6 @@ export function AppShell({
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
-  const target = getTarget();
 
   return (
     <div className="min-h-screen">

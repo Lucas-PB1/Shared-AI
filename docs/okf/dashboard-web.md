@@ -13,22 +13,16 @@ Service role **nunca** no browser.
 
 ## Ambientes (switch)
 
-Pares no [`.env`](../../.env.example):
-
-| Prefixo | Uso |
-| --- | --- |
-| `SUPABASE_LOCAL_*` | Docker (`PUBLISHABLE`/`SECRET`; local ainda pode ser JWT) |
-| `SUPABASE_CLOUD_*` | HostDime cloud (`sb_publishable_` / `sb_secret_`) |
-| `SUPABASE_TARGET` | `local` \| `cloud` |
+Pares em tabelas `app_connections` + `app_settings` (UI `/settings`).  
+`.env` só bootstrap (`NEXT_PUBLIC_SUPABASE_*` + `SUPABASE_SECRET_KEY`).
 
 ```bash
-npm run env:switch -- local --refresh-keys
-npm run env:switch -- cloud --refresh-keys
-# depois reinicie
+npm run env:switch -- local --refresh-keys   # bootstrap .env
+npm run connections:seed                     # grava/espelha tabela local+cloud
 npm run dev
 ```
 
-O script resolve só keys **publishable/secret**. Alias `SUPABASE_SERVICE_ROLE_KEY` (= secret) permanece para CLIs/CI.
+Target ativo: cookie + `app_settings` (sem reescrever `.env` pela UI). Botão **Testar conexão** valida auth/health + REST.
 
 ## Permissões
 
@@ -43,12 +37,10 @@ O script resolve só keys **publishable/secret**. Alias `SUPABASE_SERVICE_ROLE_K
 
 Rota `/settings` (só admin):
 
-- Trocar target local/cloud (grava `.env` se `ALLOW_ENV_WRITE=1`)
-- Atualizar URLs / publishable / secret dos pares
-- **Sincronizar do remoto** (só com target `local`): projects, exclusions, conventions, memberships por e-mail
-
-Reinicie o Next após mudar `NEXT_PUBLIC_*`.
-
+- Trocar target local/cloud (`app_settings` + cookies)
+- Salvar URL / publishable / secret em `app_connections` (espelha nos dois DBs)
+- **Testar conexão** (local e cloud)
+- **Sincronizar do remoto** (só com target `local`)
 ## Auth
 
 - Local: `enable_confirmations = false` no config.toml

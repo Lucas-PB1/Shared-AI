@@ -41,6 +41,7 @@
     "supabase:link": "npx supabase link --project-ref toekmpljxeulcquqhkxt",
     "supabase:db-push": "npx supabase db push",
     "env:switch": "node scripts/env-switch.mjs",
+    "connections:seed": "node scripts/seed-connections.mjs",
     "review:store-smoke": "tsx packages/code-review/bin/review-store-smoke.ts",
     "review:dual-write": "tsx packages/code-review/bin/review-dual-write.ts",
     "review:store-publish": "tsx packages/code-review/bin/review-store-publish.ts",

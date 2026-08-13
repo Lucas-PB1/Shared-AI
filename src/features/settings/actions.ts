@@ -7,9 +7,11 @@ import { requireAppAdmin } from '@/entities/profile';
 import {
   getConnectionPublicSnapshot,
   getTarget,
+  saveConnections,
+  switchActiveTarget,
+  testConnection,
   type SupabaseTarget,
-  writeConnectionEnv,
-} from '@/shared/config/env';
+} from '@/shared/config/connection';
 import {
   createCloudServiceClient,
   createLocalServiceClient,
@@ -35,11 +37,11 @@ export async function switchTarget(
   try {
     await requireAppAdmin();
     const target = targetSchema.parse(String(formData.get('target') || ''));
-    writeConnectionEnv({ target });
+    await switchActiveTarget(target);
     revalidatePath('/settings');
     revalidatePath('/');
     return {
-      success: `Target ativo: ${target}. Reinicie o npm run dev para o Next recarregar NEXT_PUBLIC_*.`,
+      success: `Target ativo: ${target}. Faça login de novo se a sessão for do outro ambiente.`,
     };
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Falha ao trocar target' };
@@ -53,10 +55,10 @@ export async function saveConnection(
   try {
     await requireAppAdmin();
     const target = targetSchema.parse(
-      String(formData.get('target') || getTarget()),
+      String(formData.get('target') || (await getTarget())),
     );
 
-    writeConnectionEnv({
+    await saveConnections({
       target,
       localUrl: String(formData.get('localUrl') || '') || undefined,
       localPublishableKey:
@@ -69,12 +71,28 @@ export async function saveConnection(
     });
 
     revalidatePath('/settings');
-    return {
-      success:
-        'Conexão salva no .env. Reinicie o npm run dev se mudou NEXT_PUBLIC_*.',
-    };
+    revalidatePath('/');
+    return { success: 'Conexão salva na tabela (local e cloud quando possível).' };
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Falha ao salvar' };
+  }
+}
+
+export async function testConnectionsAction(
+  _prev: SettingsActionState,
+  _formData: FormData,
+): Promise<SettingsActionState> {
+  try {
+    await requireAppAdmin();
+    const local = await testConnection('local');
+    const cloud = await testConnection('cloud');
+    const ok = local.ok && cloud.ok;
+    const report = `${local.detail} · ${cloud.detail}`;
+    return ok
+      ? { success: 'Conexões OK', report }
+      : { error: 'Falha no teste', report };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Falha no teste' };
   }
 }
 
@@ -82,14 +100,14 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
   try {
     await requireAppAdmin();
 
-    if (getTarget() !== 'local') {
+    if ((await getTarget()) !== 'local') {
       return {
-        error: 'Sync cloud→local só quando SUPABASE_TARGET=local',
+        error: 'Sync cloud→local só com target local ativo',
       };
     }
 
-    const cloud = createCloudServiceClient();
-    const local = createLocalServiceClient();
+    const cloud = await createCloudServiceClient();
+    const local = await createLocalServiceClient();
 
     const { data: cloudProjects, error: projectsError } = await cloud
       .from('projects')

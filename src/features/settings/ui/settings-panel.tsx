@@ -7,6 +7,7 @@ import {
   saveConnection,
   switchTarget,
   syncFromCloud,
+  testConnectionsAction,
   type SettingsActionState,
 } from '@/features/settings/actions';
 import { Button } from '@/shared/ui/button';
@@ -18,7 +19,6 @@ const initial: SettingsActionState = {};
 
 type Snapshot = {
   target: 'local' | 'cloud';
-  allowEnvWrite: boolean;
   local: { url: string; publishableKeySet: boolean; secretKeySet: boolean };
   cloud: { url: string; publishableKeySet: boolean; secretKeySet: boolean };
 };
@@ -36,31 +36,37 @@ export function SettingsPanel({
     saveConnection,
     initial,
   );
+  const [testState, testAction, testPending] = useActionState(
+    testConnectionsAction,
+    initial,
+  );
   const [syncState, syncAction, syncPending] = useActionState(
     async (_prev: SettingsActionState, _formData: FormData) => syncFromCloud(),
     initial,
   );
 
   useEffect(() => {
-    for (const state of [switchState, saveState, syncState]) {
-      if (state.error) toast.error(state.error);
+    for (const state of [switchState, saveState, testState, syncState]) {
+      if (state.error) {
+        toast.error(
+          state.report ? `${state.error} — ${state.report}` : state.error,
+        );
+      }
       if (state.success) {
         toast.success(
           state.report ? `${state.success} — ${state.report}` : state.success,
         );
       }
     }
-  }, [switchState, saveState, syncState]);
+  }, [switchState, saveState, testState, syncState]);
 
   return (
     <div className="space-y-6">
       <Card>
         <CardTitle>Target ativo</CardTitle>
         <CardDescription>
-          Agora: <strong>{snapshot.target}</strong>
-          {!snapshot.allowEnvWrite
-            ? ' — ALLOW_ENV_WRITE não está 1; gravação de .env bloqueada.'
-            : null}
+          Agora: <strong>{snapshot.target}</strong> — gravado em{' '}
+          <code>app_settings</code> + cookies (sem .env).
         </CardDescription>
         <form action={switchAction} className="mt-4 flex flex-wrap gap-2">
           <input type="hidden" name="target" value="local" />
@@ -87,9 +93,9 @@ export function SettingsPanel({
       <Card>
         <CardTitle>Conexão</CardTitle>
         <CardDescription>
-          Preferir <code>sb_publishable_*</code> e <code>sb_secret_*</code> no
-          cloud. Local Docker ainda pode usar JWT legado. Secret nunca vai no
-          bundle do browser. Campos vazios não sobrescrevem.
+          Pares em <code>app_connections</code> (local e cloud). Preferir{' '}
+          <code>sb_publishable_*</code> / <code>sb_secret_*</code>. Secret nunca
+          vai no bundle. Campos vazios não sobrescrevem.
         </CardDescription>
         <form action={saveAction} className="mt-5 space-y-5">
           <input type="hidden" name="target" value={snapshot.target} />
@@ -128,7 +134,7 @@ export function SettingsPanel({
                 id="localSecretKey"
                 name="localSecretKey"
                 type="password"
-                placeholder="sb_secret_… ou service_role local"
+                placeholder="sb_secret_…"
                 autoComplete="off"
               />
             </div>
@@ -174,8 +180,15 @@ export function SettingsPanel({
             </div>
           </fieldset>
 
-          <Button type="submit" disabled={savePending || !snapshot.allowEnvWrite}>
-            {savePending ? 'Salvando…' : 'Salvar conexão'}
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={savePending}>
+              {savePending ? 'Salvando…' : 'Salvar conexão'}
+            </Button>
+          </div>
+        </form>
+        <form action={testAction} className="mt-3">
+          <Button type="submit" variant="secondary" disabled={testPending}>
+            {testPending ? 'Testando…' : 'Testar conexão'}
           </Button>
         </form>
       </Card>

@@ -1,17 +1,20 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { resolvePublicConfigFromEnvAndCookies } from '@/shared/config/connection-public';
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const config = resolvePublicConfigFromEnvAndCookies({
+    get: (name) => request.cookies.get(name),
+  });
 
-  if (!url || !publishableKey) {
+  if (!config) {
     return { user: null, supabaseResponse };
   }
 
-  const supabase = createServerClient(url, publishableKey, {
+  const supabase = createServerClient(config.url, config.publishableKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
