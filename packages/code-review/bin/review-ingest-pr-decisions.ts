@@ -161,7 +161,9 @@ async function cmdIngest(
 
   console.log(`=== ingest PR #${prNumber} (${owner}/${repo}) ===`);
   console.log(`Merge: ${mergeOid ? mergeOid.slice(0, 7) : "?"}`);
-  console.log(`Threads /avaliar: ${proposed.length} decisão(ões) proposta(s)`);
+  console.log(
+    `Threads classificadas: ${proposed.length} decisão(ões) proposta(s) (/avaliar + review humano)`
+  );
   console.log("");
 
   for (const d of proposed) {

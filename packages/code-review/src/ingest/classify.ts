@@ -1,5 +1,9 @@
 /**
  * Classifica thread de review PR → decision (aceito/rejeitado/nao-aplicavel).
+ *
+ * Aceita:
+ * - threads do `/avaliar` (root com marker `avaliar-inline`)
+ * - threads de review humano top-level (root humano, sem marker)
  */
 
 import {
@@ -35,6 +39,10 @@ type ThreadNode = {
   author?: { login?: string };
 };
 
+function isBotLogin(login: string | undefined): boolean {
+  return Boolean(login && BOT_LOGINS.has(login));
+}
+
 export function classifyThread(
   thread: {
     isResolved?: boolean;
@@ -58,9 +66,14 @@ export function classifyThread(
   if (!nodes.length) return null;
   const root = nodes[0];
   const body = root.body ?? "";
-  if (!bodyHasInlineMarker(body)) return null;
+  const hasMarker = bodyHasInlineMarker(body);
+  const rootIsHuman = !isBotLogin(root.author?.login);
 
-  const marker = INLINE_MARKER_RE.exec(body);
+  // Bot sem marker (ruído) — ignora. Humano top-level sem marker — ingere.
+  if (!hasMarker && !rootIsHuman) return null;
+  if (!hasMarker && !body.trim()) return null;
+
+  const marker = hasMarker ? INLINE_MARKER_RE.exec(body) : null;
   const filePath = marker ? marker[1] : root.path ?? "";
   const line = marker
     ? Number.parseInt(marker[2], 10)
@@ -70,23 +83,22 @@ export function classifyThread(
   const summary = extractFindingTheme(rawSummary);
   const [deCode, paraCode] = extractDeParaFromBody(body);
 
-  const human = nodes.slice(1).filter((c) => {
-    const login = c.author?.login;
-    return login ? !BOT_LOGINS.has(login) : true;
-  });
+  const human = nodes.slice(1).filter((c) => !isBotLogin(c.author?.login));
 
   const stamp =
     opts.now ?? new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  const resolvedLine = Number.isFinite(line) && line > 0 ? line : 1;
   const base = {
     schema: SCHEMA_VERSION,
     finalized_at: stamp,
     review_slug: `pr-${prNumber}`,
     file: filePath,
     finding_id: markerFid || stableFindingId(rawSummary),
-    line,
-    category: "pr-ingest",
+    line: resolvedLine,
+    category: hasMarker ? "pr-ingest" : "pr-ingest-human",
     summary,
     source: `github-pr-${prNumber}`,
+    origin: hasMarker ? "avaliar" : "human-review",
   };
 
   let humanReason = "";
@@ -126,7 +138,7 @@ export function classifyThread(
     headOid,
     mergeOid,
     filePath,
-    line,
+    line: resolvedLine,
     deCode,
     paraCode,
     body,
@@ -156,7 +168,9 @@ export function classifyThread(
     return {
       ...base,
       decision: "aceito",
-      reason: "thread resolvido sem objeção",
+      reason: hasMarker
+        ? "thread resolvido sem objeção"
+        : "review humano resolvido sem objeção",
     };
   }
 

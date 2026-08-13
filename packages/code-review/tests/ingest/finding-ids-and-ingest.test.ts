@@ -29,6 +29,7 @@ function thread(
     line?: number;
     resolved?: boolean;
     humanLogin?: string;
+    rootLogin?: string;
   } = {}
 ) {
   const filePath = opts.path ?? "src/ok.mjs";
@@ -39,7 +40,7 @@ function thread(
       path: filePath,
       line,
       originalLine: line,
-      author: { login: "github-actions[bot]" },
+      author: { login: opts.rootLogin ?? "github-actions[bot]" },
       commit: { oid: "abc" },
     },
   ];
@@ -216,6 +217,90 @@ describe("ingest rules", () => {
     );
     assert.ok(d);
     assert.equal(d!.decision, "aceito");
+  });
+
+  it("bot root without marker ignored", () => {
+    const d = classifyThread(
+      thread("noise without marker\n", { resolved: true }),
+      true,
+      "m",
+      "b",
+      "h",
+      ".",
+      20,
+      { now: "2026-08-10T00:00:00Z" }
+    );
+    assert.equal(d, null);
+  });
+
+  it("human top-level with reply accepted", () => {
+    const d = classifyThread(
+      thread("Prefira Heroicons em vez de SVG inline\n", {
+        rootLogin: "lucas-hdbr",
+        humanBody: "feito",
+        path: "src/Card.tsx",
+        line: 42,
+      }),
+      true,
+      "m",
+      "b",
+      "h",
+      ".",
+      69,
+      { now: "2026-08-10T00:00:00Z" }
+    );
+    assert.ok(d);
+    assert.equal(d!.decision, "aceito");
+    assert.equal(d!.origin, "human-review");
+    assert.equal(d!.category, "pr-ingest-human");
+    assert.equal(d!.file, "src/Card.tsx");
+    assert.equal(d!.line, 42);
+    assert.match(String(d!.finding_id), /heroicons|svg|inline/i);
+  });
+
+  it("human top-level resolved without reply accepted", () => {
+    const d = classifyThread(
+      thread("Default de vídeo deveria ir em branco\n", {
+        rootLogin: "lucas-hdbr",
+        resolved: true,
+        path: "src/defaults.ts",
+        line: 10,
+      }),
+      true,
+      "m",
+      "b",
+      "h",
+      ".",
+      69,
+      {
+        now: "2026-08-10T00:00:00Z",
+        showFile: () => "",
+        listCommits: () => [],
+      }
+    );
+    assert.ok(d);
+    assert.equal(d!.decision, "aceito");
+    assert.equal(d!.origin, "human-review");
+    assert.match(String(d!.reason), /review humano resolvido/);
+  });
+
+  it("human top-level reject reply", () => {
+    const d = classifyThread(
+      thread("Trocar biblioteca de ícones\n", {
+        rootLogin: "lucas-hdbr",
+        humanBody: "não precisa, intencional",
+      }),
+      true,
+      "m",
+      "b",
+      "h",
+      ".",
+      69,
+      { now: "2026-08-10T00:00:00Z" }
+    );
+    assert.ok(d);
+    assert.equal(d!.decision, "rejeitado");
+    assert.equal(d!.origin, "human-review");
   });
 
   it("fix intra-pr aceito", () => {
