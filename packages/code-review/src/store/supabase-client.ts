@@ -28,6 +28,7 @@ import {
   restCreateFinding,
   restCreateRun,
   restGetProjectId,
+  restRefreshDashboardMviews,
 } from "./supabase-runs.js";
 
 export class ReviewStore extends SupabaseRest implements ReviewStorePort {
@@ -125,5 +126,9 @@ export class ReviewStore extends SupabaseRest implements ReviewStorePort {
     fields: ConventionFields
   ): Promise<Record<string, unknown>> {
     return restUpsertConvention(this, projectId, fields);
+  }
+
+  refreshDashboardMviews(): Promise<void> {
+    return restRefreshDashboardMviews(this);
   }
 }

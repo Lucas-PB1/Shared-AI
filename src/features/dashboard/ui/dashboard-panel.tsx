@@ -8,13 +8,15 @@ import { computeDashboardMetrics } from '../model/aggregate';
 import type { DashboardSnapshot } from '../model/types';
 import {
   KpiGrid,
-  ProjectPerformanceChart,
+  ProjectMetricsChart,
   RunsOverTimeChart,
   VerdictPieChart,
 } from './dashboard-charts';
 
+const ALL = 'all' as const;
+
 export function DashboardPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
-  const [projectId, setProjectId] = useState<string>('all');
+  const [projectId, setProjectId] = useState<string>(ALL);
 
   if (snapshot.projects.length === 0) {
     return (
@@ -25,18 +27,18 @@ export function DashboardPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
     );
   }
 
+  const selected =
+    projectId === ALL
+      ? null
+      : (snapshot.projects.find((p) => p.id === projectId) ?? null);
+  const scope = selected?.id ?? ALL;
+
   const metrics = computeDashboardMetrics(
     snapshot.projects,
-    snapshot.runs,
-    snapshot.decisions,
-    projectId === 'all' ? 'all' : projectId,
+    snapshot.projectStats,
+    snapshot.weekly,
+    scope,
   );
-
-  const mode = projectId === 'all' ? 'all' : 'single';
-  const selected =
-    projectId === 'all'
-      ? null
-      : snapshot.projects.find((p) => p.id === projectId);
 
   return (
     <div className="space-y-5">
@@ -44,11 +46,11 @@ export function DashboardPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
         <label className="space-y-1 text-xs font-medium text-hd-muted">
           Escopo
           <select
-            className="mt-1 block h-10 w-full min-w-[14rem] rounded-hd-md border border-hd-border bg-hd-canvas px-2.5 text-sm text-hd-text-strong sm:w-72"
-            value={projectId}
+            className="mt-1 block h-10 w-full min-w-56 rounded-hd-md border border-hd-border bg-hd-canvas px-2.5 text-sm text-hd-text-strong sm:w-80"
+            value={scope}
             onChange={(e) => setProjectId(e.target.value)}
           >
-            <option value="all">Geral — todos os projetos</option>
+            <option value={ALL}>Geral</option>
             {snapshot.projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.name}
@@ -56,10 +58,8 @@ export function DashboardPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
             ))}
           </select>
         </label>
-        <p className="text-xs text-hd-muted sm:pb-2">
-          {mode === 'all'
-            ? `${snapshot.projects.length} projetos · visão consolidada`
-            : `Projeto ${selected?.slug ?? ''}`}
+        <p className="font-mono text-xs text-hd-muted sm:pb-2">
+          {selected ? selected.slug : 'todos os projetos'}
         </p>
       </div>
 
@@ -68,7 +68,7 @@ export function DashboardPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <RunsOverTimeChart data={metrics.byWeek} />
         <VerdictPieChart data={metrics.byVerdict} />
-        <ProjectPerformanceChart data={metrics.byProject} mode={mode} />
+        <ProjectMetricsChart metrics={metrics} />
       </div>
     </div>
   );

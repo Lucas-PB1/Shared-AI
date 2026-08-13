@@ -3,9 +3,9 @@ import { createClient } from '@/shared/lib/supabase/server';
 import { listMemberProjects } from '@/entities/project';
 
 import type {
-  DashboardDecision,
-  DashboardRun,
+  DashboardProjectStat,
   DashboardSnapshot,
+  DashboardWeeklyStat,
 } from './model/types';
 
 export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
@@ -17,37 +17,32 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   }));
 
   if (slim.length === 0) {
-    return { projects: [], runs: [], decisions: [] };
+    return { projects: [], projectStats: [], weekly: [] };
   }
 
   const ids = slim.map((p) => p.id);
   const supabase = await createClient();
 
-  const [runsRes, decisionsRes] = await Promise.all([
+  const [statsRes, weeklyRes] = await Promise.all([
     supabase
-      .from('review_runs')
+      .from('mv_dashboard_project_stats')
       .select(
-        'id, project_id, source, status, started_at, finished_at, pr_number',
+        'project_id, runs, completed, failed, decisions, aceitos, rejeitados, nao_aplicavel, acceptance_rate',
       )
-      .in('project_id', ids)
-      .eq('source', 'ci')
-      .order('started_at', { ascending: true })
-      .limit(2000),
+      .in('project_id', ids),
     supabase
-      .from('decisions')
-      .select('id, project_id, run_id, verdict, finalized_at, decided_by')
+      .from('mv_dashboard_weekly')
+      .select('project_id, week_start, runs, aceitos, rejeitados')
       .in('project_id', ids)
-      .like('source', 'github-pr-%')
-      .order('finalized_at', { ascending: true })
-      .limit(5000),
+      .order('week_start', { ascending: true }),
   ]);
 
-  if (runsRes.error) throw runsRes.error;
-  if (decisionsRes.error) throw decisionsRes.error;
+  if (statsRes.error) throw statsRes.error;
+  if (weeklyRes.error) throw weeklyRes.error;
 
   return {
     projects: slim,
-    runs: (runsRes.data ?? []) as DashboardRun[],
-    decisions: (decisionsRes.data ?? []) as DashboardDecision[],
+    projectStats: (statsRes.data ?? []) as DashboardProjectStat[],
+    weekly: (weeklyRes.data ?? []) as DashboardWeeklyStat[],
   };
 }

@@ -1,141 +1,157 @@
 import type {
-  DashboardDecision,
   DashboardMetrics,
   DashboardProject,
-  DashboardRun,
+  DashboardProjectStat,
+  DashboardWeeklyStat,
   NamedCount,
   ProjectPoint,
   WeekPoint,
 } from './types';
 
-function weekKey(iso: string): { key: string; label: string } {
+function emptyStat(projectId: string): DashboardProjectStat {
+  return {
+    project_id: projectId,
+    runs: 0,
+    completed: 0,
+    failed: 0,
+    decisions: 0,
+    aceitos: 0,
+    rejeitados: 0,
+    nao_aplicavel: 0,
+    acceptance_rate: null,
+  };
+}
+
+function weekLabel(weekStart: string): string {
+  const iso = weekStart.includes('T')
+    ? weekStart
+    : `${weekStart}T00:00:00.000Z`;
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) {
-    return { key: 'invalid', label: '?' };
-  }
-  const day = d.getUTCDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  const monday = new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + mondayOffset),
-  );
-  const key = monday.toISOString().slice(0, 10);
-  const label = monday.toLocaleDateString('pt-BR', {
+  if (Number.isNaN(d.getTime())) return weekStart.slice(0, 10);
+  return d.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'short',
+    timeZone: 'UTC',
   });
-  return { key, label };
 }
 
-function countBy(values: string[]): NamedCount[] {
-  const map = new Map<string, number>();
-  for (const value of values) {
-    const name = value || '—';
-    map.set(name, (map.get(name) ?? 0) + 1);
-  }
-  return [...map.entries()]
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
+function weekKey(weekStart: string): string {
+  return weekStart.slice(0, 10);
 }
 
+function acceptanceFromCounts(
+  aceitos: number,
+  rejeitados: number,
+): number | null {
+  const decided = aceitos + rejeitados;
+  if (decided <= 0) return null;
+  return Math.round((aceitos / decided) * 1000) / 10;
+}
+
+/**
+ * Monta métricas do dashboard a partir das Materialized Views.
+ * Escopo `all` soma os projetos do snapshot; UUID filtra um projeto.
+ */
 export function computeDashboardMetrics(
   projects: DashboardProject[],
-  runs: DashboardRun[],
-  decisions: DashboardDecision[],
+  projectStats: DashboardProjectStat[],
+  weekly: DashboardWeeklyStat[],
   projectId: string | 'all' = 'all',
 ): DashboardMetrics {
   const projectMap = new Map(projects.map((p) => [p.id, p]));
-  const filteredRuns =
-    projectId === 'all'
-      ? runs
-      : runs.filter((r) => r.project_id === projectId);
-  const filteredDecisions =
-    projectId === 'all'
-      ? decisions
-      : decisions.filter((d) => d.project_id === projectId);
+  const statsMap = new Map(projectStats.map((s) => [s.project_id, s]));
 
-  const aceitos = filteredDecisions.filter((d) => d.verdict === 'aceito').length;
-  const rejeitados = filteredDecisions.filter(
-    (d) => d.verdict === 'rejeitado',
-  ).length;
-  const naoAplicavel = filteredDecisions.filter(
-    (d) => d.verdict === 'nao-aplicavel',
-  ).length;
-  const decided = aceitos + rejeitados;
-  const acceptanceRate =
-    decided > 0 ? Math.round((aceitos / decided) * 1000) / 10 : null;
+  const scopedIds =
+    projectId === 'all'
+      ? projects.map((p) => p.id)
+      : projects.filter((p) => p.id === projectId).map((p) => p.id);
+
+  const scopedStats = scopedIds.map(
+    (id) => statsMap.get(id) ?? emptyStat(id),
+  );
+
+  let runs = 0;
+  let completed = 0;
+  let failed = 0;
+  let decisions = 0;
+  let aceitos = 0;
+  let rejeitados = 0;
+  let naoAplicavel = 0;
+
+  for (const row of scopedStats) {
+    runs += Number(row.runs) || 0;
+    completed += Number(row.completed) || 0;
+    failed += Number(row.failed) || 0;
+    decisions += Number(row.decisions) || 0;
+    aceitos += Number(row.aceitos) || 0;
+    rejeitados += Number(row.rejeitados) || 0;
+    naoAplicavel += Number(row.nao_aplicavel) || 0;
+  }
 
   const weekMap = new Map<string, WeekPoint>();
-  for (const run of filteredRuns) {
-    const { key, label } = weekKey(run.started_at);
-    const row = weekMap.get(key) ?? {
+  for (const row of weekly) {
+    if (projectId !== 'all' && row.project_id !== projectId) continue;
+    if (projectId === 'all' && !projectMap.has(row.project_id)) continue;
+    const key = weekKey(row.week_start);
+    const prev = weekMap.get(key) ?? {
       week: key,
-      label,
+      label: weekLabel(key),
       runs: 0,
       aceitos: 0,
       rejeitados: 0,
     };
-    row.runs += 1;
-    weekMap.set(key, row);
-  }
-  for (const decision of filteredDecisions) {
-    const { key, label } = weekKey(decision.finalized_at);
-    const row = weekMap.get(key) ?? {
-      week: key,
-      label,
-      runs: 0,
-      aceitos: 0,
-      rejeitados: 0,
-    };
-    if (decision.verdict === 'aceito') row.aceitos += 1;
-    if (decision.verdict === 'rejeitado') row.rejeitados += 1;
-    weekMap.set(key, row);
+    prev.runs += Number(row.runs) || 0;
+    prev.aceitos += Number(row.aceitos) || 0;
+    prev.rejeitados += Number(row.rejeitados) || 0;
+    weekMap.set(key, prev);
   }
   const byWeek = [...weekMap.values()].sort((a, b) =>
     a.week.localeCompare(b.week),
   );
 
-  const projectIds =
-    projectId === 'all'
-      ? projects.map((p) => p.id)
-      : projects.filter((p) => p.id === projectId).map((p) => p.id);
+  const byProject: ProjectPoint[] = scopedIds
+    .map((id) => {
+      const project = projectMap.get(id);
+      const stat = statsMap.get(id) ?? emptyStat(id);
+      return {
+        id,
+        slug: project?.slug ?? id.slice(0, 8),
+        name: project?.name ?? 'Projeto',
+        runs: Number(stat.runs) || 0,
+        aceitos: Number(stat.aceitos) || 0,
+        rejeitados: Number(stat.rejeitados) || 0,
+        decisions: Number(stat.decisions) || 0,
+        acceptanceRate:
+          stat.acceptance_rate == null
+            ? acceptanceFromCounts(
+                Number(stat.aceitos) || 0,
+                Number(stat.rejeitados) || 0,
+              )
+            : Number(stat.acceptance_rate),
+      };
+    })
+    .sort((a, b) => b.runs - a.runs || b.decisions - a.decisions);
 
-  const byProject: ProjectPoint[] = projectIds.map((id) => {
-    const project = projectMap.get(id);
-    const pRuns = filteredRuns.filter((r) => r.project_id === id);
-    const pDecisions = filteredDecisions.filter((d) => d.project_id === id);
-    const pAceitos = pDecisions.filter((d) => d.verdict === 'aceito').length;
-    const pRejeitados = pDecisions.filter(
-      (d) => d.verdict === 'rejeitado',
-    ).length;
-    const pDecided = pAceitos + pRejeitados;
-    return {
-      id,
-      slug: project?.slug ?? id.slice(0, 8),
-      name: project?.name ?? 'Projeto',
-      runs: pRuns.length,
-      aceitos: pAceitos,
-      rejeitados: pRejeitados,
-      decisions: pDecisions.length,
-      acceptanceRate:
-        pDecided > 0
-          ? Math.round((pAceitos / pDecided) * 1000) / 10
-          : null,
-    };
-  }).sort((a, b) => b.runs - a.runs || b.decisions - a.decisions);
+  const bySource: NamedCount[] =
+    runs > 0 ? [{ name: 'ci', count: runs }] : [];
+  const byStatus: NamedCount[] = [
+    { name: 'completed', count: completed },
+    { name: 'failed', count: failed },
+  ].filter((row) => row.count > 0);
 
   return {
-    runs: filteredRuns.length,
-    completed: filteredRuns.filter((r) => r.status === 'completed').length,
-    failed: filteredRuns.filter((r) => r.status === 'failed').length,
-    decisions: filteredDecisions.length,
+    runs,
+    completed,
+    failed,
+    decisions,
     aceitos,
     rejeitados,
     naoAplicavel,
-    acceptanceRate,
+    acceptanceRate: acceptanceFromCounts(aceitos, rejeitados),
     byWeek,
     byProject,
-    bySource: countBy(filteredRuns.map((r) => r.source)),
-    byStatus: countBy(filteredRuns.map((r) => r.status)),
+    bySource,
+    byStatus,
     byVerdict: [
       { name: 'aceito', count: aceitos },
       { name: 'rejeitado', count: rejeitados },

@@ -3,72 +3,79 @@ import { describe, it } from 'node:test';
 
 import { computeDashboardMetrics } from '../src/features/dashboard/model/aggregate';
 
-describe('dashboard aggregate', () => {
-  it('computes acceptance rate and filters by project', () => {
+describe('dashboard aggregate from MVs', () => {
+  it('sums Geral and filters by project', () => {
     const projects = [
       { id: 'p1', slug: 'a', name: 'A' },
       { id: 'p2', slug: 'b', name: 'B' },
     ];
-    const runs = [
+    const projectStats = [
       {
-        id: 'r1',
         project_id: 'p1',
-        source: 'ci',
-        status: 'completed',
-        started_at: '2026-08-01T10:00:00Z',
-        finished_at: null,
-        pr_number: 1,
+        runs: 1,
+        completed: 1,
+        failed: 0,
+        decisions: 2,
+        aceitos: 1,
+        rejeitados: 1,
+        nao_aplicavel: 0,
+        acceptance_rate: 50,
       },
       {
-        id: 'r2',
         project_id: 'p2',
-        source: 'local',
-        status: 'failed',
-        started_at: '2026-08-08T10:00:00Z',
-        finished_at: null,
-        pr_number: null,
+        runs: 1,
+        completed: 0,
+        failed: 1,
+        decisions: 1,
+        aceitos: 1,
+        rejeitados: 0,
+        nao_aplicavel: 0,
+        acceptance_rate: 100,
       },
     ];
-    const decisions = [
+    const weekly = [
       {
-        id: 'd1',
         project_id: 'p1',
-        run_id: 'r1',
-        verdict: 'aceito',
-        finalized_at: '2026-08-01T12:00:00Z',
-        decided_by: 'alice',
+        week_start: '2026-07-27',
+        runs: 1,
+        aceitos: 1,
+        rejeitados: 1,
       },
       {
-        id: 'd2',
-        project_id: 'p1',
-        run_id: 'r1',
-        verdict: 'rejeitado',
-        finalized_at: '2026-08-01T12:01:00Z',
-        decided_by: 'bob',
-      },
-      {
-        id: 'd3',
         project_id: 'p2',
-        run_id: 'r2',
-        verdict: 'aceito',
-        finalized_at: '2026-08-08T12:00:00Z',
-        decided_by: null,
+        week_start: '2026-08-03',
+        runs: 1,
+        aceitos: 1,
+        rejeitados: 0,
       },
     ];
 
-    const all = computeDashboardMetrics(projects, runs, decisions, 'all');
+    const all = computeDashboardMetrics(
+      projects,
+      projectStats,
+      weekly,
+      'all',
+    );
     assert.equal(all.runs, 2);
     assert.equal(all.aceitos, 2);
     assert.equal(all.rejeitados, 1);
     assert.equal(all.acceptanceRate, 66.7);
     assert.equal(all.byProject.length, 2);
+    assert.equal(all.byWeek.length, 2);
+    assert.equal(all.bySource[0]?.name, 'ci');
 
-    const one = computeDashboardMetrics(projects, runs, decisions, 'p1');
+    const one = computeDashboardMetrics(
+      projects,
+      projectStats,
+      weekly,
+      'p1',
+    );
     assert.equal(one.runs, 1);
     assert.equal(one.aceitos, 1);
     assert.equal(one.rejeitados, 1);
     assert.equal(one.acceptanceRate, 50);
     assert.equal(one.byProject.length, 1);
-    assert.equal(one.byProject[0].slug, 'a');
+    assert.equal(one.byProject[0]?.slug, 'a');
+    assert.equal(one.byWeek.length, 1);
   });
 });

@@ -4,29 +4,32 @@ export type DashboardProject = {
   name: string;
 };
 
-export type DashboardRun = {
-  id: string;
+/** Linha de mv_dashboard_project_stats (já filtrada por membership na API). */
+export type DashboardProjectStat = {
   project_id: string;
-  source: string;
-  status: string;
-  started_at: string;
-  finished_at: string | null;
-  pr_number: number | null;
+  runs: number;
+  completed: number;
+  failed: number;
+  decisions: number;
+  aceitos: number;
+  rejeitados: number;
+  nao_aplicavel: number;
+  acceptance_rate: number | null;
 };
 
-export type DashboardDecision = {
-  id: string;
+/** Linha de mv_dashboard_weekly. */
+export type DashboardWeeklyStat = {
   project_id: string;
-  run_id: string | null;
-  verdict: string;
-  finalized_at: string;
-  decided_by: string | null;
+  week_start: string;
+  runs: number;
+  aceitos: number;
+  rejeitados: number;
 };
 
 export type DashboardSnapshot = {
   projects: DashboardProject[];
-  runs: DashboardRun[];
-  decisions: DashboardDecision[];
+  projectStats: DashboardProjectStat[];
+  weekly: DashboardWeeklyStat[];
 };
 
 export type WeekPoint = {

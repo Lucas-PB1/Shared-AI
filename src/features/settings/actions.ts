@@ -377,6 +377,14 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
       decisionsUpserted += 1;
     }
 
+    const { error: refreshErr } = await local.rpc('refresh_dashboard_mviews');
+    if (refreshErr) {
+      console.error(
+        'syncFromCloud: refresh_dashboard_mviews falhou:',
+        refreshErr.message,
+      );
+    }
+
     const report = [
       `${projectsUpserted} projects`,
       `${runsUpserted} runs CI`,
@@ -386,6 +394,7 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
       `${conventionsUpserted} conventions`,
       `${membersUpserted} memberships`,
       junkPurged > 0 ? `${junkPurged} runs locais removidos` : null,
+      refreshErr ? 'MV dashboard stale' : 'MV dashboard ok',
     ]
       .filter(Boolean)
       .join(' · ');

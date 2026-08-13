@@ -196,6 +196,9 @@ function mockPort(calls: string[]): ReviewStorePort {
       );
       return { id: "cv1" };
     },
+    async refreshDashboardMviews() {
+      calls.push("refreshDashboardMviews");
+    },
   };
 }
 

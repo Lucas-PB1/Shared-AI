@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 
 import { Card, CardDescription, CardTitle } from '@/shared/ui/card';
-import type { DashboardMetrics, NamedCount, ProjectPoint, WeekPoint } from '../model/types';
+import type { DashboardMetrics, NamedCount, WeekPoint } from '../model/types';
 
 const COLORS = {
   primary: '#ff5800',
@@ -121,58 +121,77 @@ export function VerdictPieChart({ data }: { data: NamedCount[] }) {
     );
   }
 
+  const total = data.reduce((sum, row) => sum + row.count, 0);
+  const chartData = data.map((row) => ({
+    ...row,
+    share: total > 0 ? Math.round((row.count / total) * 1000) / 10 : 0,
+  }));
+
   return (
     <ChartFrame title="Vereditos" description="Distribuição das decisões">
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+        <PieChart margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
           <Pie
-            data={data}
+            data={chartData}
             dataKey="count"
             nameKey="name"
             cx="50%"
             cy="50%"
-            innerRadius={52}
-            outerRadius={80}
+            innerRadius={48}
+            outerRadius={72}
             paddingAngle={2}
+            labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
+            label={({ payload }) => {
+              const share = (payload as { share?: number } | undefined)?.share;
+              return share != null ? `${share}%` : '';
+            }}
           >
-            {data.map((entry) => (
+            {chartData.map((entry) => (
               <Cell
                 key={entry.name}
                 fill={VERDICT_COLORS[entry.name] ?? COLORS.sky}
               />
             ))}
           </Pie>
-          <Tooltip />
-          <Legend />
+          <Tooltip
+            formatter={(value, name, item) => {
+              const share = (
+                item?.payload as { share?: number } | undefined
+              )?.share;
+              return [
+                `${value}${share != null ? ` (${share}%)` : ''}`,
+                String(name),
+              ];
+            }}
+          />
+          <Legend
+            formatter={(value, entry) => {
+              const share = (
+                entry.payload as { share?: number } | undefined
+              )?.share;
+              return share != null ? `${value} ${share}%` : String(value);
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </ChartFrame>
   );
 }
 
-export function ProjectPerformanceChart({
-  data,
-  mode,
+export function ProjectMetricsChart({
+  metrics,
 }: {
-  data: ProjectPoint[];
-  mode: 'all' | 'single';
+  metrics: Pick<DashboardMetrics, 'runs' | 'aceitos' | 'rejeitados'>;
 }) {
-  const chartData = data
-    .filter((p) => p.runs > 0 || p.decisions > 0)
-    .map((p) => ({
-      name: p.name.length > 18 ? `${p.name.slice(0, 16)}…` : p.name,
-      runs: p.runs,
-      aceitos: p.aceitos,
-      rejeitados: p.rejeitados,
-      taxa: p.acceptanceRate ?? 0,
-    }));
+  const chartData = [
+    { name: 'Runs', count: metrics.runs, fill: COLORS.primary },
+    { name: 'Aceitos', count: metrics.aceitos, fill: COLORS.ok },
+    { name: 'Rejeitados', count: metrics.rejeitados, fill: COLORS.danger },
+  ];
 
-  if (chartData.length === 0) {
+  if (chartData.every((row) => row.count === 0)) {
     return (
-      <ChartFrame
-        title={mode === 'all' ? 'Desempenho por projeto' : 'Desempenho do projeto'}
-        description="Runs e vereditos"
-      >
+      <ChartFrame title="Volume" description="Runs, aceitos e rejeitados no recorte">
         <EmptyChart />
       </ChartFrame>
     );
@@ -180,20 +199,21 @@ export function ProjectPerformanceChart({
 
   return (
     <ChartFrame
-      title={mode === 'all' ? 'Desempenho por projeto' : 'Desempenho do projeto'}
-      description="Comparativo de runs, aceitos e rejeitados"
-      className={mode === 'all' ? 'lg:col-span-2' : undefined}
+      title="Volume"
+      description="Runs, aceitos e rejeitados no recorte"
+      className="lg:col-span-2"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+        <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={48} />
+          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={32} />
           <Tooltip />
-          <Legend />
-          <Bar dataKey="runs" name="Runs" fill={COLORS.primary} radius={[4, 4, 0, 0]} />
-          <Bar dataKey="aceitos" name="Aceitos" fill={COLORS.ok} radius={[4, 4, 0, 0]} />
-          <Bar dataKey="rejeitados" name="Rejeitados" fill={COLORS.danger} radius={[4, 4, 0, 0]} />
+          <Bar dataKey="count" name="Total" radius={[4, 4, 0, 0]}>
+            {chartData.map((row) => (
+              <Cell key={row.name} fill={row.fill} />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </ChartFrame>

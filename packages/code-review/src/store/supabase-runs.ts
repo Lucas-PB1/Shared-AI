@@ -6,6 +6,13 @@ import { StoreError } from "./config.js";
 import type { CreateFindingFields, CreateRunFields } from "./port.js";
 import type { SupabaseRest } from "./supabase-rest.js";
 
+export async function restRefreshDashboardMviews(
+  rest: SupabaseRest
+): Promise<void> {
+  const url = `${rest.config.restBase}/rpc/refresh_dashboard_mviews`;
+  await rest.request("POST", url, rest.headers(), {});
+}
+
 export async function restGetProjectId(
   rest: SupabaseRest,
   slug?: string

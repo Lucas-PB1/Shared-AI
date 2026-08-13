@@ -318,6 +318,14 @@ export async function dualWriteDecisions(
       });
     }
 
+    try {
+      await port.refreshDashboardMviews();
+    } catch (refreshErr) {
+      const msg =
+        refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
+      console.error(`dual-write: refresh_dashboard_mviews falhou: ${msg}`);
+    }
+
     return {
       attempted: true,
       written,

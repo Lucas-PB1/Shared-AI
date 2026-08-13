@@ -156,4 +156,8 @@ hostdime-ia/
 
 Docs: [docs/okf/index.md](docs/okf/index.md) · [docs/README.md](docs/README.md).
 
-MIT — [LICENSE](LICENSE).
+## Licença
+
+Este repositório é distribuído sob a **[MIT License](LICENSE)** — Copyright (c) 2026 HostDime.
+
+O campo `"private": true` no `package.json` só impede publicação acidental no npm; **não** altera a licença do código.

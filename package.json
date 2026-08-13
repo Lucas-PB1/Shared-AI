@@ -2,6 +2,7 @@
   "name": "hostdime-ia",
   "version": "0.3.0",
   "private": true,
+  "license": "MIT",
   "description": "Pacotes públicos de configuração de IA da HostDime + dashboard Next.js",
   "type": "module",
   "scripts": {

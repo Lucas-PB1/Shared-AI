@@ -13,8 +13,8 @@ export default async function HomePage() {
           Dashboard
         </h1>
         <p className="mt-2 max-w-2xl text-hd-secondary md:text-base">
-          Taxa de aceite, volume de runs CI e vereditos — visão geral ou projeto
-          a projeto. Só dados remotos (CI) após merge.
+          Taxa de aceite, volume de runs CI e vereditos — visão geral ou por
+          projeto. Só dados remotos (CI) após merge.
         </p>
       </section>
 

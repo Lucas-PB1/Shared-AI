@@ -126,4 +126,6 @@ export interface ReviewStorePort {
     projectId: string,
     fields: ConventionFields
   ): Promise<Record<string, unknown>>;
+  /** Atualiza MVs do dashboard; falha deve ser tratada pelo caller (não abortar ingest). */
+  refreshDashboardMviews(): Promise<void>;
 }
