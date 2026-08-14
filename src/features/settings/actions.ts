@@ -179,7 +179,7 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
     const { data: cloudConventions, error: convErr } = await cloud
       .from('conventions')
       .select(
-        'project_id, finding_key, scope_glob, body, source, occurrences, updated_at',
+        'project_id, finding_key, scope_glob, body, source, occurrences, updated_at, meta',
       );
     if (convErr) throw convErr;
 
@@ -188,19 +188,34 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
       const slug = cloudIdToSlug.get(row.project_id);
       const localProjectId = slug ? slugToLocalId.get(slug) : undefined;
       if (!localProjectId || !row.finding_key) continue;
-      const { error } = await local.from('conventions').upsert(
-        {
-          project_id: localProjectId,
-          finding_key: row.finding_key,
-          scope_glob: row.scope_glob ?? '**/*',
-          body: row.body,
-          source: row.source ?? null,
-          occurrences: row.occurrences ?? 1,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'project_id,finding_key' },
-      );
-      if (error) throw error;
+      const payload = {
+        project_id: localProjectId,
+        finding_key: row.finding_key,
+        scope_glob: row.scope_glob ?? '**/*',
+        body: row.body,
+        source: row.source ?? null,
+        occurrences: row.occurrences ?? 1,
+        updated_at: new Date().toISOString(),
+        meta: row.meta ?? {},
+      };
+      // Índice único parcial (project_id, finding_key) não serve em onConflict do PostgREST.
+      const { data: existing, error: findErr } = await local
+        .from('conventions')
+        .select('id')
+        .eq('project_id', localProjectId)
+        .eq('finding_key', row.finding_key)
+        .maybeSingle();
+      if (findErr) throw findErr;
+      if (existing?.id) {
+        const { error } = await local
+          .from('conventions')
+          .update(payload)
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await local.from('conventions').insert(payload);
+        if (error) throw error;
+      }
       conventionsUpserted += 1;
     }
 
@@ -303,6 +318,7 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
 
     const syncedRunIds = [...cloudRunIdToLocalProject.keys()];
     let findingsUpserted = 0;
+    const knownFindingIds = new Set<string>();
     if (syncedRunIds.length > 0) {
       const { data: cloudFindings, error: findErr } = await cloud
         .from('findings')
@@ -334,6 +350,7 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
           { onConflict: 'id' },
         );
         if (error) throw error;
+        knownFindingIds.add(finding.id as string);
         findingsUpserted += 1;
       }
     }
@@ -345,6 +362,24 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
       );
     if (decErr) throw decErr;
 
+    const candidateFindingIds = [
+      ...new Set(
+        (cloudDecisions ?? [])
+          .map((d) => d.finding_id)
+          .filter((id): id is string => Boolean(id) && !knownFindingIds.has(id)),
+      ),
+    ];
+    if (candidateFindingIds.length > 0) {
+      const { data: localFindings, error: lfErr } = await local
+        .from('findings')
+        .select('id')
+        .in('id', candidateFindingIds);
+      if (lfErr) throw lfErr;
+      for (const f of localFindings ?? []) {
+        knownFindingIds.add(f.id as string);
+      }
+    }
+
     let decisionsUpserted = 0;
     for (const decision of cloudDecisions ?? []) {
       const slug = cloudIdToSlug.get(decision.project_id);
@@ -354,12 +389,16 @@ export async function syncFromCloud(): Promise<SettingsActionState> {
         decision.run_id && cloudRunIdToLocalProject.has(decision.run_id)
           ? decision.run_id
           : null;
+      const findingId =
+        decision.finding_id && knownFindingIds.has(decision.finding_id)
+          ? decision.finding_id
+          : null;
       const { error } = await local.from('decisions').upsert(
         {
           id: decision.id,
           project_id: localProjectId,
           run_id: runId,
-          finding_id: decision.finding_id ?? null,
+          finding_id: findingId,
           finding_key: decision.finding_key,
           verdict: decision.verdict,
           reason: decision.reason ?? null,
