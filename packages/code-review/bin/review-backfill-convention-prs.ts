@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Backfill conventions.meta: evidence[] (fonte real) + related_prs (contexto).
- * Remove source_prs legado que confundia PR com fonte.
+ * Backfill conventions.meta: evidence_decision_ids (fonte real) + related_prs.
+ * Remove evidence[] denormalizado e source_prs legado.
  *
  * Uso:
  *   npx tsx packages/code-review/bin/review-backfill-convention-prs.ts --cloud --slug hostdime-hub --write
@@ -10,8 +10,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   META_ABSORBED_FINDING_KEYS,
-  META_EVIDENCE,
   META_EVIDENCE_COUNT,
+  META_EVIDENCE_DECISION_IDS,
   META_RELATED_PRS,
   ReviewStore,
   absorbedFindingKeysFromMeta,
@@ -69,7 +69,7 @@ async function main(): Promise<number> {
   const conventions = await store.listConventions(projectId, { limit: 500 });
 
   console.log(
-    `=== backfill convention evidence (${args.cloud ? "cloud" : "local"}) ${
+    `=== backfill evidence_decision_ids (${args.cloud ? "cloud" : "local"}) ${
       args.write ? "WRITE" : "dry-run"
     } slug=${slug} ===`
   );
@@ -88,11 +88,7 @@ async function main(): Promise<number> {
         id: id.slice(0, 8),
         finding_key: primary,
         evidence_count: prov.evidenceCount,
-        evidence: prov.evidence.map((e) => ({
-          finding_key: e.finding_key,
-          summary: e.summary.slice(0, 50),
-          decision_source: e.decision_source,
-        })),
+        evidence_decision_ids: prov.decisionIds.map((x) => x.slice(0, 8)),
         related_prs: prov.relatedPrs,
       })
     );
@@ -103,9 +99,10 @@ async function main(): Promise<number> {
         : {};
     meta[META_ABSORBED_FINDING_KEYS] =
       absorbed.length > 0 ? absorbed : keys;
-    meta[META_EVIDENCE] = prov.evidence;
+    meta[META_EVIDENCE_DECISION_IDS] = prov.decisionIds;
     meta[META_EVIDENCE_COUNT] = prov.evidenceCount;
     meta[META_RELATED_PRS] = prov.relatedPrs;
+    delete meta.evidence;
     delete meta.source_prs;
     delete meta.source_decision_sources;
     await store.upsertConvention(projectId, {

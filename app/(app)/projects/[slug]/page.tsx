@@ -66,6 +66,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
         <aside className="min-w-0 space-y-4 lg:sticky lg:top-20 lg:self-start">
           <ProjectMemoryPanel
+            projectSlug={project.slug}
             exclusions={exclusions}
             conventions={conventions}
             accepted={accepted}

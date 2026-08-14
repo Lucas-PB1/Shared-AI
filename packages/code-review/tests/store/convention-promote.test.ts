@@ -39,14 +39,7 @@ describe("findCoveringConvention", () => {
       scopeGlob: "**/*",
       occurrences: 2,
       absorbedFindingKeys: ["use-const-not-let"],
-      evidence: [
-        {
-          finding_key: "prefer-const",
-          summary: "prefer const",
-          decision_source: "github-pr-68",
-          pr: 68,
-        },
-      ],
+      evidenceDecisionIds: ["d1"],
       evidenceCount: 2,
       relatedPrs: [68],
       supersededBy: null,
@@ -58,7 +51,7 @@ describe("findCoveringConvention", () => {
       scopeGlob: "**/*",
       occurrences: 1,
       absorbedFindingKeys: [],
-      evidence: [],
+      evidenceDecisionIds: [],
       evidenceCount: 0,
       relatedPrs: [],
       supersededBy: "a",
@@ -92,7 +85,7 @@ describe("findNearCoveringConvention", () => {
           scopeGlob: "**/*",
           occurrences: 2,
           absorbedFindingKeys: ["tag-label-trim-guarda"],
-          evidence: [],
+          evidenceDecisionIds: [],
           evidenceCount: 2,
           relatedPrs: [69],
           supersededBy: null,
@@ -154,7 +147,7 @@ describe("heuristicReconcileClusters", () => {
 });
 
 describe("provenanceFromDecisions", () => {
-  it("builds evidence from aceito decisions (PR is only related context)", () => {
+  it("builds decision IDs from aceito decisions (PR is only related context)", () => {
     assert.equal(prNumberFromDecisionSource("github-pr-69"), 69);
     assert.equal(prNumberFromDecisionSource("other"), null);
     const p = provenanceFromDecisions(
@@ -182,10 +175,7 @@ describe("provenanceFromDecisions", () => {
       ["a", "b"]
     );
     assert.equal(p.evidenceCount, 2);
-    assert.deepEqual(
-      p.evidence.map((e) => e.finding_key),
-      ["a", "b"]
-    );
+    assert.deepEqual(p.decisionIds, ["d1", "d2"]);
     assert.deepEqual(p.relatedPrs, [68, 69]);
   });
 });

@@ -42,8 +42,8 @@ export {
 
 export {
   META_ABSORBED_FINDING_KEYS,
-  META_EVIDENCE,
   META_EVIDENCE_COUNT,
+  META_EVIDENCE_DECISION_IDS,
   META_LLM_PROMOTED,
   META_RELATED_PRS,
   META_SUPERSEDED_BY,
@@ -53,8 +53,9 @@ export {
   findNearCoveringConvention,
   activeConventions,
   evidenceCountFromMeta,
-  evidenceFromMeta,
+  evidenceDecisionIdsFromMeta,
   heuristicReconcileClusters,
+  hydrateEvidenceFromDecisions,
   isConventionLlmEnabled,
   parseReconcileLlmResponse,
   prNumberFromDecisionSource,
@@ -62,7 +63,6 @@ export {
   reconcileConventionsWithLlm,
   relatedPrsFromMeta,
   rowToExistingConvention,
-  type ConventionEvidenceItem,
   type ReconcileCluster,
 } from "./convention-promote.js";
 

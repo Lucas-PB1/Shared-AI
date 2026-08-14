@@ -1,5 +1,6 @@
 export type {
   Convention,
+  ConventionMeta,
   Decision,
   DecisionComment,
   DecisionMeta,

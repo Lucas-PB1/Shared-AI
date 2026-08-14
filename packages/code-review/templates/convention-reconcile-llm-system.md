@@ -24,7 +24,7 @@ MENTAL MODEL (read this first)
    → **Do not** `create` another convention for “almost the same thing”.
 
 4. **PR is not the source**  
-   The real source is the **accepted findings/decisions** that form the rule (`evidence` / absorbed keys).  
+   The real source is the **accepted decisions** that form the rule (`evidence_decision_ids` / absorbed keys).  
    `related_prs` is only navigation context. One PR can feed many different themes; that does not mean “one weak convention per PR”.
 
 5. **Different themes stay separate**  

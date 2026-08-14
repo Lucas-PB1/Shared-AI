@@ -190,7 +190,7 @@ export async function listProjectConventions(
   const { data, error } = await supabase
     .from('conventions')
     .select(
-      'id, project_id, finding_key, scope_glob, body, source, occurrences, updated_at',
+      'id, project_id, finding_key, scope_glob, body, source, occurrences, updated_at, meta',
     )
     .eq('project_id', projectId)
     .order('updated_at', { ascending: false });

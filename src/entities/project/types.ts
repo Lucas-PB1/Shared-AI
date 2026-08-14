@@ -129,6 +129,16 @@ export type Exclusion = {
   updated_at: string;
 };
 
+export type ConventionMeta = {
+  evidence_decision_ids?: string[];
+  evidence_count?: number;
+  absorbed_finding_keys?: string[];
+  related_prs?: number[];
+  llm_promoted?: boolean;
+  superseded_by?: string;
+  [key: string]: unknown;
+};
+
 export type Convention = {
   id: string;
   project_id: string;
@@ -138,4 +148,5 @@ export type Convention = {
   source: string | null;
   occurrences: number;
   updated_at: string;
+  meta?: ConventionMeta | null;
 };

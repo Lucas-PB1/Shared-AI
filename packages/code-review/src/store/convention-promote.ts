@@ -18,22 +18,14 @@ export const META_ABSORBED_FINDING_KEYS = "absorbed_finding_keys";
 export const META_LLM_PROMOTED = "llm_promoted";
 export const META_SUPERSEDED_BY = "superseded_by";
 /**
- * Fonte real da convention: aceitos do ledger que justificam a regra.
- * Cada item = uma decisão (finding_key + summary + de qual ingest veio).
+ * Fonte real da convention: IDs de decisions (aceito) no ledger.
  */
-export const META_EVIDENCE = "evidence";
+export const META_EVIDENCE_DECISION_IDS = "evidence_decision_ids";
 export const META_EVIDENCE_COUNT = "evidence_count";
 /** PRs só como contexto de navegação — NÃO é a fonte da regra. */
 export const META_RELATED_PRS = "related_prs";
 
 const GITHUB_PR_SOURCE_RE = /^github-pr-(\d+)$/i;
-
-export type ConventionEvidenceItem = {
-  finding_key: string;
-  summary: string;
-  decision_source: string | null;
-  pr: number | null;
-};
 
 const PACKAGE_ROOT = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -59,7 +51,7 @@ export type ExistingConventionView = {
   scopeGlob: string;
   occurrences: number;
   absorbedFindingKeys: string[];
-  evidence: ConventionEvidenceItem[];
+  evidenceDecisionIds: string[];
   evidenceCount: number;
   /** Contexto de PR apenas — não confundir com evidência. */
   relatedPrs: number[];
@@ -98,41 +90,20 @@ export function prNumberFromDecisionSource(source: unknown): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-export function evidenceFromMeta(meta: unknown): ConventionEvidenceItem[] {
+export function evidenceDecisionIdsFromMeta(meta: unknown): string[] {
   if (!meta || typeof meta !== "object" || Array.isArray(meta)) return [];
-  const raw = (meta as Record<string, unknown>)[META_EVIDENCE];
+  const raw = (meta as Record<string, unknown>)[META_EVIDENCE_DECISION_IDS];
   if (!Array.isArray(raw)) return [];
-  const out: ConventionEvidenceItem[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
-    const row = item as Record<string, unknown>;
-    const findingKey = String(row.finding_key ?? "").trim();
-    if (!findingKey) continue;
-    const prRaw = row.pr;
-    const pr =
-      prRaw == null || prRaw === ""
-        ? null
-        : Number.isFinite(Number(prRaw)) && Number(prRaw) > 0
-          ? Number(prRaw)
-          : null;
-    out.push({
-      finding_key: findingKey,
-      summary: String(row.summary ?? "").trim(),
-      decision_source:
-        row.decision_source != null && String(row.decision_source).trim()
-          ? String(row.decision_source).trim()
-          : null,
-      pr,
-    });
-  }
-  return out;
+  return [
+    ...new Set(raw.map((x) => String(x ?? "").trim()).filter(Boolean)),
+  ];
 }
 
 export function evidenceCountFromMeta(meta: unknown): number {
   if (!meta || typeof meta !== "object" || Array.isArray(meta)) return 0;
   const n = Number((meta as Record<string, unknown>)[META_EVIDENCE_COUNT]);
   if (Number.isFinite(n) && n > 0) return n;
-  return evidenceFromMeta(meta).length;
+  return evidenceDecisionIdsFromMeta(meta).length;
 }
 
 /** related_prs — só contexto; não é a fonte. */
@@ -150,52 +121,39 @@ export function relatedPrsFromMeta(meta: unknown): number[] {
 }
 
 /**
- * Fonte real a partir do ledger: cada aceito que justifica as finding_keys.
+ * Fonte real a partir do ledger: IDs das decisions aceito nas finding_keys.
  * `relatedPrs` é só derivado (navegação), não a evidência.
  */
 export function provenanceFromDecisions(
   decisions: Array<Record<string, unknown>>,
   findingKeys: Iterable<string>
 ): {
-  evidence: ConventionEvidenceItem[];
+  decisionIds: string[];
   evidenceCount: number;
   relatedPrs: number[];
 } {
   const want = new Set(
     [...findingKeys].map((k) => k.trim()).filter(Boolean)
   );
-  const evidence: ConventionEvidenceItem[] = [];
+  const decisionIds: string[] = [];
   const seen = new Set<string>();
+  const relatedPrs = new Set<number>();
   for (const r of decisions) {
     if (String(r.verdict ?? "").trim() !== "aceito") continue;
     const key = String(r.finding_key ?? r.finding_id ?? "").trim();
     if (!key || !want.has(key)) continue;
-    const src = String(r.source ?? "").trim() || null;
     const id = String(r.id ?? "").trim();
-    const dedupe = id || `${key}\0${src ?? ""}\0${String(r.summary ?? "")}`;
-    if (seen.has(dedupe)) continue;
-    seen.add(dedupe);
-    evidence.push({
-      finding_key: key,
-      summary: String(r.summary ?? "").trim(),
-      decision_source: src,
-      pr: prNumberFromDecisionSource(src),
-    });
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    decisionIds.push(id);
+    const pr = prNumberFromDecisionSource(r.source);
+    if (pr != null) relatedPrs.add(pr);
   }
-  evidence.sort((a, b) =>
-    a.finding_key === b.finding_key
-      ? a.summary.localeCompare(b.summary)
-      : a.finding_key.localeCompare(b.finding_key)
-  );
-  const relatedPrs = [
-    ...new Set(
-      evidence.map((e) => e.pr).filter((n): n is number => n != null)
-    ),
-  ].sort((a, b) => a - b);
+  decisionIds.sort();
   return {
-    evidence,
-    evidenceCount: evidence.length,
-    relatedPrs,
+    decisionIds,
+    evidenceCount: decisionIds.length,
+    relatedPrs: [...relatedPrs].sort((a, b) => a - b),
   };
 }
 
@@ -212,24 +170,46 @@ export function mergeRelatedPrs(
   return [...out].sort((a, b) => a - b);
 }
 
-export function mergeEvidence(
-  ...lists: Array<Iterable<ConventionEvidenceItem> | undefined>
-): ConventionEvidenceItem[] {
-  const byDedupe = new Map<string, ConventionEvidenceItem>();
+export function mergeDecisionIds(
+  ...lists: Array<Iterable<string> | undefined>
+): string[] {
+  const out = new Set<string>();
   for (const list of lists) {
     if (!list) continue;
-    for (const item of list) {
-      const key = item.finding_key.trim();
-      if (!key) continue;
-      const dedupe = `${key}\0${item.decision_source ?? ""}\0${item.summary}`;
-      if (!byDedupe.has(dedupe)) byDedupe.set(dedupe, { ...item, finding_key: key });
+    for (const id of list) {
+      const t = String(id ?? "").trim();
+      if (t) out.add(t);
     }
   }
-  return [...byDedupe.values()].sort((a, b) =>
-    a.finding_key === b.finding_key
-      ? a.summary.localeCompare(b.summary)
-      : a.finding_key.localeCompare(b.finding_key)
+  return [...out].sort();
+}
+
+/** Hidrata IDs → resumo curto para LLM/audit (join in-memory). */
+export function hydrateEvidenceFromDecisions(
+  decisionIds: Iterable<string>,
+  decisions: Array<Record<string, unknown>>
+): Array<{ id: string; finding_key: string; summary: string }> {
+  const want = new Set(
+    [...decisionIds].map((id) => String(id ?? "").trim()).filter(Boolean)
   );
+  if (!want.size) return [];
+  const byId = new Map<string, Record<string, unknown>>();
+  for (const r of decisions) {
+    const id = String(r.id ?? "").trim();
+    if (id && want.has(id)) byId.set(id, r);
+  }
+  return [...want]
+    .map((id) => {
+      const r = byId.get(id);
+      return {
+        id,
+        finding_key: r
+          ? String(r.finding_key ?? r.finding_id ?? "").trim()
+          : "",
+        summary: r ? String(r.summary ?? "").trim() : "",
+      };
+    })
+    .sort((a, b) => a.finding_key.localeCompare(b.finding_key));
 }
 
 export function supersededByFromMeta(meta: unknown): string | null {
@@ -246,7 +226,7 @@ export function rowToExistingConvention(
   const body = String(row.body ?? "").trim();
   if (!id || !body) return null;
   const findingKeyRaw = String(row.finding_key ?? "").trim();
-  const evidence = evidenceFromMeta(row.meta);
+  const evidenceDecisionIds = evidenceDecisionIdsFromMeta(row.meta);
   const absorbed = absorbedFindingKeysFromMeta(row.meta);
   return {
     id,
@@ -255,11 +235,10 @@ export function rowToExistingConvention(
     scopeGlob: String(row.scope_glob ?? "**/*").trim() || "**/*",
     occurrences: Number(row.occurrences ?? 1) || 1,
     absorbedFindingKeys: absorbed,
-    evidence,
+    evidenceDecisionIds,
     evidenceCount: Math.max(
       evidenceCountFromMeta(row.meta),
-      evidence.length,
-      absorbed.length
+      evidenceDecisionIds.length
     ),
     relatedPrs: relatedPrsFromMeta(row.meta),
     supersededBy: supersededByFromMeta(row.meta),
@@ -358,28 +337,31 @@ function metaWithAbsorbed(
   absorbed: string[],
   extra: Record<string, unknown> = {}
 ): Record<string, unknown> {
-  const evidence = mergeEvidence(
-    evidenceFromMeta(base),
-    Array.isArray(extra[META_EVIDENCE])
-      ? (extra[META_EVIDENCE] as ConventionEvidenceItem[])
+  const decisionIds = mergeDecisionIds(
+    evidenceDecisionIdsFromMeta(base),
+    Array.isArray(extra[META_EVIDENCE_DECISION_IDS])
+      ? (extra[META_EVIDENCE_DECISION_IDS] as string[])
       : undefined
   );
   const relatedPrs = mergeRelatedPrs(
     relatedPrsFromMeta(base),
     Array.isArray(extra[META_RELATED_PRS])
       ? (extra[META_RELATED_PRS] as number[])
-      : undefined,
-    evidence.map((e) => e.pr).filter((n): n is number => n != null)
+      : undefined
   );
   const out: Record<string, unknown> = {
     ...base,
     ...extra,
     [META_ABSORBED_FINDING_KEYS]: absorbed,
     [META_LLM_PROMOTED]: true,
-    [META_EVIDENCE]: evidence,
-    [META_EVIDENCE_COUNT]: evidence.length,
+    [META_EVIDENCE_DECISION_IDS]: decisionIds,
+    [META_EVIDENCE_COUNT]: decisionIds.length,
   };
   if (relatedPrs.length) out[META_RELATED_PRS] = relatedPrs;
+  // Drop denormalized / legacy keys.
+  delete out.evidence;
+  delete out.source_prs;
+  delete out.source_decision_sources;
   return out;
 }
 
@@ -500,7 +482,8 @@ export function loadConventionReconcileSystemPrompt(
 
 export function buildConventionReconcileUserPrompt(
   uncovered: AceitoFactAggregate[],
-  existing: ExistingConventionView[]
+  existing: ExistingConventionView[],
+  decisions: Array<Record<string, unknown>> = []
 ): string {
   const near = nearSlugPairs(uncovered.map((f) => f.findingKey));
   const nearWithConventions = nearSlugPairs([
@@ -541,7 +524,7 @@ export function buildConventionReconcileUserPrompt(
       2
     ),
     "",
-    "EXISTING_CONVENTIONS (already promoted — do not recreate; merge/skip only when absorbing new keys). evidence[] is the real source (aceitos), related_prs is only navigation context:",
+    "EXISTING_CONVENTIONS (already promoted — do not recreate; merge/skip only when absorbing new keys). evidence_decision_ids are the real source (aceitos); related_prs is only navigation context:",
     JSON.stringify(
       activeConventions(existing).map((c) => ({
         id: c.id,
@@ -551,7 +534,11 @@ export function buildConventionReconcileUserPrompt(
         occurrences: c.occurrences,
         absorbed_finding_keys: c.absorbedFindingKeys,
         evidence_count: c.evidenceCount,
-        evidence: c.evidence.map((e) => ({
+        evidence_decision_ids: c.evidenceDecisionIds,
+        evidence_preview: hydrateEvidenceFromDecisions(
+          c.evidenceDecisionIds,
+          decisions
+        ).map((e) => ({
           finding_key: e.finding_key,
           summary: e.summary.slice(0, 80),
         })),
@@ -695,12 +682,12 @@ async function applyReconcileCluster(opts: {
     uncoveredByKey.get(primaryKey)?.scopeGlob ||
     "**/*";
 
-  // Fonte real = aceitos do ledger; related_prs só contexto.
+  // Fonte real = IDs das decisions aceito; related_prs só contexto.
   const fromLedger = provenanceFromDecisions(allDecisions, [
     ...keys,
   ]);
   const provenanceExtra = {
-    [META_EVIDENCE]: fromLedger.evidence,
+    [META_EVIDENCE_DECISION_IDS]: fromLedger.decisionIds,
     [META_EVIDENCE_COUNT]: fromLedger.evidenceCount,
     [META_RELATED_PRS]: fromLedger.relatedPrs,
   };
@@ -722,9 +709,9 @@ async function applyReconcileCluster(opts: {
         near.convention.findingKey,
         ...keys
       );
-      const mergedEvidence = mergeEvidence(
-        near.convention.evidence,
-        fromLedger.evidence
+      const mergedIds = mergeDecisionIds(
+        near.convention.evidenceDecisionIds,
+        fromLedger.decisionIds
       );
       await port.upsertConvention(projectId, {
         id: near.convention.id,
@@ -734,8 +721,8 @@ async function applyReconcileCluster(opts: {
         occurrences: Math.max(near.convention.occurrences, occ, keys.length),
         source,
         meta: metaWithAbsorbed({}, absorbed, {
-          [META_EVIDENCE]: mergedEvidence,
-          [META_EVIDENCE_COUNT]: mergedEvidence.length,
+          [META_EVIDENCE_DECISION_IDS]: mergedIds,
+          [META_EVIDENCE_COUNT]: mergedIds.length,
           [META_RELATED_PRS]: mergeRelatedPrs(
             near.convention.relatedPrs,
             fromLedger.relatedPrs
@@ -797,10 +784,10 @@ async function applyReconcileCluster(opts: {
     ...fromDupes
   );
   const mergedLedger = provenanceFromDecisions(allDecisions, absorbed);
-  const mergedEvidence = mergeEvidence(
-    match.evidence,
-    mergedLedger.evidence,
-    fromLedger.evidence
+  const mergedIds = mergeDecisionIds(
+    match.evidenceDecisionIds,
+    mergedLedger.decisionIds,
+    fromLedger.decisionIds
   );
   await port.upsertConvention(projectId, {
     id: match.id,
@@ -810,8 +797,8 @@ async function applyReconcileCluster(opts: {
     occurrences: Math.max(match.occurrences, occ),
     source,
     meta: metaWithAbsorbed({}, absorbed, {
-      [META_EVIDENCE]: mergedEvidence,
-      [META_EVIDENCE_COUNT]: mergedEvidence.length,
+      [META_EVIDENCE_DECISION_IDS]: mergedIds,
+      [META_EVIDENCE_COUNT]: mergedIds.length,
       [META_RELATED_PRS]: mergeRelatedPrs(
         match.relatedPrs,
         mergedLedger.relatedPrs,
@@ -869,7 +856,11 @@ export async function reconcileConventionsWithLlm(opts: {
   if (useLlm) {
     const call = opts.callLlm ?? callLLM;
     const system = loadConventionReconcileSystemPrompt(opts.packageRoot);
-    const user = buildConventionReconcileUserPrompt(uncovered, existing);
+    const user = buildConventionReconcileUserPrompt(
+      uncovered,
+      existing,
+      decisions
+    );
     const raw = await call(system, user);
     ({ clusters, deferredFindingKeys } = parseReconcileLlmResponse(raw));
   } else {

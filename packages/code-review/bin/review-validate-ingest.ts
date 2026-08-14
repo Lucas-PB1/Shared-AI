@@ -105,9 +105,9 @@ async function main(): Promise<number> {
           meta && typeof meta === "object" && !Array.isArray(meta)
             ? (meta as Record<string, unknown>).evidence_count ?? null
             : null,
-        evidence:
+        evidence_decision_ids:
           meta && typeof meta === "object" && !Array.isArray(meta)
-            ? (meta as Record<string, unknown>).evidence ?? null
+            ? (meta as Record<string, unknown>).evidence_decision_ids ?? null
             : null,
         related_prs:
           meta && typeof meta === "object" && !Array.isArray(meta)

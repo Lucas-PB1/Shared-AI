@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download } from 'lucide-react';
 
 import { Badge } from '@/shared/ui/badge';
 import {
@@ -203,6 +203,7 @@ export function ArtifactBrowser({
   emptyText = 'Nenhum item',
   layout = 'tile',
   className,
+  onDownload,
 }: {
   label: string;
   count: number;
@@ -212,85 +213,127 @@ export function ArtifactBrowser({
   emptyText?: string;
   layout?: 'tile' | 'row';
   className?: string;
+  onDownload?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const empty = count === 0;
+  const canDownload = Boolean(onDownload) && !empty;
+
+  function DownloadControl() {
+    if (!canDownload) return null;
+    return (
+      <button
+        type="button"
+        aria-label={`Baixar ${label}`}
+        title={`Baixar ${label}`}
+        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-hd-md text-hd-muted transition-colors hover:bg-hd-primary-soft hover:text-hd-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hd-primary/40"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onDownload?.();
+        }}
+      >
+        <Download className="h-3.5 w-3.5" aria-hidden />
+      </button>
+    );
+  }
 
   return (
     <>
       {layout === 'row' ? (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          disabled={empty}
+        <div
           className={cn(
-            'group flex w-full items-center gap-2 rounded-hd-md border border-hd-border bg-hd-canvas px-3 py-2.5 text-left transition-all',
-            empty
-              ? 'cursor-not-allowed opacity-50'
-              : 'cursor-pointer hover:border-hd-primary/50 hover:bg-hd-primary-soft/70 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hd-primary/40',
+            'group flex w-full items-center gap-1 rounded-hd-md border border-hd-border bg-hd-canvas text-left transition-all',
+            empty ? 'opacity-50' : 'hover:border-hd-primary/50 hover:shadow-sm',
             className,
           )}
         >
-          <span className="min-w-0 flex-1 truncate text-sm font-medium text-hd-ink group-hover:text-hd-primary group-enabled:underline-offset-2 group-hover:underline">
-            {label}
-          </span>
-          <span
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            disabled={empty}
             className={cn(
-              'inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-semibold',
-              countTone(tone),
+              'flex min-w-0 flex-1 items-center gap-2 px-3 py-2.5 text-left',
+              empty
+                ? 'cursor-not-allowed'
+                : 'cursor-pointer hover:bg-hd-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hd-primary/40',
             )}
           >
-            {count}
-          </span>
-          {!empty ? (
-            <span className="hidden text-[11px] font-medium text-hd-primary sm:inline">
-              Ver
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-hd-ink group-hover:text-hd-primary">
+              {label}
             </span>
-          ) : null}
-          <ChevronRight
-            className="h-4 w-4 shrink-0 text-hd-muted transition-transform group-hover:translate-x-0.5 group-hover:text-hd-primary"
-            aria-hidden
-          />
-        </button>
+            <span
+              className={cn(
+                'inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-semibold',
+                countTone(tone),
+              )}
+            >
+              {count}
+            </span>
+            {!empty ? (
+              <span className="hidden text-[11px] font-medium text-hd-primary sm:inline">
+                Ver
+              </span>
+            ) : null}
+            <ChevronRight
+              className="h-4 w-4 shrink-0 text-hd-muted transition-transform group-hover:translate-x-0.5 group-hover:text-hd-primary"
+              aria-hidden
+            />
+          </button>
+          <div className="pr-2">
+            <DownloadControl />
+          </div>
+        </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          disabled={empty}
+        <div
           className={cn(
-            'group flex min-h-17 w-full flex-col justify-center rounded-hd-xl border px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-45',
-            !empty &&
-              'cursor-pointer hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hd-primary/40',
+            'relative flex min-h-17 w-full flex-col justify-center rounded-hd-xl border px-3 py-2.5 text-left transition-all',
+            empty && 'opacity-45',
             tone === 'primary' &&
-              'border-hd-primary/25 bg-hd-primary-soft text-hd-ink hover:bg-hd-primary/15',
-            tone === 'ok' &&
-              'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100',
-            tone === 'danger' &&
-              'border-red-200 bg-red-50 text-red-900 hover:bg-red-100',
-            tone === 'neutral' &&
-              'border-hd-border bg-hd-canvas text-hd-ink hover:border-hd-primary/35 hover:bg-hd-primary-soft',
+              'border-hd-primary/25 bg-hd-primary-soft text-hd-ink',
+            tone === 'ok' && 'border-emerald-200 bg-emerald-50 text-emerald-900',
+            tone === 'danger' && 'border-red-200 bg-red-50 text-red-900',
+            tone === 'neutral' && 'border-hd-border bg-hd-canvas text-hd-ink',
+            !empty && 'hover:shadow-sm',
             className,
           )}
         >
-          <span className="text-[10px] font-bold uppercase tracking-wide text-hd-muted">
-            {label}
-          </span>
-          <span className="text-xl font-semibold leading-none">{count}</span>
-          {!empty ? (
-            <span className="mt-1 text-[10px] font-medium text-hd-primary opacity-0 transition-opacity group-hover:opacity-100">
-              Abrir lista →
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            disabled={empty}
+            className={cn(
+              'flex w-full flex-col justify-center text-left disabled:cursor-not-allowed',
+              !empty &&
+                'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hd-primary/40',
+            )}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wide text-hd-muted">
+              {label}
             </span>
-          ) : null}
-        </button>
+            <span className="text-xl font-semibold leading-none">{count}</span>
+            {!empty ? (
+              <span className="mt-1 text-[10px] font-medium text-hd-primary">
+                Abrir lista →
+              </span>
+            ) : null}
+          </button>
+          <div className="absolute right-2 top-2">
+            <DownloadControl />
+          </div>
+        </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="w-[min(100%-1.5rem,40rem)]">
           <DialogHeader>
-            <DialogTitle>
-              {label}{' '}
-              <span className="font-normal text-hd-muted">({count})</span>
-            </DialogTitle>
+            <div className="flex items-start justify-between gap-2 pr-6">
+              <DialogTitle>
+                {label}{' '}
+                <span className="font-normal text-hd-muted">({count})</span>
+              </DialogTitle>
+              <DownloadControl />
+            </div>
             {description ? (
               <DialogDescription>{description}</DialogDescription>
             ) : null}
