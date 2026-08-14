@@ -33,6 +33,7 @@
     "pre-commit": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/sh/review-pre-commit.sh",
     "hooks:pre-commit": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/sh/install-pre-commit.sh",
     "lint:shell": "bash tests/lint-shell.sh",
+    "lint:python": "bash tests/lint-python.sh",
     "lint:ts": "bash tests/lint-ts.sh",
     "test:review-unit": "bash tests/run-review-unit.sh",
     "test": "bash tests/run-all.sh",

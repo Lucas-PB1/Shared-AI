@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Garante .gitignore do projeto limpo (hostdime-ia).
 # Memória/decisões: store Supabase — sem entradas de .cursor/review.
 #
