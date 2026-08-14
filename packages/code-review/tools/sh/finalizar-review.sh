@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Finaliza review: dual-write decisões → store (obrigatório).
-# Rascunhos opcionais em workdir tmp (HOSTDIME_REVIEW_WORKDIR).
+# Finaliza review: empacota relatório no workdir tmp (HOSTDIME_REVIEW_WORKDIR).
+# Não grava no store — ingest CI pós-merge (avaliar-pr-memoria).
+# Ops/replay: FINALIZAR_FORCE_STORE=1 (chama review-dual-write --force-store).
 # Uso: finalizar-review.sh [arquivo]
 set -euo pipefail
 
@@ -95,6 +96,45 @@ find_report() {
   printf '%s\n' "$match"
 }
 
+maybe_force_store_dual_write() {
+  local project_root="$1"
+  local flag
+  flag="$(echo "${FINALIZAR_FORCE_STORE:-}" | tr '[:upper:]' '[:lower:]')"
+  case "$flag" in
+    1|true|yes|on) ;;
+    *) return 0 ;;
+  esac
+
+  local root_ia tsx slug origin_url
+  root_ia="${HOSTDIME_IA_ROOT:-}"
+  if [[ -z "$root_ia" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
+    # shellcheck disable=SC1090
+    source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" 2>/dev/null || true
+    root_ia="${HOSTDIME_IA_ROOT:-}"
+  fi
+  if [[ -z "$root_ia" ]]; then
+    echo "Erro: HOSTDIME_IA_ROOT não definido — dual-write --force-store" >&2
+    exit 1
+  fi
+  tsx="$root_ia/node_modules/.bin/tsx"
+  if [[ ! -x "$tsx" && ! -f "$tsx" ]]; then
+    echo "Erro: tsx não encontrado em $tsx" >&2
+    exit 1
+  fi
+  origin_url="$(git -C "$project_root" remote get-url origin 2>/dev/null || true)"
+  if [[ -n "$origin_url" ]]; then
+    slug="$(basename "${origin_url%.git}" | tr '[:upper:]' '[:lower:]')"
+  else
+    slug="$(basename "$project_root" | tr '[:upper:]' '[:lower:]')"
+  fi
+  echo "→ dual-write store --force-store (slug=${slug})…"
+  HOSTDIME_IA_ROOT="$root_ia" \
+    "$tsx" "$root_ia/packages/code-review/bin/review-dual-write.ts" \
+      --force-store \
+      --project "$project_root" \
+      --slug "$slug"
+}
+
 main() {
   local target project_root review_root reports output rel slug date_prefix base dest dest_name report rel_codigo
 
@@ -139,39 +179,10 @@ EOF
     rm -f "$report"
     echo "Empacotado (tmp): ${dest}"
   else
-    echo "Sem relatório no workdir — só dual-write store."
+    echo "Sem relatório no workdir — nada a empacotar."
   fi
 
-  local root_ia tsx
-  root_ia="${HOSTDIME_IA_ROOT:-}"
-  if [[ -z "$root_ia" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
-    # shellcheck disable=SC1090
-    source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" 2>/dev/null || true
-    root_ia="${HOSTDIME_IA_ROOT:-}"
-  fi
-  if [[ -z "$root_ia" ]]; then
-    echo "Erro: HOSTDIME_IA_ROOT não definido — dual-write store obrigatório" >&2
-    exit 1
-  fi
-  tsx="$root_ia/node_modules/.bin/tsx"
-  if [[ ! -x "$tsx" && ! -f "$tsx" ]]; then
-    echo "Erro: tsx não encontrado em $tsx" >&2
-    exit 1
-  fi
-  # Secrets vêm do monorepo (HOSTDIME_IA_ROOT/.env).
-  # Slug: git origin (hostdime-hub) > basename do path > REVIEW_PROJECT_SLUG no CI.
-  local slug origin_url
-  origin_url="$(git -C "$project_root" remote get-url origin 2>/dev/null || true)"
-  if [[ -n "$origin_url" ]]; then
-    slug="$(basename "${origin_url%.git}" | tr '[:upper:]' '[:lower:]')"
-  else
-    slug="$(basename "$project_root" | tr '[:upper:]' '[:lower:]')"
-  fi
-  echo "→ dual-write store (slug=${slug})…"
-  HOSTDIME_IA_ROOT="$root_ia" \
-    "$tsx" "$root_ia/packages/code-review/bin/review-dual-write.ts" \
-      --project "$project_root" \
-      --slug "$slug"
+  maybe_force_store_dual_write "$project_root"
 }
 
 main "$@"
