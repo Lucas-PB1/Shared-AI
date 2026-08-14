@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { computeDashboardMetrics } from '../src/features/dashboard/model/aggregate';
+import { computeDashboardMetrics } from '../src/features/dashboard/model/aggregate.js';
 
 describe('dashboard aggregate from MVs', () => {
   it('sums Geral and filters by project', () => {

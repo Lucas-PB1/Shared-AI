@@ -6,7 +6,7 @@ import type {
   NamedCount,
   ProjectPoint,
   WeekPoint,
-} from './types';
+} from './types.js';
 
 function emptyStat(projectId: string): DashboardProjectStat {
   return {
