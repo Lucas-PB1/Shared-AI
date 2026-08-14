@@ -37,7 +37,7 @@ Cache efêmero: `HOSTDIME_REVIEW_WORKDIR` (default no template: `${{ runner.temp
    - `aceito` → reconcile: slug match/near → **LLM** confirma lógica (`REVIEW_CONVENTION_LLM=0` = heurística só por key ≥2)
 3. Memória só no store (sem pasta de review no cliente)
 
-O job de ingest precisa de `CURSOR_API_KEY` ou `REVIEW_LLM_API_KEY` para a promoção (senão cai na heurística).
+O job de ingest precisa de `CURSOR_API_KEY` ou `REVIEW_LLM_API_KEY` para a promoção (senão cai na heurística). Com `CURSOR_API_KEY`, o workflow **deve instalar o Cursor CLI** (`agent`) — ver steps em `github-avaliar-pr-memoria.yml` (mesmo padrão de `github-avaliar-pr.yml`). Se o `agent` faltar, o promote cai em heurística em vez de abortar o dual-write.
 
 Local (dry-run): `PR_NUMBER=49 npm run review:ingest-pr -- --write` no hostdime-ia apontando `--project` pro hub.
 

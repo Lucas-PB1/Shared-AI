@@ -2,6 +2,7 @@ name: Avaliar PR — memória
 
 # Após merge: aprende com threads do /avaliar → store
 # (decisions + exclusions + promoção LLM de conventions).
+# Com CURSOR_API_KEY o promote chama o binário `agent` — instalar Cursor CLI abaixo.
 on:
   pull_request:
     types: [closed]
@@ -29,6 +30,23 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+
+      - name: Cache Cursor CLI
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        id: cursor-cache
+        with:
+          path: ~/.cursor
+          key: cursor-cli-${{ runner.os }}-v1
+
+      - name: Instalar Cursor CLI
+        run: |
+          if [[ -x "$HOME/.cursor/bin/agent" ]]; then
+            echo "Cursor CLI (cache hit)"
+          else
+            curl https://cursor.com/install -fsS | bash
+          fi
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+          "$HOME/.cursor/bin/agent" --version || agent --version
 
       - name: Checkout hostdime-ia (sparse)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

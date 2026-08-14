@@ -110,6 +110,18 @@ export async function callCursor(
 
   const prompt = `${system}\n\n---\n\n${user}`;
   const agent = resolveAgentBin();
+  if (agent === "agent") {
+    // PATH lookup — fail early with a clear message (CI often misses install).
+    const which = spawnSync("which", ["agent"], { encoding: "utf8" });
+    if (which.status !== 0) {
+      throw new Error(
+        "Cursor agent não encontrado no PATH (instale com curl https://cursor.com/install | bash ou defina CURSOR_AGENT_BIN)"
+      );
+    }
+  } else if (!fs.existsSync(agent)) {
+    throw new Error(`Cursor agent não encontrado: ${agent}`);
+  }
+
   const args = ["-p", "--force", prompt];
   if (process.env.REVIEW_LLM_MODEL) {
     args.push("--model", process.env.REVIEW_LLM_MODEL);
@@ -123,6 +135,12 @@ export async function callCursor(
   });
 
   if (result.error) {
+    const err = result.error as NodeJS.ErrnoException;
+    if (err.code === "ENOENT") {
+      throw new Error(
+        `Cursor agent não encontrado (spawn ${agent}): instale o CLI ou defina CURSOR_AGENT_BIN`
+      );
+    }
     throw new Error(result.error.message);
   }
   if (result.status !== 0) {

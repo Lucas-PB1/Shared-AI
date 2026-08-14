@@ -861,14 +861,25 @@ export async function reconcileConventionsWithLlm(opts: {
       existing,
       decisions
     );
-    const raw = await call(system, user);
-    ({ clusters, deferredFindingKeys } = parseReconcileLlmResponse(raw));
+    try {
+      const raw = await call(system, user);
+      ({ clusters, deferredFindingKeys } = parseReconcileLlmResponse(raw));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(
+        `reconcile: LLM falhou — caindo em heurística: ${msg.slice(0, 400)}`
+      );
+      ({ clusters, deferredFindingKeys } =
+        heuristicReconcileClusters(uncovered));
+      skippedLlm = true;
+    }
   } else {
     ({ clusters, deferredFindingKeys } = heuristicReconcileClusters(uncovered));
   }
 
   const uncoveredByKey = new Map(uncovered.map((f) => [f.findingKey, f]));
-  const source = opts.source ?? (useLlm ? "reconcile-llm" : "reconcile");
+  const source =
+    opts.source ?? (skippedLlm ? "reconcile" : "reconcile-llm");
   let clustersApplied = 0;
   let conventionsTouched = 0;
 
