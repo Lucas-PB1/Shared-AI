@@ -88,7 +88,7 @@ boot_sync_install_startup_script() {
     echo "Erro: HOSTDIME_IA_ROOT não configurado" >&2
     return 1
   }
-  src="$root/packages/cursor/scripts/startup-sync.sh"
+  src="$root/packages/cursor/scripts/sh/startup-sync.sh"
   dest="$(boot_sync_startup_script)"
   [[ -f "$src" ]] || {
     echo "Erro: startup-sync.sh não encontrado em $src" >&2
@@ -229,11 +229,11 @@ boot_sync_run() {
     source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
     root="$(hostdime_resolve_root 2>/dev/null || true)"
   fi
-  [[ -n "$root" && -x "$root/packages/cursor/scripts/startup-sync.sh" ]] || {
+  [[ -n "$root" && -x "$root/packages/cursor/scripts/sh/startup-sync.sh" ]] || {
     echo "Erro: script de startup não encontrado" >&2
     return 1
   }
-  exec "$root/packages/cursor/scripts/startup-sync.sh"
+  exec "$root/packages/cursor/scripts/sh/startup-sync.sh"
 }
 
 boot_sync_prompt_if_needed() {

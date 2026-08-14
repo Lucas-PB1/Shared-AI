@@ -306,7 +306,7 @@ sync_inbox_install_startup_script() {
     echo "Erro: HOSTDIME_IA_ROOT não configurado" >&2
     return 1
   }
-  src="$root/packages/cursor/scripts/startup-sync-inbox.sh"
+  src="$root/packages/cursor/scripts/sh/startup-sync-inbox.sh"
   dest="$(sync_inbox_startup_script)"
   cp "$src" "$dest"
   chmod +x "$dest"
