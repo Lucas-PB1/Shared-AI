@@ -4,7 +4,7 @@ export type DashboardProject = {
   name: string;
 };
 
-/** Linha de mv_dashboard_project_stats (já filtrada por membership na API). */
+/** Linha de mv_dashboard_project_stats (tabela com RLS por membership). */
 export type DashboardProjectStat = {
   project_id: string;
   runs: number;
