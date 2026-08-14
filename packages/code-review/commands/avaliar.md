@@ -23,7 +23,9 @@ Avalie **objetivamente** o arquivo indicado no **repositório**.
 2. Ler o arquivo completo.
 3. Skills de stack + tier 2 (`clean-code`, `solid`, `dry`).
 4. **Não** alterar o arquivo — De/Para + GitLab (en) + PT-BR.
-5. Entregar relatório **no chat** (formato abaixo). Persistência de decisões é `/finalizar` → store.
+5. Entregar relatório **no chat** (formato abaixo) — ajuda quem vai comentar no PR.
+6. `/finalizar` confirma vereditos e devolve texto no chat; **não** grava no banco.
+7. Store (decisions/exclusions/conventions) = **ingest CI** pós-merge.
 
 **Não** incluir falhas só de ambiente (`vendor`/`node_modules` ausentes).
 

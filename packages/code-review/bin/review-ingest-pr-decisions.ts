@@ -20,7 +20,7 @@ import {
   cmdPromover,
   decisionsIngestPath,
   readDecisions,
-  reviewDir,
+  reviewWorkDir,
   writeContext,
 } from "../src/memory/index.js";
 import {
@@ -213,7 +213,7 @@ async function cmdIngest(
     return 0;
   }
 
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   mkdirSync(rd, { recursive: true });
   const version = path.join(rd, ".memoria-version");
   if (!existsSync(version)) writeFileSync(version, "2\n", "utf8");
@@ -229,7 +229,7 @@ async function cmdIngest(
       resolveProjectSlug(project) ||
       String(process.env.REVIEW_PROJECT_SLUG ?? "").trim() ||
       undefined,
-    // Ingest CI: ledger + promoção LLM de conventions (aceito ≥2).
+    // Ingest CI: ledger + reconcile LLM por lógica (não por slug).
     promoteConventions: true,
     run: {
       source: "ci",

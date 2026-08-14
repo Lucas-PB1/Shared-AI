@@ -11,12 +11,6 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { stableFindingId } from "../shared/index.js";
-import {
-  decideConventionPromotion,
-  isConventionLlmEnabled,
-  type ConventionPromoteDecision,
-  type ExistingConventionView,
-} from "../store/convention-promote.js";
 import { loadContext, writeContext } from "./context-yaml.js";
 import {
   buildContext,
@@ -25,15 +19,11 @@ import {
   mode,
   readMergedDecisions,
 } from "./decisions-io.js";
-import {
-  mergePromotedIntoConvencoes,
-  parseConvencoesSections,
-  renderConvencoesSections,
-} from "./merge.js";
-import { localStamp, reviewDir } from "./paths.js";
+import { mergePromotedIntoConvencoes } from "./merge.js";
+import { localStamp, reviewWorkDir } from "./paths.js";
 
 export function cmdStatus(project: string): number {
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   const m = mode(project);
   const stats = fileStats(project);
   console.log(`Modo: ${m === "v2" ? "v2" : "não inicializado"}`);
@@ -84,7 +74,7 @@ const BACKUP_FILES = [
 ] as const;
 
 export function cmdBackup(project: string): number {
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   if (mode(project) !== "v2") {
     console.error(
       "Erro: memória não inicializada (npm run memoria -- init --write)"
@@ -115,7 +105,7 @@ export function cmdBackup(project: string): number {
 }
 
 export function cmdRestore(project: string, write: boolean): number {
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   const srcDir = path.join(rd, "backups", "latest");
   if (
     !existsSync(path.join(srcDir, "context.yaml")) &&
@@ -143,7 +133,7 @@ export function cmdRestore(project: string, write: boolean): number {
 
 export function cmdDiff(project: string): number {
   ensureV2Scaffold(project);
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   const decisions = readMergedDecisions(project);
   const context = buildContext(project, "diff", decisions);
   console.log("=== status compacto ===");
@@ -160,7 +150,7 @@ export function cmdDiff(project: string): number {
 
 export function cmdCompactar(project: string, write: boolean): number {
   ensureV2Scaffold(project);
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   const decisions = readMergedDecisions(project);
   if (!decisions.length) {
     console.error(
@@ -182,89 +172,17 @@ export function cmdCompactar(project: string, write: boolean): number {
   return 0;
 }
 
-function existingFromConvencoesMd(raw: string): ExistingConventionView[] {
-  const [, sections] = parseConvencoesSections(raw);
-  const out: ExistingConventionView[] = [];
-  let i = 0;
-  for (const section of sections) {
-    for (const bullet of section.bullets) {
-      const body = bullet.replace(/^- /, "").trim();
-      if (!body) continue;
-      out.push({
-        id: `local-${i}`,
-        findingKey: null,
-        body,
-        scopeGlob: section.glob || section.label || "**/*",
-        occurrences: 1,
-        absorbedFindingKeys: [],
-        supersededBy: null,
-      });
-      i += 1;
-    }
-  }
-  return out;
-}
-
-function applyLocalPromoteDecision(
-  existingMd: string,
-  decision: {
-    action: string;
-    body: string;
-    scopeGlob: string;
-    matchId: string | null;
-  },
-  existingViews: ExistingConventionView[]
-): { md: string; added: number } {
-  if (decision.action === "skip" && decision.matchId) {
-    return { md: existingMd, added: 0 };
-  }
-  if (decision.action === "merge" && decision.matchId) {
-    const match = existingViews.find((c) => c.id === decision.matchId);
-    if (!match) {
-      const [md, added] = mergePromotedIntoConvencoes(existingMd, {
-        [decision.scopeGlob]: [decision.body],
-      });
-      return { md, added };
-    }
-    const [preamble, sections] = parseConvencoesSections(existingMd);
-    let replaced = false;
-    for (const section of sections) {
-      for (let bi = 0; bi < section.bullets.length; bi++) {
-        const text = section.bullets[bi].replace(/^- /, "").trim();
-        if (text === match.body) {
-          section.bullets[bi] = decision.body.startsWith("- ")
-            ? decision.body
-            : `- ${decision.body}`;
-          replaced = true;
-          break;
-        }
-      }
-      if (replaced) break;
-    }
-    if (!replaced) {
-      const [md, added] = mergePromotedIntoConvencoes(existingMd, {
-        [decision.scopeGlob || match.scopeGlob]: [decision.body],
-      });
-      return { md, added };
-    }
-    return {
-      md: renderConvencoesSections(preamble, sections),
-      added: 0,
-    };
-  }
-  const [md, added] = mergePromotedIntoConvencoes(existingMd, {
-    [decision.scopeGlob || "**/*"]: [decision.body],
-  });
-  return { md, added };
-}
-
+/**
+ * Preview local de convencoes.md (workdir).
+ * Store / LLM reconcile = só ingest CI — não promove no banco daqui.
+ */
 export async function cmdPromover(
   project: string,
   write: boolean,
   allCandidates: boolean
 ): Promise<number> {
   ensureV2Scaffold(project);
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   let context = loadContext(rd);
   if (context === null) {
     const decisions = readMergedDecisions(project);
@@ -303,87 +221,38 @@ export async function cmdPromover(
     return 0;
   }
 
-  const out = path.join(rd, "convencoes.md");
-  let md = existsSync(out) ? readFileSync(out, "utf8") : "";
-  let addedTotal = 0;
-  const useLlm = isConventionLlmEnabled();
+  const sections: Record<string, string[]> = {};
   const promotedIds = new Set<string>();
-
-  console.log("=== promover (proposta) ===");
-  console.log(`Candidatos: ${pending.length}`);
-  console.log(`LLM: ${useLlm ? "sim" : "não (heurística / REVIEW_CONVENTION_LLM=0)"}`);
-
   for (const c of pending) {
-    const findingKey = String(c.id ?? "");
-    const rule = String(c.rule ?? "").trim();
     const scope = String(c.scope ?? "**/*");
-    const existingViews = existingFromConvencoesMd(md);
-
-    // Já presente por texto exato → marca promoted, sem reconverter.
-    if (
-      existingViews.some(
-        (e) => e.body.trim() === rule || e.body.trim() === rule.replace(/^- /, "")
-      )
-    ) {
-      promotedIds.add(findingKey);
-      continue;
-    }
-
-    let decision: ConventionPromoteDecision = {
-      action: "create",
-      body: rule,
-      scopeGlob: scope,
-      matchId: null,
-      alsoAbsorbIds: [],
-      rationale: "heuristic",
-    };
-
-    if (useLlm) {
-      try {
-        decision = await decideConventionPromotion({
-          facts: [
-            {
-              findingKey,
-              summary: rule,
-              scopeGlob: scope,
-            },
-          ],
-          existing: existingViews,
-          fallbackBody: rule,
-          fallbackScopeGlob: scope,
-        });
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error(`promover LLM falhou (${findingKey}): ${msg} — heurística`);
-      }
-    }
-
-    const applied = applyLocalPromoteDecision(md, decision, existingViews);
-    md = applied.md;
-    addedTotal += applied.added;
-    promotedIds.add(findingKey);
-    console.log(
-      `  [${decision.action}] ${findingKey.slice(0, 40)} → ${decision.body.slice(0, 60)}`
-    );
+    const rule = String(c.rule ?? "").trim();
+    sections[scope] = sections[scope] ?? [];
+    sections[scope].push(rule);
+    promotedIds.add(String(c.id ?? ""));
   }
 
-  console.log(`Bullets novos/alterados: ${addedTotal}`);
-  console.log(`Tamanho: ${md.length} bytes`);
+  const out = path.join(rd, "convencoes.md");
+  const existing = existsSync(out) ? readFileSync(out, "utf8") : "";
+  const [merged, added] = mergePromotedIntoConvencoes(existing, sections);
+
+  console.log("=== promover (preview local) ===");
+  console.log(`Candidatos: ${pending.length}`);
+  console.log(`Bullets novos: ${added}`);
+  console.log(
+    "Store: conventions só no ingest CI (reconcile keywords + LLM)."
+  );
 
   if (!write) {
     console.log("\nDry-run. Use --write para gravar convencoes.md + promoted.");
     return 0;
   }
 
-  writeFileSync(out, md, "utf8");
+  writeFileSync(out, merged, "utf8");
   context.candidates = candidates.map((c) =>
-    promotedIds.has(String(c.id ?? ""))
-      ? { ...c, promoted: true }
-      : c
+    promotedIds.has(String(c.id ?? "")) ? { ...c, promoted: true } : c
   );
   writeContext(rd, context);
-  console.log(`\nGravado: ${out}`);
-  console.log(`context.yaml: ${promotedIds.size} candidate(s) marked promoted`);
+  console.log(`\nGravado: ${out} (+${added})`);
   return 0;
 }
 

@@ -19,7 +19,7 @@ import {
   DECISIONS_INGEST_FILE,
   SCHEMA_VERSION,
   decisionsIngestPath,
-  reviewDir,
+  reviewWorkDir,
   utcNowIso,
 } from "./paths.js";
 
@@ -43,7 +43,7 @@ export function readDecisions(filePath: string): Array<Record<string, unknown>> 
 }
 
 export function readMergedDecisions(project: string): Array<Record<string, unknown>> {
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   const merged = readDecisions(decisionsIngestPath(project));
   const seen = new Set(
     merged.map((d) => `${d.source ?? ""}${d.finding_id ?? ""}`)
@@ -65,7 +65,7 @@ export function buildContext(
 ): Record<string, unknown> {
   let dec =
     decisions ??
-    readDecisions(path.join(reviewDir(project), "decisions.jsonl"));
+    readDecisions(path.join(reviewWorkDir(project), "decisions.jsonl"));
   if (!dec.length) {
     dec = readMergedDecisions(project);
   }
@@ -86,7 +86,7 @@ export function buildContext(
 }
 
 export function mode(project: string): string {
-  const versionFile = path.join(reviewDir(project), ".memoria-version");
+  const versionFile = path.join(reviewWorkDir(project), ".memoria-version");
   if (existsSync(versionFile) && readFileSync(versionFile, "utf8").trim() === "2") {
     return "v2";
   }
@@ -96,7 +96,7 @@ export function mode(project: string): string {
 export function fileStats(
   project: string
 ): Record<string, { bytes: number; lines: number } | null> {
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   const files: Record<string, string> = {
     "decisions.jsonl": path.join(rd, "decisions.jsonl"),
     "decisions-ingest.jsonl": path.join(rd, DECISIONS_INGEST_FILE),
@@ -120,7 +120,7 @@ export function fileStats(
 }
 
 export function ensureV2Scaffold(project: string): void {
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   mkdirSync(rd, { recursive: true });
   writeFileSync(path.join(rd, ".memoria-version"), "2\n", "utf8");
   const decisions = path.join(rd, "decisions.jsonl");

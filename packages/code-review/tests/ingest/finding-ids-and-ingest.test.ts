@@ -8,8 +8,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import {
   extractFindingTheme,
+  nearSlugPairs,
+  slugSimilarity,
   slugify,
   stableFindingId,
+  SLUG_NEAR_MIN_SCORE,
 } from "../../src/shared/index.js";
 import {
   classifyThread,
@@ -68,17 +71,38 @@ describe("finding-ids", () => {
     );
   });
 
-  it("stable id ignores path", () => {
+  it("stable id is keyword slug, ignores path", () => {
     const a = stableFindingId("app/A.tsx:10 — Validar FormRequest");
     const b = stableFindingId("app/B.tsx:99 — Validar FormRequest");
     assert.equal(a, b);
-    assert.equal(a, "validar-formrequest");
+    assert.equal(a, "validar-form-request");
+  });
+
+  it("keyword slug drops stopwords and keeps technical tokens", () => {
+    assert.equal(
+      stableFindingId("title.trim() sem guarda"),
+      "title-trim-guarda"
+    );
+    assert.equal(
+      stableFindingId("tagLabel.trim() sem guarda"),
+      "tag-label-trim-guarda"
+    );
+  });
+
+  it("near slugs score higher for overlapping keywords", () => {
+    const a = stableFindingId("title.trim() sem guarda");
+    const b = stableFindingId("tagLabel.trim() sem guarda");
+    assert.ok(slugSimilarity(a, b) >= SLUG_NEAR_MIN_SCORE);
+    const pairs = nearSlugPairs([a, b, "totally-unrelated-thing"]);
+    assert.equal(pairs.length, 1);
+    assert.equal(pairs[0].a, a);
+    assert.equal(pairs[0].b, b);
   });
 
   it("slugify limits", () => {
     assert.equal(slugify(""), "finding");
     const long = "x".repeat(200);
-    assert.ok(slugify(long).length <= 80);
+    assert.ok(slugify(long).length <= 64);
   });
 });
 
@@ -123,7 +147,9 @@ describe("ingest rules", () => {
     );
     assert.ok(d);
     assert.equal(d!.decision, "rejeitado");
-    assert.equal(d!.finding_id, "test-finding");
+    // Slug por keywords do caso (não o fid do marker).
+    assert.equal(d!.finding_id, "issue");
+    assert.equal(d!.marker_fid, "test-finding");
     assert.equal(d!.root_kind, "bot");
     assert.equal(d!.root_is_bot, true);
     assert.equal(d!.decided_by_kind, "human");

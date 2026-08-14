@@ -1,8 +1,9 @@
 # Memória de review (`/memoria`)
 
-**Fonte de verdade:** store Supabase (`SUPABASE_URL` + chave + `REVIEW_PROJECT_SLUG`).
+**Fonte de verdade:** store Supabase (`SUPABASE_URL` + chave + `REVIEW_PROJECT_SLUG`) — escrita no **ingest CI**.
 
-CLI local (`memoria`) e dual-write usam workdir **fora do repo** (`HOSTDIME_REVIEW_WORKDIR` ou `$TMPDIR/hostdime-review/<hash>`).
+CLI local (`memoria`) usa workdir **fora do repo** (`HOSTDIME_REVIEW_WORKDIR` ou `$TMPDIR/hostdime-review/<hash>`).  
+`/finalizar` local **não** dual-write; só devolve resultado no chat.
 
 Ler skill **`review-inbox`** para o fluxo `/avaliar` + `/finalizar`.
 
@@ -13,7 +14,7 @@ Ler skill **`review-inbox`** para o fluxo `/avaliar` + `/finalizar`.
 | `/memoria` ou `/memoria status` | Estado (workdir tmp + dica store) |
 | `/memoria init [--write]` | Scaffold no workdir (rascunho local) |
 | `/memoria backup` / `restore` | Backup do workdir |
-| `/memoria compactar` / `promover` | decisions → context → convencoes (LLM reúne fatos + dedupe semântico; marca `promoted`) |
+| `/memoria compactar` / `promover` | Preview local no workdir; **store** = ingest CI |
 
 Após **merge de PR** com `/avaliar` no GitHub (workflow `avaliar-pr-memoria`):
 

@@ -4,20 +4,12 @@
  * - findings: comentário materializado se summary/file e sem finding_id
  * - decisions: ledger
  * - rejeitado | nao-aplicavel → exclusions
- * - aceito ×≥2 → convention (LLM reúne fatos + dedupe semântico; slug só dispara)
+ * - aceito → após o lote, reconcile LLM por **lógica** (não por slug) → conventions
  */
 
 import { inferScopeFromFile } from "../memory/merge.js";
 import { StoreError } from "./config.js";
-import {
-  applyConventionPromotion,
-  factsFromAceitoDecisions,
-} from "./convention-promote.js";
-import {
-  CONVENTION_PROMOTE_THRESHOLD,
-  conventionBodyFromDecision,
-  countAceitoVerdicts,
-} from "./dual-write-helpers.js";
+import { reconcileConventionsWithLlm } from "./convention-promote.js";
 import type { CreateRunFields, ReviewStorePort } from "./port.js";
 import {
   STORE_REQUIRED_MSG,
@@ -78,7 +70,7 @@ export async function dualWriteDecisions(
     /** Injeta LLM de promote (testes). */
     callLlm?: (system: string, user: string) => Promise<string>;
     /**
-     * Promove conventions (aceito ≥2 → LLM/heurística).
+     * Após o lote, reconcilia conventions por lógica (LLM).
      * Default true. Ingest CI promove no merge; passe false só para ledger-only.
      */
     promoteConventions?: boolean;
@@ -259,39 +251,24 @@ export async function dualWriteDecisions(
           source: "finalize",
         });
         exclusions += 1;
-      } else if (
-        verdict === "aceito" &&
-        opts.promoteConventions !== false
-      ) {
-        const prior = await port.listDecisions(projectId, {
-          findingKey,
-          limit: 200,
-        });
-        const aceitoCount = countAceitoVerdicts(prior);
-        if (aceitoCount >= CONVENTION_PROMOTE_THRESHOLD) {
-          const fallbackBody = conventionBodyFromDecision({
-            summary,
-            reason,
-            findingKey,
-          });
-          const existingRows = await port.listConventions(projectId, {
-            limit: 500,
-          });
-          await applyConventionPromotion({
-            port,
-            projectId,
-            findingKey,
-            facts: factsFromAceitoDecisions(prior, findingKey, scopeGlob),
-            existingRows,
-            fallbackBody,
-            fallbackScopeGlob: scopeGlob,
-            source: "finalize",
-            occurrences: aceitoCount,
-            env,
-            callLlm: opts.callLlm,
-          });
-          conventions += 1;
-        }
+      }
+    }
+
+    if (opts.promoteConventions !== false) {
+      const recon = await reconcileConventionsWithLlm({
+        port,
+        projectId,
+        inferScope: inferScopeFromFile,
+        env,
+        callLlm: opts.callLlm,
+        source: String(opts.run?.source ?? "dual-write"),
+      });
+      conventions = recon.conventionsTouched;
+      if (recon.clustersApplied || recon.deferred) {
+        console.error(
+          `dual-write: reconcile conventions clusters=${recon.clustersApplied}` +
+            ` deferred=${recon.deferred} llm=${recon.skippedLlm ? "off" : "on"}`
+        );
       }
     }
 

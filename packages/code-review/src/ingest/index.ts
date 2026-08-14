@@ -21,10 +21,13 @@ export {
   type ShowFileFn,
 } from "./git.js";
 
-export { classifyThread, isBotLogin } from "./classify.js";
+export { classifyThread, ingestFindingKey, isBotLogin } from "./classify.js";
 export { fixAppliedInPr } from "./fix.js";
 
-export { upsertPrDecisions } from "./decisions.js";
+export {
+  normalizeIngestDecision,
+  upsertPrDecisions,
+} from "./decisions.js";
 
 export {
   extractPrParticipants,

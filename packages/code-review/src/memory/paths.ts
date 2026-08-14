@@ -37,11 +37,6 @@ export function reviewWorkDir(project: string): string {
   return path.join(tmpdir(), "hostdime-review", hash);
 }
 
-/** @deprecated alias — prefer `reviewWorkDir` */
-export function reviewDir(project: string): string {
-  return reviewWorkDir(project);
-}
-
 export function decisionsIngestPath(project: string): string {
   return path.join(reviewWorkDir(project), DECISIONS_INGEST_FILE);
 }

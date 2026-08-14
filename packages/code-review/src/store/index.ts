@@ -42,14 +42,28 @@ export {
 
 export {
   META_ABSORBED_FINDING_KEYS,
+  META_EVIDENCE,
+  META_EVIDENCE_COUNT,
   META_LLM_PROMOTED,
+  META_RELATED_PRS,
   META_SUPERSEDED_BY,
-  applyConventionPromotion,
-  decideConventionPromotion,
+  absorbedFindingKeysFromMeta,
+  aggregateUncoveredAceitos,
   findCoveringConvention,
+  findNearCoveringConvention,
+  activeConventions,
+  evidenceCountFromMeta,
+  evidenceFromMeta,
+  heuristicReconcileClusters,
   isConventionLlmEnabled,
-  parseConventionPromoteDecision,
-  type ConventionPromoteDecision,
+  parseReconcileLlmResponse,
+  prNumberFromDecisionSource,
+  provenanceFromDecisions,
+  reconcileConventionsWithLlm,
+  relatedPrsFromMeta,
+  rowToExistingConvention,
+  type ConventionEvidenceItem,
+  type ReconcileCluster,
 } from "./convention-promote.js";
 
 export {

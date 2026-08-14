@@ -1,12 +1,13 @@
 /**
  * Persistência de decisões de ingest PR (substitui source do PR).
+ *
+ * Na hora de salvar, cada caso ganha `finding_id` por palavras‑chave
+ * (`ingestFindingKey` / `stableFindingId`) — não depende do fid interativo do marker.
  */
 
-import {
-  extractFindingTheme,
-  stableFindingId,
-} from "../shared/index.js";
+import { extractFindingTheme } from "../shared/index.js";
 import { readDecisions, writeDecisions } from "../memory/index.js";
+import { ingestFindingKey } from "./classify.js";
 
 export function upsertPrDecisions(
   decisionsPath: string,
@@ -19,27 +20,23 @@ export function upsertPrDecisions(
   );
   const normalizedNew: Array<Record<string, unknown>> = [];
   for (const item of newItems) {
-    const row = { ...item };
-    const summary = String(row.summary ?? "");
-    if (summary) {
-      const theme = extractFindingTheme(summary);
-      row.summary = theme;
-      row.finding_id = stableFindingId(theme);
-    }
-    normalizedNew.push(row);
+    normalizedNew.push(normalizeIngestDecision(item));
   }
   existing.push(...normalizedNew);
-  const normalizedAll: Array<Record<string, unknown>> = [];
-  for (const item of existing) {
-    const row = { ...item };
-    const summary = String(row.summary ?? "");
-    if (summary) {
-      const theme = extractFindingTheme(summary);
-      row.summary = theme;
-      row.finding_id = stableFindingId(theme);
-    }
-    normalizedAll.push(row);
-  }
+  const normalizedAll = existing.map((item) => normalizeIngestDecision(item));
   writeDecisions(decisionsPath, normalizedAll);
   return normalizedNew;
+}
+
+/** Normaliza summary + finding_id (keywords) de um caso de ingest. */
+export function normalizeIngestDecision(
+  item: Record<string, unknown>
+): Record<string, unknown> {
+  const row = { ...item };
+  const summary = String(row.summary ?? "");
+  if (!summary) return row;
+  const theme = extractFindingTheme(summary);
+  row.summary = theme;
+  row.finding_id = ingestFindingKey(theme);
+  return row;
 }

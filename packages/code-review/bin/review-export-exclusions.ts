@@ -5,7 +5,7 @@
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
-import { loadContext, reviewDir } from "../src/memory/index.js";
+import { loadContext, reviewWorkDir } from "../src/memory/index.js";
 
 function yamlEscape(s: string): string {
   if (/[:{}[\]&*#?|<>=!%@`]/.test(s) || s.includes("\n")) {
@@ -16,8 +16,8 @@ function yamlEscape(s: string): string {
 
 function main(): number {
   const project = path.resolve(process.argv[2] || ".");
-  const contextPath = path.join(reviewDir(project), "context.yaml");
-  const outPath = path.join(reviewDir(project), "exclusions.yaml");
+  const contextPath = path.join(reviewWorkDir(project), "context.yaml");
+  const outPath = path.join(reviewWorkDir(project), "exclusions.yaml");
 
   if (!existsSync(contextPath)) {
     console.error(`Erro: ${contextPath} não encontrado.`);
@@ -25,7 +25,7 @@ function main(): number {
     return 1;
   }
 
-  const data = loadContext(reviewDir(project)) || {};
+  const data = loadContext(reviewWorkDir(project)) || {};
   const raw = (data.exclusions as Array<Record<string, unknown>>) || [];
   const items: Array<Record<string, string>> = [];
 

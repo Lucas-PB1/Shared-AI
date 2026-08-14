@@ -33,7 +33,8 @@ Cache efêmero: `HOSTDIME_REVIEW_WORKDIR` (default no template: `${{ runner.temp
 2. Workflow `avaliar-pr-memoria` classifica cada thread e **grava no store** (decisions + exclusions + conventions):
    - `/avaliar` (root com marker `avaliar-inline`)
    - **review humano top-level** (comentário de dev sem marker; reply / Resolve decide aceito vs rejeitado)
-   - `aceito` ×≥2 → **promoção LLM** no próprio ingest (reunir fatos + merge semântico; `REVIEW_CONVENTION_LLM=0` = heurística)
+   - ao salvar: `finding_id` = slug por **palavras‑chave** do summary (`ingestFindingKey`); fid do marker só rastreio
+   - `aceito` → reconcile: slug match/near → **LLM** confirma lógica (`REVIEW_CONVENTION_LLM=0` = heurística só por key ≥2)
 3. Memória só no store (sem pasta de review no cliente)
 
 O job de ingest precisa de `CURSOR_API_KEY` ou `REVIEW_LLM_API_KEY` para a promoção (senão cai na heurística).
@@ -103,7 +104,7 @@ Sem `CURSOR_API_KEY` nem `REVIEW_LLM_API_KEY`: roda só **Fase 1** (estático).
   5. Cópia em workdir tmp (`HOSTDIME_REVIEW_WORKDIR/reports/`) → artifact no workflow
 - Job **não bloqueia merge** por default (`REVIEW_AVALIAR_SOFT=true`) — comenta achados para o dev
 - Job **falha** só se `REVIEW_AVALIAR_SOFT=false` (gate hard, opcional)
-- `/finalizar` no Cursor continua para decisões do dev
+- `/finalizar` no Cursor confirma vereditos e devolve texto no chat (**sem** gravar no store)
 
 ### Cache (CI)
 

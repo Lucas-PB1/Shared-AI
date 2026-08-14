@@ -8,7 +8,6 @@ export {
   SCHEMA_VERSION,
   decisionsIngestPath,
   localStamp,
-  reviewDir,
   reviewWorkDir,
   utcNowIso,
 } from "./paths.js";

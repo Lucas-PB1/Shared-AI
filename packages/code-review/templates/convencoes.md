@@ -5,9 +5,9 @@ No CI GitHub: este arquivo é lido por escopo no `/avaliar`.
 
 Regras de styling/CSS/Tailwind ficam na skill `hostdime-styling` (roteada no `/avaliar`).
 
-Promoção (≥2 aceites): passo **LLM** reúne fatos, compara semanticamente com bullets existentes
-(create | merge | skip) e marca `promoted: true` no candidate — sem reconverter o mesmo achado.
-`finding_key`/slug só dispara o limiar; igualdade lógica é da LLM.
+Promoção: slug por **palavras‑chave** → pares próximos (Jaccard) como prior →
+**LLM** decide por lógica (create | merge | skip) e absorve keys no mesmo sentido.
+Slug igual conta como o mesmo achado; slug próximo só aumenta a chance — a lógica confirma.
 
 ## Como escrever escopos
 

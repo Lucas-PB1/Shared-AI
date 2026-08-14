@@ -365,12 +365,18 @@ describe("dualWriteDecisions", () => {
         env: { REVIEW_CONVENTION_LLM: "1" },
         callLlm: async () =>
           JSON.stringify({
-            action: "merge",
-            body: "Prefira const; evite let quando o valor não muda.",
-            scope_glob: "src/**",
-            match_id: "cv-existing",
-            also_absorb_ids: [],
-            rationale: "mesmo sentido de Prefer const",
+            clusters: [
+              {
+                action: "merge",
+                finding_keys: ["use-const-everywhere"],
+                body: "Prefira const; evite let quando o valor não muda.",
+                scope_glob: "src/**",
+                match_id: "cv-existing",
+                also_absorb_ids: [],
+                rationale: "mesmo sentido de Prefer const",
+              },
+            ],
+            deferred_finding_keys: [],
           }),
       }
     );
@@ -378,6 +384,57 @@ describe("dualWriteDecisions", () => {
     assert.ok(
       calls.some((c) =>
         c.includes("upsertConvention:cv-existing:Prefira const")
+      )
+    );
+  });
+
+  it("LLM clusters different finding_keys by logic", async () => {
+    const calls: string[] = [];
+    const port = mockPort(calls);
+    // empty conventions for create path
+    port.listConventions = async () => [];
+    const r = await dualWriteDecisions(
+      [
+        {
+          finding_id: "title-trim-sem-guarda",
+          decision: "aceito",
+          summary: "title.trim() sem guarda",
+          file: "src/Card.tsx",
+        },
+        {
+          finding_id: "taglabel-trim-sem-guarda",
+          decision: "aceito",
+          summary: "tagLabel.trim() sem guarda",
+          file: "src/Card.tsx",
+        },
+      ],
+      {
+        port,
+        env: { REVIEW_CONVENTION_LLM: "1" },
+        callLlm: async () =>
+          JSON.stringify({
+            clusters: [
+              {
+                action: "create",
+                finding_keys: [
+                  "title-trim-sem-guarda",
+                  "taglabel-trim-sem-guarda",
+                ],
+                body: "Guarde trim em labels de UI antes de renderizar.",
+                scope_glob: "src/**",
+                match_id: null,
+                also_absorb_ids: [],
+                rationale: "mesma lógica: trim sem null-check",
+              },
+            ],
+            deferred_finding_keys: [],
+          }),
+      }
+    );
+    assert.equal(r.conventions, 1);
+    assert.ok(
+      calls.some((c) =>
+        c.includes("Guarde trim em labels")
       )
     );
   });
@@ -533,6 +590,6 @@ describe("finding-ids", () => {
 
   it("slugify truncates", () => {
     const long = "a".repeat(100);
-    assert.equal(slugify(long).length, 80);
+    assert.equal(slugify(long).length, 64);
   });
 });

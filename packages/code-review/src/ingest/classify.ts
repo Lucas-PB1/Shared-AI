@@ -23,6 +23,15 @@ import { gitLogCommits, gitShow, type ListCommitsFn, type ShowFileFn } from "./g
 import { fixAppliedInPr } from "./fix.js";
 import { isBotLogin } from "./participants.js";
 
+/**
+ * Slug de ingest: palavras‑chave a partir do summary do caso.
+ * Não usa o `fid` do marker (difícil gerar interativamente) —
+ * o ingest é quem materializa o finding_key estável.
+ */
+export function ingestFindingKey(summaryOrTheme: string): string {
+  return stableFindingId(summaryOrTheme);
+}
+
 const REJECT_PATTERNS =
   /intencional|won'?t fix|wont fix|n[aã]o se aplica|nao se aplica|false positive|falso positivo|pode ignorar|ignorar|rejeit|decline|deixa assim|sem necessidade|n[aã]o precisa|nao precisa|descart/i;
 const NAO_APLICAVEL_PATTERNS =
@@ -118,6 +127,8 @@ export function classifyThread(
     root_kind: rootKind,
     comments,
     origin: hasMarker ? "avaliar" : "human-review",
+    /** fid do marker só para rastreio; finding_id vem das keywords do caso. */
+    marker_fid: markerFid,
   };
 
   const base = {
@@ -125,7 +136,7 @@ export function classifyThread(
     finalized_at: stamp,
     review_slug: `pr-${prNumber}`,
     file: filePath,
-    finding_id: markerFid || stableFindingId(rawSummary),
+    finding_id: ingestFindingKey(summary || rawSummary),
     line: resolvedLine,
     category: hasMarker ? "pr-ingest" : "pr-ingest-human",
     summary,

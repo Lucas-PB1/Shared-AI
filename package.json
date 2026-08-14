@@ -28,6 +28,7 @@
     "review:ci": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/sh/review-ci.sh",
     "review:github-pr": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/sh/review-github-pr.sh",
     "review:ingest-pr": "bash packages/code-review/tools/sh/review-ingest-pr-decisions.sh",
+    "review:validate-ingest": "tsx packages/code-review/bin/review-validate-ingest.ts",
     "review:export-exclusions": "bash packages/code-review/tools/sh/review-export-exclusions.sh",
     "pre-commit": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/sh/review-pre-commit.sh",
     "hooks:pre-commit": "HOSTDIME_IA_ROOT=\"$(pwd)\" bash packages/code-review/tools/sh/install-pre-commit.sh",
@@ -50,6 +51,8 @@
     "review:memory-pull": "tsx packages/code-review/bin/review-memory-pull.ts",
     "review:memory-push": "tsx packages/code-review/bin/review-memory-push.ts",
     "review:backfill-pr-people": "tsx packages/code-review/bin/review-backfill-pr-people.ts",
+    "review:backfill-finding-keys": "tsx packages/code-review/bin/review-backfill-finding-keys.ts",
+    "review:backfill-convention-prs": "tsx packages/code-review/bin/review-backfill-convention-prs.ts",
     "review:purge-non-ci": "tsx packages/code-review/bin/review-purge-non-ci-runs.ts"
   },
   "engines": {

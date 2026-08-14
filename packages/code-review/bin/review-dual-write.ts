@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 /**
- * Dual-write de decisões locais → store (obrigatório).
- * Uso após /finalizar (append em decisions.jsonl) ou reprocessamento.
+ * Dual-write de decisões → store.
  *
- * Secrets (SUPABASE_*): sempre do monorepo hostdime-ia / HOSTDIME_IA_ROOT.
- * Projetos ligados (ex. DNA, hostdime-hub) **não** precisam de .env —
- * slug via --slug, git remote origin, basename ou REVIEW_PROJECT_SLUG no CI.
+ * Uso normal: **ingest CI** (`review-ingest-pr-decisions`), não o `/finalizar` local.
+ * Local: `/avaliar` + `/finalizar` só devolvem resultado no chat para quem comenta.
+ *
+ * Este CLI exige `--force-store` (ops/replay). Secrets do monorepo hostdime-ia.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   DECISIONS_INGEST_FILE,
   readDecisions,
-  reviewDir,
+  reviewWorkDir,
 } from "../src/memory/index.js";
 import {
   dualWriteDecisions,
@@ -32,20 +32,23 @@ function parseArgs(argv: string[]): {
   source?: string;
   slug?: string;
   all: boolean;
+  forceStore: boolean;
 } {
   let project = ".";
   let source: string | undefined;
   let slug: string | undefined;
   let all = false;
+  let forceStore = false;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--project" && argv[i + 1]) project = argv[++i];
     else if (a === "--source" && argv[i + 1]) source = argv[++i];
     else if (a === "--slug" && argv[i + 1]) slug = argv[++i];
     else if (a === "--all") all = true;
+    else if (a === "--force-store") forceStore = true;
     else if (!a.startsWith("-")) project = a;
   }
-  return { project, source, slug, all };
+  return { project, source, slug, all, forceStore };
 }
 
 async function loadStoreSecrets(): Promise<void> {
@@ -60,11 +63,21 @@ async function loadStoreSecrets(): Promise<void> {
 
 async function main(): Promise<number> {
   const args = parseArgs(process.argv.slice(2));
+  if (!args.forceStore) {
+    console.error(
+      "review-dual-write: gravação local no store desligada.\n" +
+        "Local: /avaliar e /finalizar só retornam resultado no chat.\n" +
+        "Store: ingest CI pós-merge (avaliar-pr-memoria).\n" +
+        "Ops/replay: passe --force-store."
+    );
+    return 1;
+  }
+
   const project = path.resolve(args.project);
   await loadStoreSecrets();
   const projectSlug = resolveProjectSlug(project, args.slug);
 
-  const rd = reviewDir(project);
+  const rd = reviewWorkDir(project);
   const primary = path.join(rd, "decisions.jsonl");
   const ingest = path.join(rd, DECISIONS_INGEST_FILE);
   let rows = [...readDecisions(primary), ...readDecisions(ingest)];
@@ -97,7 +110,7 @@ async function main(): Promise<number> {
       actorKind: "tool",
       actorRef: "review-dual-write",
       meta: {
-        kind: "finalize-or-replay",
+        kind: "force-store-replay",
         count: rows.length,
         project_root: project,
         project_slug: projectSlug,

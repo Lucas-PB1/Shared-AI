@@ -4,10 +4,18 @@
  */
 
 export {
+  FINDING_SLUG_MAX_LEN,
+  FINDING_SLUG_MAX_TOKENS,
   FINDING_THEME,
+  SLUG_NEAR_MIN_SCORE,
+  extractFindingKeywords,
   extractFindingTheme,
+  nearSlugPairs,
+  slugSimilarity,
+  slugTokens,
   slugify,
   stableFindingId,
+  type SlugNearPair,
 } from "./finding-ids.js";
 
 export {
