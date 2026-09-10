@@ -3,15 +3,13 @@
 | Pacote | Descrição |
 | --- | --- |
 | [cursor](cursor/) | Rules, skills, hooks, bootstrap, sync |
-| [code-review](code-review/) | Commands `/avaliar`, `/avaliar-diff`, `/finalizar` |
 
 ## Comandos
 
 | Comando | Pacote |
 | --- | --- |
 | `setup:skills` | cursor |
-| `setup:code-review` | code-review |
-| `bootstrap` / `detach` | ambos |
-| `sync` / `status` / `doctor` | ambos |
+| `bootstrap` / `detach` | cursor |
+| `sync` / `status` / `doctor` | cursor |
 
 Ver [README](../README.md).

@@ -11,7 +11,7 @@ CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../lib/install/sh/link-from-repo.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/../lib/install/sh/hostdime-env.sh"
+source "$SCRIPT_DIR/../lib/install/sh/shared-ai-env.sh"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../lib/install/sh/install-packages.sh"
 

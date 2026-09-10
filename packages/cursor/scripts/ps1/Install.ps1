@@ -3,7 +3,7 @@
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
-. (Join-Path $LibRoot 'Hostdime-Env.ps1')
+. (Join-Path $LibRoot 'SharedAi-Env.ps1')
 . (Join-Path $LibRoot 'Link-FromRepo.ps1')
 . (Join-Path $LibRoot 'Merge-HooksJson.ps1')
 . (Join-Path $LibRoot 'Install-Packages.ps1')

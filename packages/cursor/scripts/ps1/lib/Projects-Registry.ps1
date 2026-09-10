@@ -1,7 +1,7 @@
-# Registro de projetos ligados ao hostdime-ia
+# Registro de projetos ligados ao shared-ai
 
 function Get-RegistryDir {
-    return Join-Path (Get-CursorUserDir) 'hostdime-ia'
+    return Join-Path (Get-CursorUserDir) 'shared-ai'
 }
 
 function Get-RegistryFile {

@@ -1,84 +1,102 @@
 import { notFound } from 'next/navigation';
 
 import {
-  getMyRole,
-  getProjectBySlug,
-  listProjectAcceptedDecisions,
-  listProjectConventions,
-  listProjectExclusions,
-  listProjectMembers,
-  listProjectRuns,
-} from '@/entities/project';
-import { ProjectMemoryPanel, RunsTable } from '@/entities/review-run';
-import { createClient } from '@/shared/lib/supabase/server';
-import { ProjectHeader } from '@/widgets/project-header';
-import { ProjectTeamPanel } from '@/widgets/project-team';
+  getLinkedProjectBySlug,
+  unregisterLinkedProjectAction,
+} from '@/entities/linked-project';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
+import { LinkedProjectHeader } from '@/widgets/project-header';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+function formatWhen(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleString('pt-BR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
 export default async function ProjectDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const project = await getProjectBySlug(slug);
+  const project = getLinkedProjectBySlug(slug);
   if (!project) notFound();
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const [members, runs, role, exclusions, conventions, accepted] =
-    await Promise.all([
-      listProjectMembers(project.id),
-      listProjectRuns(project.id),
-      user ? getMyRole(project.id, user.id) : Promise.resolve(null),
-      listProjectExclusions(project.id),
-      listProjectConventions(project.id),
-      listProjectAcceptedDecisions(project.id),
-    ]);
-
-  const isOwner = role === 'owner';
 
   return (
     <div className="space-y-5">
-      <ProjectHeader
-        project={project}
-        role={role}
-        stats={{
-          runs: runs.length,
-          members: members.length,
-          accepted: accepted.length,
-          exclusions: exclusions.length,
-        }}
-      />
+      <LinkedProjectHeader project={project} />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <section className="min-w-0 space-y-3">
+      <Card className="space-y-4 p-5">
+        <dl className="grid gap-3 sm:grid-cols-2">
           <div>
-            <h2 className="text-base font-semibold text-hd-ink">Review runs</h2>
-            <p className="text-xs text-hd-muted">
-              Clique numa linha para abrir Aceitos / Rejeitados
-            </p>
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
+              Path
+            </dt>
+            <dd className="mt-1 break-all font-mono text-sm text-sa-ink">
+              {project.path}
+            </dd>
           </div>
-          <RunsTable runs={runs} project={project} />
-        </section>
+          <div>
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
+              Pasta
+            </dt>
+            <dd className="mt-1">
+              <Badge>{project.pathExists ? 'existe' : 'ausente'}</Badge>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
+              Primeiro link
+            </dt>
+            <dd className="mt-1 text-sm text-sa-ink">
+              {formatWhen(project.firstLinked)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
+              Último link
+            </dt>
+            <dd className="mt-1 text-sm text-sa-ink">
+              {formatWhen(project.lastLinked)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
+              Perfil
+            </dt>
+            <dd className="mt-1 text-sm text-sa-ink">
+              {project.profile ?? '—'}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
+              Git remote
+            </dt>
+            <dd className="mt-1 break-all font-mono text-sm text-sa-ink">
+              {project.gitRemote ?? '—'}
+            </dd>
+          </div>
+        </dl>
 
-        <aside className="min-w-0 space-y-4 lg:sticky lg:top-20 lg:self-start">
-          <ProjectMemoryPanel
-            projectSlug={project.slug}
-            exclusions={exclusions}
-            conventions={conventions}
-            accepted={accepted}
-          />
-          <ProjectTeamPanel
-            members={members}
-            projectId={project.id}
-            projectSlug={project.slug}
-            isOwner={isOwner}
-          />
-        </aside>
-      </div>
+        <form action={unregisterLinkedProjectAction}>
+          <input type="hidden" name="slug" value={project.slug} />
+          <Button type="submit" variant="secondary" size="sm">
+            Remover do registro
+          </Button>
+          <p className="mt-2 text-xs text-sa-muted">
+            Só tira do{' '}
+            <code className="text-sa-ink">projects.json</code>. Symlinks do
+            Cursor saem com{' '}
+            <code className="text-sa-ink">npm run detach -- {project.path}</code>
+            .
+          </p>
+        </form>
+      </Card>
     </div>
   );
 }

@@ -1,1 +1,1 @@
-export { ProjectHeader } from './ui/project-header';
+export { LinkedProjectHeader } from './ui/project-header';

@@ -1,4 +1,4 @@
-# Wrapper hostdime para Cursor CLI — alinha projeto antes de rodar agent.
+# Wrapper shared-ai para Cursor CLI — alinha projeto antes de rodar agent.
 param(
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$RawArgs = @()
@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $lib = Join-Path $scriptRoot 'lib/Cursor-Cli.ps1'
 if (-not (Test-Path -LiteralPath $lib)) {
-    $userLib = Join-Path $env:USERPROFILE '.cursor/hostdime-cursor-cli.ps1'
+    $userLib = Join-Path $env:USERPROFILE '.cursor/shared-ai-cursor-cli.ps1'
     if (Test-Path -LiteralPath $userLib) { $lib = $userLib }
     else { throw 'Lib Cursor-Cli.ps1 não encontrada' }
 }

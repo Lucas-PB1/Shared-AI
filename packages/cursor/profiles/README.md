@@ -10,7 +10,6 @@ npm run onboard                              # wizard interativo (escolhe perfil
 | Perfil | Stack detectada |
 | --- | --- |
 | `laravel` | `composer.json` → `laravel/framework` |
-| `hubspot` | `hsproject.json`, `@hubspot/*` |
 | `react` | `package.json` → `react` / `react-dom` |
 | `next` | `package.json` → `next` |
 | `python` | `pyproject.toml`, `requirements.txt`, `setup.py` |

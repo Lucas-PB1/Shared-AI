@@ -8,9 +8,9 @@ function Apply-BootstrapProfile {
 
     if (-not $Profile) { return }
 
-    $root = $env:HOSTDIME_IA_ROOT
+    $root = $env:SHARED_AI_ROOT
     if (-not $root -or -not (Test-Path $root)) {
-        Write-Error 'HOSTDIME_IA_ROOT não configurado'
+        Write-Error 'SHARED_AI_ROOT não configurado'
         return
     }
 

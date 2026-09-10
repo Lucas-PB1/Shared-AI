@@ -3,19 +3,19 @@
 set -euo pipefail
 
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
-STATE_FILE="$CURSOR_DIR/hostdime-ia/sync-inbox.env"
-ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
-LIB="$CURSOR_DIR/hostdime-sync-inbox.sh"
+STATE_FILE="$CURSOR_DIR/shared-ai/sync-inbox.env"
+ENV_FILE="$CURSOR_DIR/shared-ai.env"
+LIB="$CURSOR_DIR/shared-ai-sync-inbox.sh"
 
-SYNC_INBOX_LOG="$CURSOR_DIR/hostdime-ia/sync-inbox.log"
+SYNC_INBOX_LOG="$CURSOR_DIR/shared-ai/sync-inbox.log"
 
 log() {
-  mkdir -p "$CURSOR_DIR/hostdime-ia"
+  mkdir -p "$CURSOR_DIR/shared-ai"
   printf '[%s] %s\n' "$(date -Iseconds 2>/dev/null || date)" "$1" >>"$SYNC_INBOX_LOG"
 }
 
 # Rotaciona o log se passar de ~1 MB (mantém 1 backup) — evita crescimento sem limite.
-mkdir -p "$CURSOR_DIR/hostdime-ia"
+mkdir -p "$CURSOR_DIR/shared-ai"
 if [[ -f "$SYNC_INBOX_LOG" ]] && (($(wc -c <"$SYNC_INBOX_LOG" 2>/dev/null || echo 0) > 1048576)); then
   mv -f "$SYNC_INBOX_LOG" "$SYNC_INBOX_LOG.1"
 fi
@@ -35,7 +35,7 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 if [[ ! -f "$LIB" ]]; then
-  log "hostdime-sync-inbox.sh ausente"
+  log "shared-ai-sync-inbox.sh ausente"
   exit 0
 fi
 

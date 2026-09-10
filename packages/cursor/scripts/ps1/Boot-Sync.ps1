@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
-. (Join-Path $LibRoot 'Hostdime-Env.ps1')
+. (Join-Path $LibRoot 'SharedAi-Env.ps1')
 . (Join-Path $LibRoot 'Boot-Sync.ps1')
 
 foreach ($arg in $args) {

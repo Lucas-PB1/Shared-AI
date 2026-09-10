@@ -1,6 +1,6 @@
 # Portabilidade
 
-HostDime IA cobre **Linux** (Bash) e **Windows** (PowerShell). Não orientar scripts para macOS/BSD.
+Shared AI cobre **Linux** (Bash) e **Windows** (PowerShell). Não orientar scripts para macOS/BSD.
 
 ## Bash em Linux
 

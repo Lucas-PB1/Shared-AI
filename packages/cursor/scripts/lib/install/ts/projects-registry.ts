@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Registro de projetos ligados ao hostdime-ia (projects.json). */
+/** Registro de projetos ligados ao shared-ai (projects.json). */
 import {
   existsSync,
   mkdirSync,
@@ -12,15 +12,15 @@ import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 
-interface ProjectEntry {
+export type ProjectEntry = {
   path: string;
   firstLinked: string;
   lastLinked: string;
-}
+};
 
-interface RegistryData {
+export type RegistryData = {
   projects: ProjectEntry[];
-}
+};
 
 function nowIso(): string {
   return new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
@@ -48,12 +48,12 @@ function isUserCursorRoot(path: string): boolean {
   return p === home || p === cursor;
 }
 
-function defaultRegistryPath(): string {
-  return join(homedir(), '.cursor', 'hostdime-ia', 'projects.json');
+export function defaultRegistryPath(): string {
+  return join(homedir(), '.cursor', 'shared-ai', 'projects.json');
 }
 
-function resolveRegistry(arg?: string): string {
-  return arg ?? process.env.HOSTDIME_REGISTRY_FILE ?? defaultRegistryPath();
+export function resolveRegistry(arg?: string): string {
+  return arg ?? process.env.SHARED_AI_REGISTRY_FILE ?? defaultRegistryPath();
 }
 
 function ensureRegistry(registry: string): void {
@@ -63,7 +63,7 @@ function ensureRegistry(registry: string): void {
   }
 }
 
-function load(registry: string): RegistryData {
+export function loadRegistry(registry: string): RegistryData {
   ensureRegistry(registry);
   try {
     const data = JSON.parse(readFileSync(registry, 'utf-8')) as RegistryData;
@@ -85,7 +85,7 @@ function cmdRegister(pathArg: string, registry: string): number {
   if (isEphemeral(path) && real(registry) === defaultReg) return 0;
   if (isUserCursorRoot(path)) return 0;
 
-  const data = load(registry);
+  const data = loadRegistry(registry);
   const now = nowIso();
   let found = false;
   for (const p of data.projects) {
@@ -103,24 +103,34 @@ function cmdRegister(pathArg: string, registry: string): number {
 }
 
 function cmdList(registry: string): number {
-  const data = load(registry);
+  const data = loadRegistry(registry);
   for (const p of data.projects) {
     if (p.path) process.stdout.write(`${p.path}\n`);
   }
   return 0;
 }
 
-function cmdUnregister(pathArg: string, registry: string): number {
+export function unregisterProject(pathArg: string, registry?: string): boolean {
+  const file = registry ?? resolveRegistry();
   const path = real(pathArg);
-  const data = load(registry);
+  const data = loadRegistry(file);
   const before = data.projects.length;
   data.projects = data.projects.filter((p) => real(p.path) !== path);
-  save(registry, data);
-  return before > data.projects.length ? 0 : 1;
+  save(file, data);
+  return before > data.projects.length;
+}
+
+function cmdUnregister(pathArg: string, registry: string): number {
+  return unregisterProject(pathArg, registry) ? 0 : 1;
+}
+
+export function pruneRegistry(registry?: string): void {
+  const file = registry ?? resolveRegistry();
+  cmdPrune(file);
 }
 
 function cmdPrune(registry: string): number {
-  const data = load(registry);
+  const data = loadRegistry(registry);
   data.projects = data.projects.filter((p) => {
     const path = p.path;
     if (!path) return false;

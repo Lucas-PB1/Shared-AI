@@ -61,14 +61,12 @@ function npmInstall() {
 function printNextSteps() {
   console.log(`
 Próximos passos:
-  1. Preencha o .env  OU  npm run env:switch -- local --refresh-keys
-  2. npm run supabase:start          # stack local (opcional)
-  3. npm run connections:seed        # após ter secret no .env
-  4. npm run dev                     # http://localhost:3000
+  1. npm run supabase:start
+  2. copie URL e keys de npm run supabase:status para o .env
+  3. npm run dev                     # http://localhost:3000
 
-Skills/code-review (outra máquina):
+Skills (outra máquina):
   npm run setup:skills
-  npm run setup:code-review
 `);
 }
 

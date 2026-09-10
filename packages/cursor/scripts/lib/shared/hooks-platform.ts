@@ -1,5 +1,5 @@
 /**
- * Helpers compartilhados de merge de hooks (hostdime / historico).
+ * Helpers compartilhados de merge de hooks (shared-ai / historico).
  * Platform support: win32 | linux only.
  */
 

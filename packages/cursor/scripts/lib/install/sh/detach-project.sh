@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Remove symlinks gerenciados pelo hostdime-ia no projeto (preserva arquivos reais).
+# Remove symlinks gerenciados pelo shared-ai no projeto (preserva arquivos reais).
 #
 # Source: source .../detach-project.sh
-#         detach_hostdime_from_project /caminho/repo
+#         detach_shared_ai_from_project /caminho/repo
 
-detach_hostdime_from_project() {
+detach_shared_ai_from_project() {
   local project="$1"
-  local root="${HOSTDIME_IA_ROOT:-}"
+  local root="${SHARED_AI_ROOT:-}"
   local rules_dir="$project/.cursor/rules"
   local commands_dir="$project/.cursor/commands"
   local removed=0
@@ -17,13 +17,13 @@ detach_hostdime_from_project() {
   }
 
   if [[ -z "$root" || ! -d "$root" ]]; then
-    echo "Erro: HOSTDIME_IA_ROOT não configurado" >&2
+    echo "Erro: SHARED_AI_ROOT não configurado" >&2
     return 1
   fi
 
   # shellcheck disable=SC1091
   source "$root/packages/cursor/scripts/lib/install/sh/link-from-repo.sh"
-  export HOSTDIME_IA_ROOT="$root"
+  export SHARED_AI_ROOT="$root"
 
   echo "→ removendo symlinks gerenciados em $project"
 

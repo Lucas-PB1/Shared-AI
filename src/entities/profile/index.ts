@@ -1,8 +1,8 @@
 export {
   changePassword,
   getCurrentProfile,
-  requireAppAdmin,
   updateAvatarUrl,
   updateDisplayName,
   uploadAvatar,
 } from './api';
+export type { Profile } from './types';

@@ -3,9 +3,9 @@
 $ErrorActionPreference = 'Continue'
 
 $cursorDir = if ($env:CURSOR_USER_DIR) { $env:CURSOR_USER_DIR } else { Join-Path $env:USERPROFILE '.cursor' }
-$stateFile = Join-Path $cursorDir 'hostdime-ia/boot-sync.env'
-$envFile = Join-Path $cursorDir 'hostdime-ia.env'
-$logFile = Join-Path $cursorDir 'hostdime-ia/boot-sync.log'
+$stateFile = Join-Path $cursorDir 'shared-ai/boot-sync.env'
+$envFile = Join-Path $cursorDir 'shared-ai.env'
+$logFile = Join-Path $cursorDir 'shared-ai/boot-sync.log'
 
 function Write-StartupLog {
     param([string]$Message)
@@ -27,7 +27,7 @@ if ($bootSync -ne 'on') { exit 0 }
 $root = $null
 if (Test-Path $envFile) {
     Get-Content $envFile | ForEach-Object {
-        if ($_ -match '^HOSTDIME_IA_ROOT=(.+)$') {
+        if ($_ -match '^SHARED_AI_ROOT=(.+)$') {
             $root = $Matches[1].Trim().Trim("'").Trim('"')
         }
     }

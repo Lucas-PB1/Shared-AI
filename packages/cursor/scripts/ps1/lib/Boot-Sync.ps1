@@ -1,15 +1,15 @@
 # Sync automático ao iniciar o computador (git pull + npm run sync).
 
 function Get-BootSyncStateFile {
-    return Join-Path (Get-CursorUserDir) 'hostdime-ia/boot-sync.env'
+    return Join-Path (Get-CursorUserDir) 'shared-ai/boot-sync.env'
 }
 
 function Get-BootSyncLogFile {
-    return Join-Path (Get-CursorUserDir) 'hostdime-ia/boot-sync.log'
+    return Join-Path (Get-CursorUserDir) 'shared-ai/boot-sync.log'
 }
 
 function Get-BootSyncStartupScript {
-    return Join-Path (Get-CursorUserDir) 'hostdime-ia-startup-sync.ps1'
+    return Join-Path (Get-CursorUserDir) 'shared-ai-startup-sync.ps1'
 }
 
 function Read-BootSyncState {
@@ -66,12 +66,12 @@ function Write-BootSyncLog {
 }
 
 function Install-BootSyncStartupScript {
-    $root = $env:HOSTDIME_IA_ROOT
+    $root = $env:SHARED_AI_ROOT
     if (-not $root -or -not (Test-Path $root)) {
-        $root = Resolve-HostdimeRoot
+        $root = Resolve-SharedAiRoot
     }
     if (-not $root) {
-        Write-Error 'HOSTDIME_IA_ROOT não configurado'
+        Write-Error 'SHARED_AI_ROOT não configurado'
         return $false
     }
 
@@ -88,7 +88,7 @@ function Install-BootSyncStartupScript {
 function Install-BootSyncScheduledTask {
     param([string]$ScriptPath)
 
-    $taskName = 'HostDimeIaBootSync'
+    $taskName = 'SharedAiBootSync'
     $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
     if ($existing) {
         Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
@@ -106,11 +106,11 @@ function Install-BootSyncScheduledTask {
         -Action $action `
         -Trigger $trigger `
         -Settings $settings `
-        -Description 'HostDime IA — git pull e sync ao iniciar sessão' | Out-Null
+        -Description 'Shared AI — git pull e sync ao iniciar sessão' | Out-Null
 }
 
 function Uninstall-BootSyncScheduledTask {
-    $taskName = 'HostDimeIaBootSync'
+    $taskName = 'SharedAiBootSync'
     Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
 }
 
@@ -140,7 +140,7 @@ function Disable-BootSync {
 }
 
 function Get-BootSyncHookKind {
-    $task = Get-ScheduledTask -TaskName 'HostDimeIaBootSync' -ErrorAction SilentlyContinue
+    $task = Get-ScheduledTask -TaskName 'SharedAiBootSync' -ErrorAction SilentlyContinue
     if ($task) { return 'Task Scheduler (logon)' }
     return 'não instalado'
 }
@@ -164,7 +164,7 @@ function Invoke-BootSyncRun {
         & $script
         return
     }
-    $root = Resolve-HostdimeRoot
+    $root = Resolve-SharedAiRoot
     if ($root) {
         $repoScript = Join-Path $root 'packages/cursor/scripts/ps1/Startup-Sync.ps1'
         if (Test-Path $repoScript) {
@@ -177,12 +177,12 @@ function Invoke-BootSyncRun {
 }
 
 function Prompt-BootSyncIfNeeded {
-    if ($env:HOSTDIME_BOOT_SYNC_PROMPT -eq 'skip') { return }
+    if ($env:SHARED_AI_BOOT_SYNC_PROMPT -eq 'skip') { return }
     if (Test-BootSyncAsked) { return }
     if ([Console]::IsInputRedirected) { return }
 
     Write-Host ''
-    Write-Host 'Sincronizar HostDime IA automaticamente ao iniciar o computador?'
+    Write-Host 'Sincronizar Shared AI automaticamente ao iniciar o computador?'
     Write-Host '  (git pull + npm run sync no clone — desligar: npm run boot-sync -- off)'
     $ans = Read-Host '[s/N]'
     switch ($ans.ToLowerInvariant()) {

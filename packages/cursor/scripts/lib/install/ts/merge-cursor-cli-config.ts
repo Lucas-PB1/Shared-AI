@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Merge hostdime auto config into ~/.cursor/cli-config.json. */
+/** Merge shared-ai auto config into ~/.cursor/cli-config.json. */
 import { existsSync, readFileSync } from 'node:fs';
 import { atomicWriteJson, readJsonObject } from '../../shared/json-io.js';
 import { runCliMain } from '../../shared/cli-entry.js';

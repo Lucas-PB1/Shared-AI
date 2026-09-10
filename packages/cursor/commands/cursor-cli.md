@@ -47,11 +47,11 @@ irm 'https://cursor.com/install?win32=true' | iex
 | `approvalMode` | `unrestricted` — execução auto (modo auto) |
 | `permissions.deny` | `Shell(rm)`, credenciais (`.env`, `.pem`, `.key`) |
 
-4. **PATH** — adiciona `~/.local/bin` e `~/.cursor/bin` ao `~/.bashrc` / `~/.zshrc` (marker hostdime)
+4. **PATH** — adiciona `~/.local/bin` e `~/.cursor/bin` ao `~/.bashrc` / `~/.zshrc` (marker shared-ai)
 5. **Login** — se `agent status` não estiver autenticado, abre `agent login` (browser, uma vez)
 6. Resumo: path, approvalMode, login ok
 
-### Executar via hostdime-ia
+### Executar via shared-ai
 
 ```bash
 npm run cursor-cli -- install          # install + auto + PATH + login
@@ -87,7 +87,7 @@ npm run agent -- resume
 agent update                     # atualizar CLI (direto)
 ```
 
-O wrapper `npm run agent` prepara `review/` via `link-project` antes de executar — mesmo efeito do hook `sessionStart` da IDE. Orquestrador e commands hostdime já estão em `~/.cursor/`.
+O wrapper `npm run agent` prepara `review/` via `link-project` antes de executar — mesmo efeito do hook `sessionStart` da IDE. Orquestrador e commands shared-ai já estão em `~/.cursor/`.
 
 ## Wrapper `npm run agent`
 
@@ -95,7 +95,7 @@ O wrapper `npm run agent` prepara `review/` via `link-project` antes de executar
 | --- | --- |
 | 1 | Sobe diretórios até achar `.cursor/` (raiz do projeto) |
 | 2 | `link-project --quiet` — review/ (+ remove orquestrador/commands antigos do projeto) |
-| 3 | Registra projeto no sync hostdime |
+| 3 | Registra projeto no sync shared-ai |
 | 4 | `cd` na raiz e executa `agent` com os args passados |
 
 Opções do wrapper: `--project=/path`, `--dry-run` (debug).
@@ -107,7 +107,7 @@ O CLI/IDE carregam rules/commands do projeto e do usuário (`~/.cursor/rules/`, 
 `unrestricted` executa ferramentas sem prompt. Use em máquina de dev confiável. Para restringir:
 
 ```bash
-npm run cursor-cli -- configure   # re-aplica template hostdime
+npm run cursor-cli -- configure   # re-aplica template shared-ai
 # ou edite manualmente approvalMode para allowlist + permissions.allow
 ```
 

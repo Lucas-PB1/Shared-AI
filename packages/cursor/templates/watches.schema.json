@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "hostdime-ia/history-watches/v1",
+  "$id": "shared-ai/history-watches/v1",
   "type": "object",
   "required": ["version", "watches"],
   "properties": {

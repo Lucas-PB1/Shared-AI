@@ -41,28 +41,28 @@ if (Test-Path $linkScript) {
     } catch { }
 }
 
-$registryScript = Join-Path $cursorDir 'hostdime-projects-registry.ps1'
+$registryScript = Join-Path $cursorDir 'shared-ai-projects-registry.ps1'
 if (Test-Path $registryScript) {
-    . (Join-Path $cursorDir 'hostdime-link-from-repo.ps1')
-    . (Join-Path $cursorDir 'hostdime-env.ps1')
+    . (Join-Path $cursorDir 'shared-ai-link-from-repo.ps1')
+    . (Join-Path $cursorDir 'shared-ai-env.ps1')
     . $registryScript
     try {
         Register-Project $root
     } catch { }
 }
 
-$envFile = Join-Path $cursorDir 'hostdime-ia.env'
-$envLib = Join-Path $cursorDir 'hostdime-env.ps1'
+$envFile = Join-Path $cursorDir 'shared-ai.env'
+$envLib = Join-Path $cursorDir 'shared-ai-env.ps1'
 if ((Test-Path $envFile) -and (Test-Path $envLib)) {
     . $envLib
-    $envData = Read-HostdimeEnv
-    $hostRoot = $envData['HOSTDIME_IA_ROOT']
+    $envData = Read-SharedAiEnv
+    $hostRoot = $envData['SHARED_AI_ROOT']
     if ($hostRoot -and (Test-Path $hostRoot)) {
-        $current = Get-HostdimeVersion $hostRoot
-        $installed = if ($envData['HOSTDIME_IA_VERSION']) { $envData['HOSTDIME_IA_VERSION'] } else { '?' }
+        $current = Get-SharedAiVersion $hostRoot
+        $installed = if ($envData['SHARED_AI_VERSION']) { $envData['SHARED_AI_VERSION'] } else { '?' }
         if ($current -ne $installed -and $current -ne '?') {
             [Console]::Error.WriteLine(
-                "HostDime IA: versão do clone ($current) difere da instalada ($installed). Rode: npm run sync"
+                "Shared AI: versão do clone ($current) difere da instalada ($installed). Rode: npm run sync"
             )
         }
     }

@@ -16,31 +16,13 @@ Mapear **palavras ou objetivo** do pedido → ler SKILL.md (localização em `sk
 | commit, mensagem de commit, PR, pull request, merge, rebase | `git` |
 | lint, eslint, fix lint, unused imports | `eslint` |
 | format, prettier, formatação | `prettier` |
-| deploy, upload, build remoto, CLI do projeto | skill de tooling no projeto ou em `~/.cursor/skills/` (ex.: `hubspot-cli`, `git`) |
-| HubSpot, `hs project`, CMS dev, portal HubSpot, MCP HubSpot | `hubspot-cli` + rule `skills-orchestrator-hubspot.mdc`; `/hubspot-mcp` para instalar MCP |
+| deploy, upload, build remoto, CLI do projeto | skill de tooling no projeto ou em `~/.cursor/skills/` (ex.: `git`) |
 | OKF, Open Knowledge Format, knowledge bundle, concept OKF, LLM wiki | `okf` + rule `skills-orchestrator-okf.mdc` |
-| `/onboard`, onboard, atualizar monorepo, pull e sync hostdime | command `/onboard` |
+| `/onboard`, onboard, atualizar monorepo, pull e sync shared-ai | command `/onboard` |
 | `/historico`, historico, history watch, log.md escopo, history.md escopo | `history-watch` + command `/historico` |
 | `/cursor-cli`, cursor cli, agent cli, cursor agent terminal | command `/cursor-cli` |
 | `/sync-inbox`, sync inbox, inbox boot, continuar projeto, trabalho pendente | command `/sync-inbox` |
 | review, auditoria, qualidade, code review | tier 2 + `eslint`, `prettier`, `testing` + skills da stack detectada |
-
-### Review — pacote code-review (opcional)
-
-Só estender o roteamento abaixo se o pacote **code-review** estiver instalado (`npm run setup:code-review`). Detectar por **qualquer** destes sinais:
-
-- `~/.cursor/commands/avaliar.md`
-- `~/.cursor/skills/review-inbox/SKILL.md`
-- `.cursor/commands/avaliar.md` no workspace (command local do projeto, se existir)
-
-Se **nenhum** existir: manter só a linha genérica de review acima — **não** assumir `/avaliar` nem skills `review-*`.
-
-| Intenção no pedido | Skill / command |
-| --- | --- |
-| `/avaliar`, `/finalizar`, `/avaliar-diff`, `/memoria`, `/skills-why`, review de arquivo no repo | `review-inbox` |
-| diff do branch, arquivos alterados, triagem do MR (antes do deep dive) | `review-inbox` + command `/avaliar-diff` |
-| debug de skills, roteamento do orquestrador, "por que essas skills" | command `/skills-why` |
-| review de PR, diff, MR, merge request, bugbot | `review` → `review-bugbot` ou `review-security` |
 
 ## Stack front-end / JS
 
@@ -100,7 +82,7 @@ Se **nenhum** existir: manter só a linha genérica de review acima — **não**
 | zero-downtime, blue-green, canary, rollback, estratégia de deploy | `deployment-strategies` |
 | Terraform, IaC, infraestrutura como código, `.tf`, state, provisionar | `infrastructure-as-code` |
 
-> **Deploy:** se houver tooling específico do projeto (ex.: `hubspot-cli`), priorizá-lo; senão, `ci-cd` + `deployment-strategies`.
+> **Deploy:** se houver tooling específico do projeto, priorizá-lo; senão, `ci-cd` + `deployment-strategies`.
 
 ## Como aplicar
 

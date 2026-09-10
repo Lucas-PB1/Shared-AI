@@ -21,7 +21,7 @@ function Remove-ProjectOrchestratorRuleSymlinks {
     if (-not (Test-Path -LiteralPath $RulesDir)) { return }
 
     foreach ($f in Get-ChildItem -Path (Join-Path $RulesDir 'skills-orchestrator-*.mdc') -ErrorAction SilentlyContinue) {
-        if (Test-HostdimeSymlink $f.FullName) {
+        if (Test-SharedAiSymlink $f.FullName) {
             $name = $f.Name
             Remove-Item -LiteralPath $f.FullName -Force
             $script:LinkOrchestratorRemoved++
@@ -37,7 +37,7 @@ function Remove-ProjectManagedCommandSymlinks {
     if (-not (Test-Path -LiteralPath $CommandsDir)) { return }
 
     foreach ($f in Get-ChildItem -Path (Join-Path $CommandsDir '*.md') -ErrorAction SilentlyContinue) {
-        if (Test-HostdimeSymlink $f.FullName) {
+        if (Test-SharedAiSymlink $f.FullName) {
             $name = $f.Name
             Remove-Item -LiteralPath $f.FullName -Force
             $script:LinkCommandsRemoved++
@@ -80,7 +80,7 @@ function Remove-LinkTarget {
     }
 }
 
-function New-HostdimeLink {
+function New-SharedAiLink {
     param(
         [Parameter(Mandatory)][string]$Source,
         [Parameter(Mandatory)][string]$Dest
@@ -131,10 +131,10 @@ function New-HostdimeLink {
     }
 }
 
-function Test-HostdimeSymlink {
+function Test-SharedAiSymlink {
     param([string]$Path)
 
-    $root = $env:HOSTDIME_IA_ROOT
+    $root = $env:SHARED_AI_ROOT
     if (-not $root -or -not (Test-Path -LiteralPath $Path)) { return $false }
 
     $item = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
@@ -159,7 +159,7 @@ function Test-HostdimeSymlink {
     return $false
 }
 
-function Test-HostdimeHardlink {
+function Test-SharedAiHardlink {
     param(
         [string]$Path,
         [string]$ExpectedSource
@@ -182,14 +182,14 @@ function Test-HostdimeHardlink {
     return $false
 }
 
-function Test-HostdimeManagedLink {
+function Test-SharedAiManagedLink {
     param(
         [string]$Path,
         [string]$ExpectedSource = ''
     )
 
-    if (Test-HostdimeSymlink $Path) { return $true }
-    if ($ExpectedSource -and (Test-HostdimeHardlink $Path $ExpectedSource)) { return $true }
+    if (Test-SharedAiSymlink $Path) { return $true }
+    if ($ExpectedSource -and (Test-SharedAiHardlink $Path $ExpectedSource)) { return $true }
     return $false
 }
 
@@ -204,13 +204,13 @@ function Link-File {
     $name = Split-Path -Leaf $Src
     $dest = Join-Path $DestDir $name
 
-    if ((Test-Path -LiteralPath $dest) -and -not (Test-HostdimeSymlink $dest) -and -not (Test-HostdimeHardlink $dest $Src)) {
+    if ((Test-Path -LiteralPath $dest) -and -not (Test-SharedAiSymlink $dest) -and -not (Test-SharedAiHardlink $dest $Src)) {
         $script:LinkSkipped++
         Write-LinkReport 'skipped' "$dest (arquivo real — não sobrescrito)"
         return
     }
 
-    if ((Test-Path -LiteralPath $dest) -and (Test-HostdimeSymlink $dest) -and -not (Test-Path -LiteralPath $dest)) {
+    if ((Test-Path -LiteralPath $dest) -and (Test-SharedAiSymlink $dest) -and -not (Test-Path -LiteralPath $dest)) {
         $script:LinkBroken++
         Write-LinkReport 'broken' $dest
     }
@@ -219,9 +219,9 @@ function Link-File {
     $targetPath = Get-AbsolutePath $Src
 
     if ($current -eq $targetPath) { return }
-    if ((Test-Path -LiteralPath $dest) -and (Test-HostdimeManagedLink $dest $Src)) {
+    if ((Test-Path -LiteralPath $dest) -and (Test-SharedAiManagedLink $dest $Src)) {
         $linkedTarget = Get-AbsolutePath $Src
-        if ((Test-HostdimeHardlink $dest $Src) -or (Test-HostdimeSymlink $dest)) {
+        if ((Test-SharedAiHardlink $dest $Src) -or (Test-SharedAiSymlink $dest)) {
             return
         }
     }
@@ -230,7 +230,7 @@ function Link-File {
         New-Item -ItemType Directory -Path $DestDir -Force | Out-Null
     }
 
-    $linkType = New-HostdimeLink -Source $Src -Dest $dest
+    $linkType = New-SharedAiLink -Source $Src -Dest $dest
     $script:LinkLinked++
     Write-LinkReport 'linked' "$dest -> $Src ($linkType)"
 }
@@ -246,13 +246,13 @@ function Link-Dir {
     $name = Split-Path -Leaf $Src.TrimEnd('\', '/')
     $dest = Join-Path $DestDir $name
 
-    if ((Test-Path -LiteralPath $dest) -and -not (Test-HostdimeSymlink $dest)) {
+    if ((Test-Path -LiteralPath $dest) -and -not (Test-SharedAiSymlink $dest)) {
         $script:LinkSkipped++
         Write-LinkReport 'skipped' "$dest (pasta real — não sobrescrito)"
         return
     }
 
-    if ((Test-Path -LiteralPath $dest) -and (Test-HostdimeSymlink $dest) -and -not (Test-Path -LiteralPath $dest)) {
+    if ((Test-Path -LiteralPath $dest) -and (Test-SharedAiSymlink $dest) -and -not (Test-Path -LiteralPath $dest)) {
         $script:LinkBroken++
         Write-LinkReport 'broken' $dest
     }
@@ -265,7 +265,7 @@ function Link-Dir {
         New-Item -ItemType Directory -Path $DestDir -Force | Out-Null
     }
 
-    $linkType = New-HostdimeLink -Source $Src -Dest $dest
+    $linkType = New-SharedAiLink -Source $Src -Dest $dest
     $script:LinkLinked++
     Write-LinkReport 'linked' "$dest -> $Src ($linkType)"
 }
@@ -296,7 +296,7 @@ function Prune-ManagedSymlinks {
     foreach ($entry in Get-ChildItem -LiteralPath $Dir -Force -ErrorAction SilentlyContinue) {
         $name = $entry.Name
         if ($ManagedNames -contains $name) { continue }
-        if (Test-HostdimeSymlink $entry.FullName) {
+        if (Test-SharedAiSymlink $entry.FullName) {
             Remove-Item -LiteralPath $entry.FullName -Force -Recurse -ErrorAction SilentlyContinue
             Write-LinkReport 'pruned' $entry.FullName
         }

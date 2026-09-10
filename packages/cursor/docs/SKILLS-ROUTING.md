@@ -2,7 +2,7 @@
 
 > **Repositório:** `packages/cursor/docs/SKILLS-ROUTING.md` → após `npm run setup:skills` vira `~/.cursor/SKILLS-ROUTING.md`.
 
-Skills genéricas em **`~/.cursor/skills/`** (fonte: `skills/` neste repo). Rules orquestradoras em **`~/.cursor/rules/`** e commands hostdime em **`~/.cursor/commands/`** — globais no usuário, sem symlink por projeto. Mapa: este arquivo.
+Skills genéricas em **`~/.cursor/skills/`** (fonte: `skills/` neste repo). Rules orquestradoras em **`~/.cursor/rules/`** e commands do Shared AI em **`~/.cursor/commands/`** — globais no usuário, sem symlink por projeto. Mapa: este arquivo.
 
 Skills **do projeto** (se existirem) em `.cursor/skills/<nome>/` **sobrescrevem** o pacote do usuário.
 
@@ -11,7 +11,7 @@ Skills **do projeto** (se existirem) em `.cursor/skills/<nome>/` **sobrescrevem*
 | Camada | Rule | Sinal |
 | --- | --- | --- |
 | Intent | `intent.mdc` | palavras do pedido |
-| Stack | `stack.mdc` | `package.json`, `composer.json`, `tsconfig`, `hsproject.json` |
+| Stack | `stack.mdc` | `package.json`, `composer.json`, `tsconfig` |
 | Contexto | rules glob | arquivos abertos ou no diff |
 
 Merge, dedupe e cap (6–8 skills): `base.mdc`.
@@ -66,12 +66,7 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `observability` | log, métrica, health check, readiness | — | devops |
 | `deployment-strategies` | zero-downtime, blue-green, canary, rollback | — | devops |
 | `infrastructure-as-code` | Terraform, IaC, state, provisionar | `*.tf`, `*.tfvars` | devops |
-| `hubspot-cli` | deploy/CLI, HubSpot, `hs project` | hsproject / cms-components / `@hubspot/cli` | hubspot |
 | `okf` | OKF, knowledge bundle, concept document | — | okf |
-| `review-inbox` | `/avaliar`, `/avaliar-diff`, `/finalizar`, arquivo no repo (se code-review instalado) | — | — |
-| `review`, `review-bugbot`, `review-security` | review PR/diff (se code-review instalado) | — | — |
-
-> Skills `review-*` exigem `npm run setup:code-review`. Sem o pacote, review cai em tier 2 + `eslint`, `prettier`, `testing` + stack.
 
 ## Rules glob (no projeto)
 
@@ -84,7 +79,6 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `python-stack.mdc` | `*.{py,pyi}` |
 | `arquitetura.mdc` | `*.{ts,tsx,js,php,py}` |
 | `testing.mdc` | `*.{test,spec}.*`, `tests/**` |
-| `hubspot.mdc` | `hsproject.json`, `*.fields.json`, `hubspot.config.yml` |
 | `devops.mdc` | `Dockerfile*`, `docker-compose*.yml`, `.github/workflows/*.yml`, `.gitlab-ci.yml`, `*.tf`, `*.sh`, `nginx*.conf`, `*.service` |
 | `okf.mdc` | `okf/**/*.md`, `.okf/**/*.md`, `okf-bundle/**/*.md` |
 

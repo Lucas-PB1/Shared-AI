@@ -1,6 +1,6 @@
-# Merge idempotente do sessionStart hostdime-ia em ~/.cursor/hooks.json
+# Merge idempotente do sessionStart shared-ai em ~/.cursor/hooks.json
 
-function Get-HostdimeTsx {
+function Get-SharedAiTsx {
     param([string]$Root)
     if ($Root) {
         $tsx = Join-Path $Root 'node_modules/.bin/tsx.cmd'
@@ -13,7 +13,7 @@ function Get-HostdimeTsx {
     return $null
 }
 
-function Merge-HostdimeHooksJson {
+function Merge-SharedAiHooksJson {
     param([Parameter(Mandatory)][string]$CursorPkg)
 
     $cursorDir = if ($env:CURSOR_USER_DIR) { $env:CURSOR_USER_DIR } else { Join-Path $env:USERPROFILE '.cursor' }
@@ -26,17 +26,17 @@ function Merge-HostdimeHooksJson {
         return $false
     }
 
-    $root = $env:HOSTDIME_IA_ROOT
+    $root = $env:SHARED_AI_ROOT
     if (-not $root) {
-        $envFile = Join-Path $env:USERPROFILE '.cursor/hostdime-ia.env'
+        $envFile = Join-Path $env:USERPROFILE '.cursor/shared-ai.env'
         if (Test-Path -LiteralPath $envFile) {
             Get-Content -LiteralPath $envFile | ForEach-Object {
-                if ($_ -match '^HOSTDIME_IA_ROOT=(.+)$') { $root = $Matches[1].Trim('"') }
+                if ($_ -match '^SHARED_AI_ROOT=(.+)$') { $root = $Matches[1].Trim('"') }
             }
         }
     }
 
-    $tsx = Get-HostdimeTsx -Root $root
+    $tsx = Get-SharedAiTsx -Root $root
     if (-not $tsx) {
         Write-Error 'tsx não encontrado (npm install na raiz do monorepo)'
         return $false
@@ -57,7 +57,7 @@ function Merge-HostdimeHooksJson {
     switch ($action) {
         'created' { Write-Host '→ hooks.json criado (sessionStart → ensure-project-cursor)' }
         'merged'  { Write-Host '→ hooks.json atualizado (sessionStart → ensure-project-cursor, hooks existentes preservados)' }
-        'ok'      { Write-Host '→ hooks.json ok (sessionStart hostdime-ia já presente)' }
+        'ok'      { Write-Host '→ hooks.json ok (sessionStart shared-ai já presente)' }
         default {
             Write-Error "hooks.json — resposta inesperada do merge: $action"
             return $false

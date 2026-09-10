@@ -1,9 +1,9 @@
 import { createClient } from '@/shared/lib/supabase/server';
 
-import type { Profile } from '@/entities/project';
+import type { Profile } from './types';
 
 const PROFILE_SELECT =
-  'id, display_name, email, created_at, is_admin, avatar_url';
+  'id, display_name, email, created_at, avatar_url';
 
 export async function getCurrentProfile(): Promise<Profile | null> {
   const supabase = await createClient();
@@ -27,7 +27,6 @@ export async function getCurrentProfile(): Promise<Profile | null> {
         (user.user_metadata?.display_name as string | undefined) ?? null,
       email: user.email ?? null,
       created_at: user.created_at,
-      is_admin: false,
       avatar_url:
         (user.user_metadata?.avatar_url as string | undefined) ?? null,
     };
@@ -41,17 +40,8 @@ export async function getCurrentProfile(): Promise<Profile | null> {
       (user.user_metadata?.display_name as string | undefined) ?? null,
     email: user.email ?? null,
     created_at: user.created_at,
-    is_admin: false,
     avatar_url: null,
   };
-}
-
-export async function requireAppAdmin(): Promise<Profile> {
-  const profile = await getCurrentProfile();
-  if (!profile?.is_admin) {
-    throw new Error('Apenas admin pode executar esta ação');
-  }
-  return profile;
 }
 
 export async function updateDisplayName(displayName: string): Promise<void> {

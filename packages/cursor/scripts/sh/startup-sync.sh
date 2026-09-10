@@ -3,9 +3,9 @@
 set -euo pipefail
 
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
-STATE_FILE="$CURSOR_DIR/hostdime-ia/boot-sync.env"
-ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
-LOG_FILE="$CURSOR_DIR/hostdime-ia/boot-sync.log"
+STATE_FILE="$CURSOR_DIR/shared-ai/boot-sync.env"
+ENV_FILE="$CURSOR_DIR/shared-ai.env"
+LOG_FILE="$CURSOR_DIR/shared-ai/boot-sync.log"
 
 log() {
   mkdir -p "$(dirname "$LOG_FILE")"
@@ -28,13 +28,13 @@ if [[ "${BOOT_SYNC:-off}" != "on" ]]; then
 fi
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  log "hostdime-ia.env ausente — abortando"
+  log "shared-ai.env ausente — abortando"
   exit 0
 fi
 
 # shellcheck disable=SC1090
 source "$ENV_FILE"
-ROOT="${HOSTDIME_IA_ROOT:-}"
+ROOT="${SHARED_AI_ROOT:-}"
 
 if [[ -z "$ROOT" || ! -d "$ROOT" ]]; then
   log "clone ausente: ${ROOT:-?}"

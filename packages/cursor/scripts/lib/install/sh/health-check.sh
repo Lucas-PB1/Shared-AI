@@ -4,10 +4,6 @@
 # Source: source .../health-check.sh
 #         health_check_project /caminho/repo
 
-health_count_review_inbox() {
-  echo 0
-}
-
 health_detect_profile_label() {
   local project="$1"
   local f base
@@ -64,7 +60,7 @@ health_git_summary() {
 health_check_project() {
   local project="$1"
   local issues=0
-  local broken inbox profile git_line branch dirty behind
+  local broken profile git_line branch dirty behind
 
   echo "── $(basename "$project")"
   echo "   $project"
@@ -100,14 +96,6 @@ health_check_project() {
       echo "   ⚠ $behind commit(s) atrás do upstream"
       issues=$((issues + 1))
     fi
-  fi
-
-  inbox="$(health_count_review_inbox "$project")"
-  if [[ "$inbox" -gt 0 ]]; then
-    echo "   ⚠ review inbox: $inbox item(ns) pendente(s)"
-    issues=$((issues + 1))
-  else
-    echo "   ✓ review inbox vazia"
   fi
 
   return "$issues"

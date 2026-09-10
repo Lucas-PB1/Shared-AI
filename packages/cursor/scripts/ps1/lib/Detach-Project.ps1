@@ -1,11 +1,11 @@
-# Remove symlinks gerenciados pelo hostdime-ia no projeto (preserva arquivos reais).
+# Remove symlinks gerenciados pelo shared-ai no projeto (preserva arquivos reais).
 
-function Remove-HostdimeFromProject {
+function Remove-SharedAiFromProject {
     param([Parameter(Mandatory)][string]$Project)
 
-    $root = $env:HOSTDIME_IA_ROOT
+    $root = $env:SHARED_AI_ROOT
     if (-not $root -or -not (Test-Path $root)) {
-        Write-Error 'HOSTDIME_IA_ROOT não configurado'
+        Write-Error 'SHARED_AI_ROOT não configurado'
         return
     }
 

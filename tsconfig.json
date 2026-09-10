@@ -27,5 +27,5 @@
     "middleware.ts",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "vendor", "packages", "apps", "tests"]
+    "exclude": ["node_modules", "vendor", "apps", "tests"]
 }

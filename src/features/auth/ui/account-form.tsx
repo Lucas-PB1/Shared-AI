@@ -9,7 +9,6 @@ import {
   savePassword,
   type AccountActionState,
 } from '@/features/auth/ui/account-form-actions';
-import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import {
@@ -52,13 +51,13 @@ function Avatar({
       <img
         src={src}
         alt=""
-        className={`${dim} rounded-full border border-hd-border object-cover`}
+        className={`${dim} rounded-full border border-sa-border object-cover`}
       />
     );
   }
   return (
     <div
-      className={`flex ${dim} items-center justify-center rounded-full bg-hd-secondary font-bold text-white`}
+      className={`flex ${dim} items-center justify-center rounded-full bg-sa-secondary font-bold text-white`}
       aria-hidden
     >
       {initials || 'U'}
@@ -76,12 +75,12 @@ function DetailRow({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hd-border/70 py-3 first:border-t-0 first:pt-0 last:pb-0">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-sa-border/70 py-3 first:border-t-0 first:pt-0 last:pb-0">
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-hd-muted">
+        <p className="text-xs font-semibold uppercase tracking-wide text-sa-muted">
           {label}
         </p>
-        <div className="mt-0.5 truncate text-sm font-medium text-hd-ink">
+        <div className="mt-0.5 truncate text-sm font-medium text-sa-ink">
           {value}
         </div>
       </div>
@@ -94,13 +93,11 @@ export function AccountForm({
   displayName,
   email,
   avatarUrl,
-  isAdmin,
   createdAt,
 }: {
   displayName: string | null;
   email: string | null;
   avatarUrl: string | null;
-  isAdmin?: boolean;
   createdAt?: string | null;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -161,14 +158,13 @@ export function AccountForm({
           <Avatar src={avatarUrl} initials={initials} size="lg" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="font-display text-xl font-semibold text-hd-ink">
+              <h2 className="font-display text-xl font-semibold text-sa-ink">
                 {displayName || 'Sem nome'}
               </h2>
-              {isAdmin ? <Badge>Admin</Badge> : null}
             </div>
-            <p className="truncate text-sm text-hd-muted">{email}</p>
+            <p className="truncate text-sm text-sa-muted">{email}</p>
             {memberSince ? (
-              <p className="mt-1 text-xs text-hd-muted">Desde {memberSince}</p>
+              <p className="mt-1 text-xs text-sa-muted">Desde {memberSince}</p>
             ) : null}
           </div>
         </div>
@@ -281,7 +277,7 @@ export function AccountForm({
           <DialogHeader>
             <DialogTitle>Editar perfil</DialogTitle>
             <DialogDescription>
-              Nome usado no dashboard e nos convites.
+              Nome usado no dashboard.
             </DialogDescription>
           </DialogHeader>
           <form action={profileAction}>

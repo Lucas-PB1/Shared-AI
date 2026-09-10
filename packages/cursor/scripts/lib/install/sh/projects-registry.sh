@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
-# Registro de projetos ligados ao hostdime-ia
+# Registro de projetos ligados ao shared-ai
 
-REGISTRY_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia"
+REGISTRY_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai"
 REGISTRY_FILE="$REGISTRY_DIR/projects.json"
 
 # shellcheck disable=SC1091
-source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/shared-ai-env.sh"
 
 _registry_ts() {
   local root
-  root="$(hostdime_resolve_root 2>/dev/null || true)"
+  root="$(shared_ai_resolve_root 2>/dev/null || true)"
   if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/install/ts/projects-registry.ts" ]]; then
     printf '%s/packages/cursor/scripts/lib/install/ts/projects-registry.ts' "$root"
     return 0
   fi
-  echo "Erro: projects-registry.ts não encontrado (HOSTDIME_IA_ROOT?)" >&2
+  echo "Erro: projects-registry.ts não encontrado (SHARED_AI_ROOT?)" >&2
   return 1
 }
 
 _registry_run() {
   local ts
   ts="$(_registry_ts)" || return 1
-  hostdime_tsx "$ts" "$@"
+  shared_ai_tsx "$ts" "$@"
 }
 
 _registry_ensure() {

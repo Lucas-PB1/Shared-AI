@@ -12,7 +12,27 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { detectProfile } from '../../profiles/ts/detect-stack.js';
-import { parseDotenvText } from '../../../../../code-review/src/shared/index.js';
+
+function parseDotenvText(raw: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const line of raw.split(/\r?\n/)) {
+    const stripped = line.trim();
+    if (!stripped || stripped.startsWith('#') || !stripped.includes('=')) {
+      continue;
+    }
+    const eq = stripped.indexOf('=');
+    const key = stripped.slice(0, eq).trim();
+    let val = stripped.slice(eq + 1).trim();
+    if (
+      (val.startsWith("'") && val.endsWith("'")) ||
+      (val.startsWith('"') && val.endsWith('"'))
+    ) {
+      val = val.slice(1, -1);
+    }
+    if (key) out[key] = val;
+  }
+  return out;
+}
 
 interface MachineReport {
   ok: boolean;
@@ -27,7 +47,6 @@ interface ProjectReport {
   issues: string[];
   profile: string;
   git_dirty: number;
-  inbox: number;
   suggested_profile?: string;
 }
 
@@ -49,7 +68,6 @@ function runHealthProject(project: string): ProjectReport {
     issues: [],
     profile: '—',
     git_dirty: 0,
-    inbox: 0,
   };
 
   if (!existsSync(project) || !statSync(project).isDirectory()) {
@@ -94,9 +112,6 @@ function runHealthProject(project: string): ProjectReport {
   } else if (existsSync(join(project, '.cursor/SKILLS-ROUTING.md'))) {
     item.profile = 'custom';
   }
-
-  // Inbox legada removida — memória no store
-  item.inbox = 0;
 
   const gitCheck = spawnSync('git', ['-C', project, 'rev-parse', '--is-inside-work-tree'], {
     encoding: 'utf-8',
@@ -148,12 +163,12 @@ function main(): number {
 
   if (existsSync(envFile)) {
     const env = parseEnvFile(envFile);
-    const root = env.HOSTDIME_IA_ROOT ?? '';
+    const root = env.SHARED_AI_ROOT ?? '';
     const verFile = root ? join(root, 'VERSION') : '';
     if (verFile && existsSync(verFile)) {
       result.machine.version_clone = readFileSync(verFile, 'utf-8').trim();
     }
-    result.machine.version_installed = env.HOSTDIME_IA_VERSION ?? null;
+    result.machine.version_installed = env.SHARED_AI_VERSION ?? null;
     if (result.machine.version_clone !== result.machine.version_installed) {
       result.machine.issues.push('version_mismatch');
       result.machine.ok = false;

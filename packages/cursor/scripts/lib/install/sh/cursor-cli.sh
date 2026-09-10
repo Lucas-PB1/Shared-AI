@@ -4,7 +4,7 @@
 # CLI: npm run cursor-cli -- [install|configure|status|login]
 
 cursor_cli_state_file() {
-  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-cursor-cli.state"
+  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai-cursor-cli.state"
 }
 
 cursor_cli_config_file() {
@@ -24,20 +24,20 @@ cursor_cli_resolve_lib() {
     printf '%s/lib/install/sh/cursor-cli.sh' "$script_dir"
     return 0
   fi
-  if [[ -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-cursor-cli.sh" ]]; then
-    printf '%s/hostdime-cursor-cli.sh' "${CURSOR_USER_DIR:-$HOME/.cursor}"
+  if [[ -f "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai-cursor-cli.sh" ]]; then
+    printf '%s/shared-ai-cursor-cli.sh' "${CURSOR_USER_DIR:-$HOME/.cursor}"
     return 0
   fi
-  if [[ -n "${HOSTDIME_IA_ROOT:-}" && -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/cursor-cli.sh" ]]; then
-    printf '%s/packages/cursor/scripts/lib/install/sh/cursor-cli.sh' "$HOSTDIME_IA_ROOT"
+  if [[ -n "${SHARED_AI_ROOT:-}" && -f "$SHARED_AI_ROOT/packages/cursor/scripts/lib/install/sh/cursor-cli.sh" ]]; then
+    printf '%s/packages/cursor/scripts/lib/install/sh/cursor-cli.sh' "$SHARED_AI_ROOT"
     return 0
   fi
-  local env_file="${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
+  local env_file="${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env"
   if [[ -f "$env_file" ]]; then
     # shellcheck disable=SC1090
     source "$env_file"
-    if [[ -n "${HOSTDIME_IA_ROOT:-}" && -f "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/install/sh/cursor-cli.sh" ]]; then
-      printf '%s/packages/cursor/scripts/lib/install/sh/cursor-cli.sh' "$HOSTDIME_IA_ROOT"
+    if [[ -n "${SHARED_AI_ROOT:-}" && -f "$SHARED_AI_ROOT/packages/cursor/scripts/lib/install/sh/cursor-cli.sh" ]]; then
+      printf '%s/packages/cursor/scripts/lib/install/sh/cursor-cli.sh' "$SHARED_AI_ROOT"
       return 0
     fi
   fi
@@ -100,7 +100,7 @@ cursor_cli_ensure_login() {
 }
 
 cursor_cli_ensure_path_profile() {
-  local marker="# hostdime-ia cursor-cli PATH"
+  local marker="# shared-ai cursor-cli PATH"
   local line='export PATH="$HOME/.local/bin:$HOME/.cursor/bin:$PATH"'
   local rc
   for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
@@ -132,13 +132,13 @@ cursor_cli_write_status() {
 }
 
 cursor_cli_template_file() {
-  local root="${HOSTDIME_IA_ROOT:-}"
+  local root="${SHARED_AI_ROOT:-}"
   if [[ -z "$root" ]]; then
-    local env_file="${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
+    local env_file="${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env"
     if [[ -f "$env_file" ]]; then
       # shellcheck disable=SC1090
       source "$env_file"
-      root="${HOSTDIME_IA_ROOT:-}"
+      root="${SHARED_AI_ROOT:-}"
     fi
   fi
   if [[ -n "$root" && -f "$root/packages/cursor/templates/cli-config.auto.json" ]]; then
@@ -149,11 +149,11 @@ cursor_cli_template_file() {
 }
 
 cursor_cli_merge_ts() {
-  local root="${HOSTDIME_IA_ROOT:-}"
+  local root="${SHARED_AI_ROOT:-}"
   if [[ -z "$root" ]]; then
-    local env_file="${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
+    local env_file="${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env"
     [[ -f "$env_file" ]] && source "$env_file"
-    root="${HOSTDIME_IA_ROOT:-}"
+    root="${SHARED_AI_ROOT:-}"
   fi
   if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/install/ts/merge-cursor-cli-config.ts" ]]; then
     printf '%s/packages/cursor/scripts/lib/install/ts/merge-cursor-cli-config.ts' "$root"
@@ -166,7 +166,7 @@ cursor_cli_configure_auto() {
   local template ts config result
   config="$(cursor_cli_config_file)"
   template="$(cursor_cli_template_file)" || {
-    echo "Erro: template cli-config.auto.json não encontrado (HOSTDIME_IA_ROOT?)" >&2
+    echo "Erro: template cli-config.auto.json não encontrado (SHARED_AI_ROOT?)" >&2
     return 1
   }
   ts="$(cursor_cli_merge_ts)" || {
@@ -174,8 +174,8 @@ cursor_cli_configure_auto() {
     return 1
   }
   # shellcheck disable=SC1091
-  source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
-  result="$(hostdime_tsx "$ts" "$config" "$template")"
+  source "$(dirname "${BASH_SOURCE[0]}")/shared-ai-env.sh"
+  result="$(shared_ai_tsx "$ts" "$config" "$template")"
   cursor_cli_write_status "configured" "auto"
   printf '%s\n' "$result"
 }
@@ -237,7 +237,7 @@ try {
   else
     echo "  cli-config: ausente ($config)"
   fi
-  echo "  hostdime state: $(cursor_cli_read_status || echo unset)"
+  echo "  shared-ai state: $(cursor_cli_read_status || echo unset)"
 }
 
 cursor_cli_login() {
@@ -266,7 +266,7 @@ cursor_cli_install_and_configure() {
   echo ""
   echo "Pronto: modo auto (Run Everything) = approvalMode unrestricted"
   echo "Uso:     agent              # de qualquer pasta (PATH no shell)"
-  echo "         npm run agent -- \"prompt\"   # com relink hostdime"
+  echo "         npm run agent -- \"prompt\"   # com relink shared-ai"
 }
 
 cursor_cli_find_project_root() {
@@ -290,7 +290,7 @@ cursor_cli_prepare_project() {
   if [[ -x "$link_script" ]]; then
     "$link_script" --quiet "$root" 2>/dev/null || true
   fi
-  registry="${HOME}/.cursor/hostdime-projects-registry.sh"
+  registry="${HOME}/.cursor/shared-ai-projects-registry.sh"
   if [[ -x "$registry" ]]; then
     # shellcheck disable=SC1091
     source "$registry"
@@ -301,7 +301,7 @@ cursor_cli_prepare_project() {
 cursor_cli_run_agent() {
   local dry_run=0
   local project=""
-  local hostdime_auto=1
+  local shared_ai_auto=1
   local -a agent_args=()
   local arg
 
@@ -313,7 +313,7 @@ cursor_cli_run_agent() {
         shift
         ;;
       --no-auto)
-        hostdime_auto=0
+        shared_ai_auto=0
         shift
         ;;
       --project=*)
@@ -345,16 +345,16 @@ cursor_cli_run_agent() {
     return 1
   fi
 
-  local -a hostdime_defaults=()
-  if [[ "$hostdime_auto" -eq 1 ]]; then
-    hostdime_defaults=(--approve-mcps)
+  local -a shared_ai_defaults=()
+  if [[ "$shared_ai_auto" -eq 1 ]]; then
+    shared_ai_defaults=(--approve-mcps)
     local has_print=0 has_force=0
     for a in "${agent_args[@]}"; do
       [[ "$a" == "-p" || "$a" == "--print" ]] && has_print=1
       [[ "$a" == "-f" || "$a" == "--force" || "$a" == "--yolo" ]] && has_force=1
     done
     if [[ "$has_print" -eq 1 && "$has_force" -eq 0 ]]; then
-      hostdime_defaults+=(--force)
+      shared_ai_defaults+=(--force)
     fi
   fi
 
@@ -365,7 +365,7 @@ cursor_cli_run_agent() {
   if [[ "$dry_run" -eq 1 ]]; then
     echo "project: $root"
     echo "agent: ${agent_bin:-não instalado}"
-    echo "defaults: ${hostdime_defaults[*]-"(nenhum)"}"
+    echo "defaults: ${shared_ai_defaults[*]-"(nenhum)"}"
     echo "args: ${agent_args[*]-"(interativo)"}"
     return 0
   fi
@@ -377,5 +377,5 @@ cursor_cli_run_agent() {
 
   cursor_cli_prepare_project "$root"
   cd "$root"
-  exec "$agent_bin" "${hostdime_defaults[@]}" "${agent_args[@]}"
+  exec "$agent_bin" "${shared_ai_defaults[@]}" "${agent_args[@]}"
 }

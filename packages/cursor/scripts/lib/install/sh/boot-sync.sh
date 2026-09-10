@@ -5,19 +5,19 @@
 # CLI:    npm run boot-sync -- on|off|status|run
 
 boot_sync_state_file() {
-  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia/boot-sync.env"
+  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai/boot-sync.env"
 }
 
 boot_sync_log_file() {
-  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia/boot-sync.log"
+  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai/boot-sync.log"
 }
 
 boot_sync_startup_script() {
-  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia-startup-sync.sh"
+  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai-startup-sync.sh"
 }
 
 boot_sync_ensure_state_dir() {
-  mkdir -p "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia"
+  mkdir -p "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai"
 }
 
 boot_sync_read_state() {
@@ -78,14 +78,14 @@ boot_sync_log() {
 
 boot_sync_install_startup_script() {
   local root src dest
-  root="${HOSTDIME_IA_ROOT:-}"
+  root="${SHARED_AI_ROOT:-}"
   if [[ -z "$root" || ! -d "$root" ]]; then
     # shellcheck disable=SC1091
-    source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
-    root="$(hostdime_resolve_root 2>/dev/null || true)"
+    source "$(dirname "${BASH_SOURCE[0]}")/shared-ai-env.sh"
+    root="$(shared_ai_resolve_root 2>/dev/null || true)"
   fi
   [[ -n "$root" && -d "$root" ]] || {
-    echo "Erro: HOSTDIME_IA_ROOT não configurado" >&2
+    echo "Erro: SHARED_AI_ROOT não configurado" >&2
     return 1
   }
   src="$root/packages/cursor/scripts/sh/startup-sync.sh"
@@ -100,10 +100,10 @@ boot_sync_install_startup_script() {
 
 boot_sync_uninstall_systemd() {
   if command -v systemctl >/dev/null 2>&1; then
-    systemctl --user disable hostdime-ia-boot-sync.service 2>/dev/null || true
-    systemctl --user stop hostdime-ia-boot-sync.service 2>/dev/null || true
+    systemctl --user disable shared-ai-boot-sync.service 2>/dev/null || true
+    systemctl --user stop shared-ai-boot-sync.service 2>/dev/null || true
   fi
-  rm -f "$HOME/.config/systemd/user/hostdime-ia-boot-sync.service"
+  rm -f "$HOME/.config/systemd/user/shared-ai-boot-sync.service"
   systemctl --user daemon-reload 2>/dev/null || true
 }
 
@@ -111,11 +111,11 @@ boot_sync_install_systemd() {
   local script unit_dir unit
   script="$(boot_sync_startup_script)"
   unit_dir="$HOME/.config/systemd/user"
-  unit="$unit_dir/hostdime-ia-boot-sync.service"
+  unit="$unit_dir/shared-ai-boot-sync.service"
   mkdir -p "$unit_dir"
   cat >"$unit" <<EOF
 [Unit]
-Description=HostDime IA — git pull e sync ao iniciar sessão
+Description=Shared AI — git pull e sync ao iniciar sessão
 After=network-online.target
 Wants=network-online.target
 
@@ -129,24 +129,24 @@ Environment=PATH=$PATH
 WantedBy=default.target
 EOF
   systemctl --user daemon-reload
-  systemctl --user enable hostdime-ia-boot-sync.service
+  systemctl --user enable shared-ai-boot-sync.service
 }
 
 boot_sync_uninstall_desktop() {
-  rm -f "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/hostdime-ia-boot-sync.desktop"
+  rm -f "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/shared-ai-boot-sync.desktop"
 }
 
 boot_sync_install_desktop() {
   local script autostart_dir desktop
   script="$(boot_sync_startup_script)"
   autostart_dir="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
-  desktop="$autostart_dir/hostdime-ia-boot-sync.desktop"
+  desktop="$autostart_dir/shared-ai-boot-sync.desktop"
   mkdir -p "$autostart_dir"
   cat >"$desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=HostDime IA Boot Sync
-Comment=git pull e sync do hostdime-ia ao iniciar sessão
+Name=Shared AI Boot Sync
+Comment=git pull e sync do shared-ai ao iniciar sessão
 Exec=$script
 Hidden=true
 NoDisplay=true
@@ -181,8 +181,8 @@ boot_sync_uninstall_hook() {
 
 boot_sync_hook_kind() {
   local desktop unit
-  desktop="${XDG_CONFIG_HOME:-$HOME/.config}/autostart/hostdime-ia-boot-sync.desktop"
-  unit="$HOME/.config/systemd/user/hostdime-ia-boot-sync.service"
+  desktop="${XDG_CONFIG_HOME:-$HOME/.config}/autostart/shared-ai-boot-sync.desktop"
+  unit="$HOME/.config/systemd/user/shared-ai-boot-sync.service"
 
   [[ -f "$unit" ]] && { printf '%s' "systemd user"; return; }
   [[ -f "$desktop" ]] && { printf '%s' "autostart desktop"; return; }
@@ -223,11 +223,11 @@ boot_sync_run() {
     exec "$script"
   fi
   # fallback: repo copy (antes do primeiro enable)
-  local root="${HOSTDIME_IA_ROOT:-}"
+  local root="${SHARED_AI_ROOT:-}"
   if [[ -z "$root" ]]; then
     # shellcheck disable=SC1091
-    source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
-    root="$(hostdime_resolve_root 2>/dev/null || true)"
+    source "$(dirname "${BASH_SOURCE[0]}")/shared-ai-env.sh"
+    root="$(shared_ai_resolve_root 2>/dev/null || true)"
   fi
   [[ -n "$root" && -x "$root/packages/cursor/scripts/sh/startup-sync.sh" ]] || {
     echo "Erro: script de startup não encontrado" >&2
@@ -237,12 +237,12 @@ boot_sync_run() {
 }
 
 boot_sync_prompt_if_needed() {
-  [[ "${HOSTDIME_BOOT_SYNC_PROMPT:-}" == "skip" ]] && return 0
+  [[ "${SHARED_AI_BOOT_SYNC_PROMPT:-}" == "skip" ]] && return 0
   boot_sync_was_asked && return 0
   [[ -t 0 ]] || return 0
 
   echo ""
-  echo "Sincronizar HostDime IA automaticamente ao iniciar o computador?"
+  echo "Sincronizar Shared AI automaticamente ao iniciar o computador?"
   echo "  (git pull + npm run sync no clone — pode ser desligado com: npm run boot-sync -- off)"
   local ans
   read -r -p "[s/N] " ans

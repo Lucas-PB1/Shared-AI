@@ -53,7 +53,7 @@ export function SignupForm() {
           />
         </div>
         {state.error ? (
-          <p className="text-sm text-hd-danger" role="alert">
+          <p className="text-sm text-sa-danger" role="alert">
             {state.error}
           </p>
         ) : null}
@@ -62,7 +62,7 @@ export function SignupForm() {
         </Button>
       </form>
 
-      <p className="mt-4 text-sm text-hd-muted">
+      <p className="mt-4 text-sm text-sa-muted">
         Já tem conta?{' '}
         <Link href="/login" className="font-semibold">
           Entrar

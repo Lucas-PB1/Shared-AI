@@ -65,11 +65,11 @@ if [[ ! -d "$PROJECT" ]]; then
 fi
 
 PROJECT="$(cd "$PROJECT" && pwd)"
-HOSTDIME_IA_ROOT="${HOSTDIME_IA_ROOT:-$MONOREPO_ROOT}"
+SHARED_AI_ROOT="${SHARED_AI_ROOT:-$MONOREPO_ROOT}"
 
 HOME_ABS="$(cd "$HOME" && pwd -P)"
 if [[ "$PROJECT" == "$HOME_ABS" || "$PROJECT" == "$(cd "$HOME/.cursor" && pwd -P)" ]]; then
-  echo "Erro: não use o home (~) nem ~/.cursor como projeto do hostdime-ia." >&2
+  echo "Erro: não use o home (~) nem ~/.cursor como projeto do shared-ai." >&2
   exit 1
 fi
 
@@ -92,7 +92,7 @@ fi
 echo ""
 echo "Projeto preparado: $PROJECT"
 echo "  .cursor/rules/    → rules do projeto (*-project.mdc); orquestrador em ~/.cursor/rules/"
-echo "  .cursor/commands/ → commands do projeto (opcional); hostdime em ~/.cursor/commands/"
-echo "  memória → store Supabase"echo "  .cursor/skills/   → overrides do projeto"
+echo "  .cursor/commands/ → commands do projeto (opcional); shared-ai em ~/.cursor/commands/"
+echo "  .cursor/skills/   → overrides do projeto"
 [[ -n "$PROFILE" ]] && echo "  perfil            → $PROFILE"
 echo "  .gitignore        → artefatos gerenciados (se .cursor/ não estiver ignorado)"

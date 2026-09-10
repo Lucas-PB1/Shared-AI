@@ -10,11 +10,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-hd-primary text-white shadow-hd-accent hover:bg-hd-primary-hover',
+          'bg-sa-primary text-white shadow-sa-accent hover:bg-sa-primary-hover',
         secondary:
-          'border border-hd-border bg-hd-canvas text-hd-text-strong hover:border-hd-primary/40 hover:bg-hd-primary-soft',
-        ghost: 'text-hd-text-strong hover:bg-hd-primary-soft',
-        danger: 'bg-hd-danger text-white hover:bg-hd-danger/90',
+          'border border-sa-border bg-sa-canvas text-sa-text-strong hover:border-sa-primary/40 hover:bg-sa-primary-soft',
+        ghost: 'text-sa-text-strong hover:bg-sa-primary-soft',
+        danger: 'bg-sa-danger text-white hover:bg-sa-danger/90',
       },
       size: {
         sm: 'h-8 px-3.5',

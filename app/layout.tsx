@@ -1,25 +1,24 @@
 import type { Metadata } from 'next';
 import { Nunito, Nunito_Sans } from 'next/font/google';
-import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from 'sonner';
 
 import './globals.css';
 
-const hostdimeDisplay = Nunito({
+const brandDisplay = Nunito({
   subsets: ['latin'],
-  variable: '--font-hostdime-display',
+  variable: '--font-brand-display',
   weight: ['300', '600', '700', '800'],
 });
 
-const hostdimeBody = Nunito_Sans({
+const brandBody = Nunito_Sans({
   subsets: ['latin'],
-  variable: '--font-hostdime-body',
+  variable: '--font-brand-body',
   weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
-  title: 'HostDime Review',
-  description: 'Dashboard do review store HostDime',
+  title: 'Shared AI',
+  description: 'Repositórios ligados neste computador',
 };
 
 export default function RootLayout({
@@ -29,11 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${hostdimeDisplay.variable} ${hostdimeBody.variable}`}>
-        <NuqsAdapter>
-          {children}
-          <Toaster richColors position="top-right" />
-        </NuqsAdapter>
+      <body className={`${brandDisplay.variable} ${brandBody.variable}`}>
+        {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

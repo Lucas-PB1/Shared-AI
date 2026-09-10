@@ -53,7 +53,7 @@ projeto/
 └── <historyFile>                    # ex. docs/domain/log.md
 ```
 
-Templates do pacote hostdime-ia (`$HOSTDIME_IA_ROOT` ou clone):
+Templates do pacote shared-ai (`$SHARED_AI_ROOT` ou clone):
 
 | Artefato | Origem |
 | --- | --- |
@@ -119,7 +119,7 @@ A partir de `packages/cursor/templates/history-watch-rule.mdc`, substituir:
 2. Merge idempotente em `.cursor/hooks.json`:
 
 ```bash
-"$HOSTDIME_IA_ROOT/node_modules/.bin/tsx" "$HOSTDIME_IA_ROOT/packages/cursor/scripts/lib/history/merge-historico-hooks.ts" \
+"$SHARED_AI_ROOT/node_modules/.bin/tsx" "$SHARED_AI_ROOT/packages/cursor/scripts/lib/history/merge-historico-hooks.ts" \
   "$PROJECT/.cursor/hooks.json"
 ```
 

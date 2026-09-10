@@ -9,29 +9,29 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $matcher = Join-Path $scriptDir 'history-watch-match.ts'
 
 if (-not (Test-Path -LiteralPath $matcher)) {
-    $hostdimeRoot = $env:HOSTDIME_IA_ROOT
-    if (-not $hostdimeRoot) {
-        $envFile = Join-Path $env:USERPROFILE '.cursor/hostdime-ia.env'
+    $sharedAiRoot = $env:SHARED_AI_ROOT
+    if (-not $sharedAiRoot) {
+        $envFile = Join-Path $env:USERPROFILE '.cursor/shared-ai.env'
         if (Test-Path -LiteralPath $envFile) {
             Get-Content -LiteralPath $envFile | ForEach-Object {
-                if ($_ -match '^HOSTDIME_IA_ROOT=(.+)$') { $hostdimeRoot = $Matches[1].Trim('"') }
+                if ($_ -match '^SHARED_AI_ROOT=(.+)$') { $sharedAiRoot = $Matches[1].Trim('"') }
             }
         }
     }
-    if ($hostdimeRoot) {
-        $matcher = Join-Path $hostdimeRoot 'packages/cursor/scripts/lib/history/history-watch-match.ts'
+    if ($sharedAiRoot) {
+        $matcher = Join-Path $sharedAiRoot 'packages/cursor/scripts/lib/history/history-watch-match.ts'
     }
 }
 
 if (-not (Test-Path -LiteralPath $matcher)) { exit 0 }
 
-function Get-HostdimeTsx {
-    $root = $env:HOSTDIME_IA_ROOT
+function Get-SharedAiTsx {
+    $root = $env:SHARED_AI_ROOT
     if (-not $root) {
-        $envFile = Join-Path $env:USERPROFILE '.cursor/hostdime-ia.env'
+        $envFile = Join-Path $env:USERPROFILE '.cursor/shared-ai.env'
         if (Test-Path -LiteralPath $envFile) {
             Get-Content -LiteralPath $envFile | ForEach-Object {
-                if ($_ -match '^HOSTDIME_IA_ROOT=(.+)$') { $root = $Matches[1].Trim('"') }
+                if ($_ -match '^SHARED_AI_ROOT=(.+)$') { $root = $Matches[1].Trim('"') }
             }
         }
     }
@@ -46,7 +46,7 @@ function Get-HostdimeTsx {
     throw 'tsx não encontrado (npm install na raiz do monorepo)'
 }
 
-$tsx = Get-HostdimeTsx
+$tsx = Get-SharedAiTsx
 $inputJson = [Console]::In.ReadToEnd()
 if ($inputJson) {
     $inputJson | & $tsx $matcher stop

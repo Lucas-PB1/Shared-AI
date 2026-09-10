@@ -5,7 +5,6 @@ Cada fatia agrupa por linguagem quando há mais de um tipo de arquivo:
 | Fatia | Layout |
 | --- | --- |
 | `install/` | `sh/`, `ts/`, `conf/` |
-| `hubspot/` | `sh/`, `ts/` |
 | `profiles/` | `sh/`, `ts/` |
 | `sync-inbox/` | `sh/`, `ts/` |
 | `history/` | só TypeScript (flat) |

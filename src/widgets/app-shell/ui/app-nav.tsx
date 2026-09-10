@@ -21,21 +21,14 @@ const links = [
     label: 'Conta',
     match: (path: string) => path.startsWith('/account'),
   },
-  {
-    href: '/settings',
-    label: 'Config',
-    match: (path: string) => path.startsWith('/settings'),
-    adminOnly: true,
-  },
 ] as const;
 
-export function AppNav({ isAdmin = false }: { isAdmin?: boolean }) {
+export function AppNav() {
   const pathname = usePathname();
 
   return (
     <nav className="hidden items-center gap-1 text-sm font-semibold sm:flex">
       {links.map((link) => {
-        if ('adminOnly' in link && link.adminOnly && !isAdmin) return null;
         const active = link.match(pathname);
         return (
           <Link
@@ -45,8 +38,8 @@ export function AppNav({ isAdmin = false }: { isAdmin?: boolean }) {
             className={cn(
               'rounded-full px-3 py-1.5 no-underline transition-colors',
               active
-                ? 'bg-hd-primary-soft text-hd-primary'
-                : 'text-hd-text-strong hover:bg-hd-primary-soft hover:text-hd-primary',
+                ? 'bg-sa-primary-soft text-sa-primary'
+                : 'text-sa-text-strong hover:bg-sa-primary-soft hover:text-sa-primary',
             )}
           >
             {link.label}

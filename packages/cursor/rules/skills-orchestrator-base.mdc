@@ -59,7 +59,7 @@ Referências (`references/*.md`): no mesmo diretório da skill encontrada.
 | Tipo | Onde vive |
 | --- | --- |
 | Orquestrador genérico | `~/.cursor/rules/skills-orchestrator-*.mdc` (global; Cursor 2.1+) |
-| Rule do projeto | arquivo real em `.cursor/rules/` (ex.: `hdbr-hubspot-project.mdc`, history-watch) |
+| Rule do projeto | arquivo real em `.cursor/rules/` (ex.: `laravel-project.mdc`, history-watch) |
 
 Instalar orquestrador e commands no usuário: `npm run setup:skills` / `npm run sync`.  
-Review e rules do projeto: `~/.cursor/link-project.sh /caminho/do/repo` (não espelha orquestrador nem commands).
+Link do projeto: `~/.cursor/link-project.sh /caminho/do/repo` (não espelha orquestrador nem commands).

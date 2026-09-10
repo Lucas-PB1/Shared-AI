@@ -1,14 +1,20 @@
 ---
 type: Playbook
 title: Supabase local (Docker)
-description: Subir o review store em Docker, env e smoke no monorepo.
-tags: [store, supabase, local, playbook]
-timestamp: 2026-08-10T16:00:00Z
+description: Subir o stack de auth do dashboard em Docker.
+tags: [supabase, local, playbook]
+timestamp: 2026-09-10T16:00:00Z
 ---
 
 ## Contexto
 
-Ambiente de **desenvolvimento** do store (Docker). Ops/cloud HostDime: [Supabase cloud](supabase-cloud.md) (`toekmpljxeulcquqhkxt`). Sem dados de clientes no git.
+Ambiente de **desenvolvimento** (Docker). Auth + `profiles` + bucket `avatars`.
+
+Schema: `supabase/migrations/20260910160000_init.sql`. Para recriar o banco:
+
+```bash
+npm run supabase:reset
+```
 
 ## Pré-requisitos
 
@@ -18,7 +24,7 @@ Ambiente de **desenvolvimento** do store (Docker). Ops/cloud HostDime: [Supabase
 ## Subir / parar
 
 ```bash
-cd /caminho/hostdime-ia
+cd /caminho/shared-ai
 npm run supabase:start
 npm run supabase:status
 npm run supabase:stop
@@ -34,28 +40,15 @@ npm run supabase:reset    # schema + seed
 | Postgres | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
 | Mailpit | http://127.0.0.1:54324 |
 
-Chaves demo: `npm run supabase:status` (`SERVICE_ROLE_KEY`).
+Chaves demo: `npm run supabase:status`.
 
 ## Env
 
 ```bash
 cp .env.example .env
-# SUPABASE_SERVICE_ROLE_KEY do status
-# REVIEW_PROJECT_SLUG=hostdime-ia | hostdime-hub | …
-
-npm run review:store-smoke
+# NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY
 ```
-
-## Artefatos
-
-| Artefato | Conteúdo |
-| --- | --- |
-| `supabase/migrations/*.sql` | DDL + RLS |
-| `supabase/seed.sql` | projects de demo |
-| `supabase/config.toml` | portas locais |
 
 ## Relacionados
 
-- [Review store](review-store.md)
-- [Schema](review-store-schema.md)
-- [Cloud](supabase-cloud.md)
+- [Dashboard web](dashboard-web.md)

@@ -20,10 +20,10 @@ _link_abs() {
   readlink -f "$1" 2>/dev/null || printf '%s' "$1"
 }
 
-# Symlink aponta para dentro do clone hostdime-ia?
-is_hostdime_symlink() {
+# Symlink aponta para dentro do clone shared-ai?
+is_shared_ai_symlink() {
   local path="$1"
-  local root="${HOSTDIME_IA_ROOT:-}"
+  local root="${SHARED_AI_ROOT:-}"
   [[ -L "$path" && -n "$root" ]] || return 1
   local target
   target="$(_link_abs "$path")"
@@ -138,7 +138,7 @@ prune_managed_symlinks() {
   for entry in "$dir"/*; do
     [[ -e "$entry" || -L "$entry" ]] || continue
     name="$(basename "$entry")"
-    if [[ -L "$entry" ]] && is_hostdime_symlink "$entry"; then
+    if [[ -L "$entry" ]] && is_shared_ai_symlink "$entry"; then
       local found=0 n
       for n in "${managed_names[@]}"; do
         [[ "$n" == "$name" ]] && found=1 && break
@@ -172,7 +172,7 @@ remove_project_orchestrator_rule_symlinks() {
   shopt -s nullglob
   for f in "$rules_dir"/skills-orchestrator-*.mdc; do
     [[ -L "$f" ]] || continue
-    if is_hostdime_symlink "$f"; then
+    if is_shared_ai_symlink "$f"; then
       name="$(basename "$f")"
       rm -f "$f"
       LINK_ORCHESTRATOR_REMOVED=$((LINK_ORCHESTRATOR_REMOVED + 1))
@@ -183,7 +183,7 @@ remove_project_orchestrator_rule_symlinks() {
 }
 
 # Remove symlinks gerenciados de commands no projeto
-# (commands hostdime vivem só em ~/.cursor/commands/).
+# (commands shared-ai vivem só em ~/.cursor/commands/).
 LINK_COMMANDS_REMOVED=0
 remove_project_managed_command_symlinks() {
   local commands_dir="$1"
@@ -195,7 +195,7 @@ remove_project_managed_command_symlinks() {
   shopt -s nullglob
   for f in "$commands_dir"/*.md; do
     [[ -L "$f" ]] || continue
-    if is_hostdime_symlink "$f"; then
+    if is_shared_ai_symlink "$f"; then
       name="$(basename "$f")"
       rm -f "$f"
       LINK_COMMANDS_REMOVED=$((LINK_COMMANDS_REMOVED + 1))

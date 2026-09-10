@@ -186,7 +186,7 @@ function collectEditedFiles(hookInput: Record<string, unknown> | null, projectRo
   const paths = new Set<string>();
   if (hookInput) extractPathsFromJson(hookInput, paths);
   for (const p of gitChangedFiles(projectRoot)) paths.add(p);
-  const envFiles = process.env.HOSTDIME_HISTORICO_EDITED_FILES ?? '';
+  const envFiles = process.env.SHARED_AI_HISTORICO_EDITED_FILES ?? '';
   for (const part of envFiles.split(':')) {
     const trimmed = part.trim();
     if (trimmed) paths.add(trimmed);

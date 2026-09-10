@@ -1,19 +1,19 @@
 # Cursor CLI — instalação e config auto (approvalMode unrestricted)
 
 function Get-CursorCliStateFile {
-    Join-Path $env:USERPROFILE '.cursor/hostdime-cursor-cli.state'
+    Join-Path $env:USERPROFILE '.cursor/shared-ai-cursor-cli.state'
 }
 
 function Get-CursorCliConfigFile {
     Join-Path $env:USERPROFILE '.cursor/cli-config.json'
 }
 
-function Get-HostdimeIaRoot {
-    if ($env:HOSTDIME_IA_ROOT) { return $env:HOSTDIME_IA_ROOT }
-    $envFile = Join-Path $env:USERPROFILE '.cursor/hostdime-ia.env'
+function Get-SharedAiRoot {
+    if ($env:SHARED_AI_ROOT) { return $env:SHARED_AI_ROOT }
+    $envFile = Join-Path $env:USERPROFILE '.cursor/shared-ai.env'
     if (Test-Path -LiteralPath $envFile) {
         foreach ($line in Get-Content -LiteralPath $envFile) {
-            if ($line -match '^HOSTDIME_IA_ROOT=(.+)$') { return $Matches[1].Trim('"') }
+            if ($line -match '^SHARED_AI_ROOT=(.+)$') { return $Matches[1].Trim('"') }
         }
     }
     return $null
@@ -34,7 +34,7 @@ function Find-CursorAgent {
 }
 
 function Get-CursorCliTemplateFile {
-    $root = Get-HostdimeIaRoot
+    $root = Get-SharedAiRoot
     if (-not $root) { return $null }
     $path = Join-Path $root 'packages/cursor/templates/cli-config.auto.json'
     if (Test-Path -LiteralPath $path) { return $path }
@@ -42,15 +42,15 @@ function Get-CursorCliTemplateFile {
 }
 
 function Get-CursorCliMergeTs {
-    $root = Get-HostdimeIaRoot
+    $root = Get-SharedAiRoot
     if (-not $root) { return $null }
     $path = Join-Path $root 'packages/cursor/scripts/lib/install/ts/merge-cursor-cli-config.ts'
     if (Test-Path -LiteralPath $path) { return $path }
     return $null
 }
 
-function Get-HostdimeTsx {
-    $root = Get-HostdimeIaRoot
+function Get-SharedAiTsx {
+    $root = Get-SharedAiRoot
     if ($root) {
         $tsx = Join-Path $root 'node_modules/.bin/tsx.cmd'
         if (Test-Path -LiteralPath $tsx) { return $tsx }
@@ -66,8 +66,8 @@ function Set-CursorCliAutoConfig {
     $config = Get-CursorCliConfigFile
     $template = Get-CursorCliTemplateFile
     $mergeTs = Get-CursorCliMergeTs
-    $tsx = Get-HostdimeTsx
-    if (-not $template) { throw 'Template cli-config.auto.json não encontrado (HOSTDIME_IA_ROOT?)' }
+    $tsx = Get-SharedAiTsx
+    if (-not $template) { throw 'Template cli-config.auto.json não encontrado (SHARED_AI_ROOT?)' }
     if (-not $mergeTs) { throw 'merge-cursor-cli-config.ts não encontrado' }
     if (-not $tsx) { throw 'tsx não encontrado (npm install na raiz do monorepo)' }
     $result = & $tsx $mergeTs $config $template
@@ -140,7 +140,7 @@ function Ensure-CursorCliLogin {
 }
 
 function Ensure-CursorCliPathProfile {
-    $marker = '# hostdime-ia cursor-cli PATH'
+    $marker = '# shared-ai cursor-cli PATH'
     $line = '$env:Path = "$env:USERPROFILE\.local\bin;$env:USERPROFILE\.cursor\bin;" + $env:Path'
     $profile = $PROFILE.CurrentUserAllHosts
     if (-not (Test-Path -LiteralPath $profile)) { return }
@@ -201,7 +201,7 @@ function Initialize-CursorProject {
         try { bash $linkSh --quiet $Root 2>$null } catch {}
     }
 
-    $registryPs1 = Join-Path $cursorDir 'hostdime-projects-registry.ps1'
+    $registryPs1 = Join-Path $cursorDir 'shared-ai-projects-registry.ps1'
     if (Test-Path -LiteralPath $registryPs1) {
         try {
             . $registryPs1
@@ -209,7 +209,7 @@ function Initialize-CursorProject {
         } catch {}
         return
     }
-    $registrySh = Join-Path $cursorDir 'hostdime-projects-registry.sh'
+    $registrySh = Join-Path $cursorDir 'shared-ai-projects-registry.sh'
     if (Test-Path -LiteralPath $registrySh) {
         try { bash -c "source '$registrySh' && register_project '$Root'" 2>$null } catch {}
     }

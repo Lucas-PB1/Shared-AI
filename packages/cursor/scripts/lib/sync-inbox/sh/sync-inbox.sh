@@ -3,27 +3,27 @@
 # CLI: npm run sync-inbox -- on|off|status|run|scan
 
 sync_inbox_state_file() {
-  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia/sync-inbox.env"
+  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai/sync-inbox.env"
 }
 
 sync_inbox_log_file() {
-  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia/sync-inbox.log"
+  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai/sync-inbox.log"
 }
 
 sync_inbox_inbox_file() {
-  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia/sync-inbox.json"
+  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai/sync-inbox.json"
 }
 
 sync_inbox_startup_script() {
-  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia-startup-sync-inbox.sh"
+  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai-startup-sync-inbox.sh"
 }
 
 sync_inbox_scan_ts() {
-  local root="${HOSTDIME_IA_ROOT:-}"
-  if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
+  local root="${SHARED_AI_ROOT:-}"
+  if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env" ]]; then
     # shellcheck disable=SC1090
-    source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
-    root="${HOSTDIME_IA_ROOT:-}"
+    source "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env"
+    root="${SHARED_AI_ROOT:-}"
   fi
   if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/sync-inbox/ts/scan-sync-inbox.ts" ]]; then
     printf '%s/packages/cursor/scripts/lib/sync-inbox/ts/scan-sync-inbox.ts' "$root"
@@ -33,7 +33,7 @@ sync_inbox_scan_ts() {
 }
 
 sync_inbox_ensure_state_dir() {
-  mkdir -p "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia"
+  mkdir -p "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai"
 }
 
 sync_inbox_read_state() {
@@ -81,8 +81,8 @@ sync_inbox_scan() {
     return 1
   }
   # shellcheck disable=SC1091
-  source "$(dirname "${BASH_SOURCE[0]}")/../../install/sh/hostdime-env.sh"
-  hostdime_tsx "$ts" >/dev/null
+  source "$(dirname "${BASH_SOURCE[0]}")/../../install/sh/shared-ai-env.sh"
+  shared_ai_tsx "$ts" >/dev/null
   sync_inbox_log "scan ok ($(sync_inbox_inbox_file))"
 }
 
@@ -95,11 +95,11 @@ sync_inbox_wants_gui() {
 }
 
 sync_inbox_query_ts() {
-  local root="${HOSTDIME_IA_ROOT:-}"
-  if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
+  local root="${SHARED_AI_ROOT:-}"
+  if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env" ]]; then
     # shellcheck disable=SC1090
-    source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
-    root="${HOSTDIME_IA_ROOT:-}"
+    source "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env"
+    root="${SHARED_AI_ROOT:-}"
   fi
   if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/sync-inbox/ts/sync-inbox-query.ts" ]]; then
     printf '%s/packages/cursor/scripts/lib/sync-inbox/ts/sync-inbox-query.ts' "$root"
@@ -115,8 +115,8 @@ sync_inbox_query() {
     return 1
   }
   # shellcheck disable=SC1091
-  source "$(dirname "${BASH_SOURCE[0]}")/../../install/sh/hostdime-env.sh"
-  hostdime_tsx "$ts" "$@"
+  source "$(dirname "${BASH_SOURCE[0]}")/../../install/sh/shared-ai-env.sh"
+  shared_ai_tsx "$ts" "$@"
 }
 
 sync_inbox_progress_emit() {
@@ -141,7 +141,7 @@ sync_inbox_run_with_progress() {
     sync_inbox_progress_emit 85 "$count projeto(s) com trabalho local"
     sync_inbox_progress_emit 100 "Abrindo menu de retomada…"
   ) | zenity --progress \
-      --title="HostDime — O que retomar?" \
+      --title="Shared AI — O que retomar?" \
       --text="Preparando retomada de trabalho…" \
       --percentage=0 \
       --width=480 \
@@ -158,7 +158,7 @@ sync_inbox_run_with_progress() {
 sync_inbox_show_empty_gui() {
   sync_inbox_can_gui || return 0
   zenity --info \
-    --title="HostDime — Sync Inbox" \
+    --title="Shared AI — Sync Inbox" \
     --width=380 \
     --text="Nenhum projeto com alterações pendentes.\n\nTodos os repos do sync estão limpos." \
     2>/dev/null || true
@@ -179,11 +179,11 @@ sync_inbox_open_cursor() {
 }
 
 sync_inbox_cards_ts() {
-  local root="${HOSTDIME_IA_ROOT:-}"
-  if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
+  local root="${SHARED_AI_ROOT:-}"
+  if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env" ]]; then
     # shellcheck disable=SC1090
-    source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
-    root="${HOSTDIME_IA_ROOT:-}"
+    source "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env"
+    root="${SHARED_AI_ROOT:-}"
   fi
   if [[ -n "$root" && -f "$root/packages/cursor/scripts/lib/sync-inbox/ts/sync-inbox-cards.ts" ]]; then
     printf '%s/packages/cursor/scripts/lib/sync-inbox/ts/sync-inbox-cards.ts' "$root"
@@ -205,8 +205,8 @@ sync_inbox_pick_gui() {
   if [[ -n "$cards_ts" ]]; then
     local rc=0
     # shellcheck disable=SC1091
-    source "$(dirname "${BASH_SOURCE[0]}")/../../install/sh/hostdime-env.sh"
-    path="$(hostdime_tsx "$cards_ts" "$inbox" 2>/dev/null)" || rc=$?
+    source "$(dirname "${BASH_SOURCE[0]}")/../../install/sh/shared-ai-env.sh"
+    path="$(shared_ai_tsx "$cards_ts" "$inbox" 2>/dev/null)" || rc=$?
     if [[ "$rc" -eq 2 ]]; then
       sync_inbox_log "cards GUI indisponível — fallback zenity"
     elif [[ -n "$path" ]]; then
@@ -235,9 +235,9 @@ sync_inbox_notify_pending() {
   local body
   body="$(sync_inbox_query notify-body "$inbox")"
   if [[ -n "$body" ]]; then
-    notify-send "HostDime — O que retomar?" "$body" 2>/dev/null || true
+    notify-send "Shared AI — O que retomar?" "$body" 2>/dev/null || true
   else
-    notify-send "HostDime Sync Inbox" \
+    notify-send "Shared AI Sync Inbox" \
       "$count projeto(s) com alterações — escolha na janela" 2>/dev/null || true
   fi
 }
@@ -296,14 +296,14 @@ sync_inbox_run() {
 
 sync_inbox_install_startup_script() {
   local root src dest
-  root="${HOSTDIME_IA_ROOT:-}"
-  if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env" ]]; then
+  root="${SHARED_AI_ROOT:-}"
+  if [[ -z "$root" && -f "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env" ]]; then
     # shellcheck disable=SC1090
-    source "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia.env"
-    root="${HOSTDIME_IA_ROOT:-}"
+    source "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai.env"
+    root="${SHARED_AI_ROOT:-}"
   fi
   [[ -n "$root" && -d "$root" ]] || {
-    echo "Erro: HOSTDIME_IA_ROOT não configurado" >&2
+    echo "Erro: SHARED_AI_ROOT não configurado" >&2
     return 1
   }
   src="$root/packages/cursor/scripts/sh/startup-sync-inbox.sh"
@@ -317,12 +317,12 @@ sync_inbox_install_desktop() {
   script="$(sync_inbox_startup_script)"
   gui_script="$(sync_inbox_startup_gui_script)"
   autostart_dir="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
-  desktop="$autostart_dir/hostdime-ia-sync-inbox.desktop"
+  desktop="$autostart_dir/shared-ai-sync-inbox.desktop"
   mkdir -p "$autostart_dir"
   cat >"$desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=HostDime IA Sync Inbox
+Name=Shared AI Sync Inbox
 Comment=Projetos sync com alterações locais — escolha para abrir no Cursor
 Exec=$gui_script
 Hidden=false
@@ -334,7 +334,7 @@ EOF
 }
 
 sync_inbox_startup_gui_script() {
-  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/hostdime-ia-startup-sync-inbox-gui.sh"
+  printf '%s' "${CURSOR_USER_DIR:-$HOME/.cursor}/shared-ai-startup-sync-inbox-gui.sh"
 }
 
 sync_inbox_install_gui_script() {
@@ -345,12 +345,12 @@ sync_inbox_install_gui_script() {
 # Autostart GUI — sync inbox com zenity (sessão gráfica).
 set -euo pipefail
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
-STATE_FILE="$CURSOR_DIR/hostdime-ia/sync-inbox.env"
+STATE_FILE="$CURSOR_DIR/shared-ai/sync-inbox.env"
 [[ -f "$STATE_FILE" ]] && source "$STATE_FILE"
 [[ "${SYNC_INBOX:-off}" == "on" ]] || exit 0
 [[ -n "${DISPLAY:-}" ]] || exit 0
 export SYNC_INBOX_GUI=1
-LIB="$CURSOR_DIR/hostdime-sync-inbox.sh"
+LIB="$CURSOR_DIR/shared-ai-sync-inbox.sh"
 [[ -f "$LIB" ]] && source "$LIB"
 sync_inbox_run
 EOF
@@ -358,18 +358,18 @@ EOF
 }
 
 sync_inbox_uninstall_desktop() {
-  rm -f "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/hostdime-ia-sync-inbox.desktop"
+  rm -f "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/shared-ai-sync-inbox.desktop"
 }
 
 sync_inbox_install_systemd() {
   local script unit_dir unit
   script="$(sync_inbox_startup_script)"
   unit_dir="$HOME/.config/systemd/user"
-  unit="$unit_dir/hostdime-ia-sync-inbox.service"
+  unit="$unit_dir/shared-ai-sync-inbox.service"
   mkdir -p "$unit_dir"
   cat >"$unit" <<EOF
 [Unit]
-Description=HostDime IA — sync-inbox trabalho ao iniciar sessão
+Description=Shared AI — sync-inbox trabalho ao iniciar sessão
 After=graphical-session.target
 Wants=graphical-session.target
 
@@ -384,12 +384,12 @@ Environment=PATH=$PATH
 WantedBy=default.target
 EOF
   systemctl --user daemon-reload
-  systemctl --user enable hostdime-ia-sync-inbox.service
+  systemctl --user enable shared-ai-sync-inbox.service
 }
 
 sync_inbox_uninstall_systemd() {
-  systemctl --user disable hostdime-ia-sync-inbox.service 2>/dev/null || true
-  rm -f "$HOME/.config/systemd/user/hostdime-ia-sync-inbox.service"
+  systemctl --user disable shared-ai-sync-inbox.service 2>/dev/null || true
+  rm -f "$HOME/.config/systemd/user/shared-ai-sync-inbox.service"
   systemctl --user daemon-reload 2>/dev/null || true
 }
 
@@ -444,7 +444,7 @@ sync_inbox_status() {
 }
 
 sync_inbox_prompt_if_needed() {
-  [[ "${HOSTDIME_SYNC_INBOX_PROMPT:-}" == "skip" ]] && return 0
+  [[ "${SHARED_AI_SYNC_INBOX_PROMPT:-}" == "skip" ]] && return 0
   sync_inbox_was_asked && return 0
   [[ -t 0 ]] || return 0
   echo ""

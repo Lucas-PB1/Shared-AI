@@ -2,7 +2,7 @@
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
-. (Join-Path $LibRoot 'Hostdime-Env.ps1')
+. (Join-Path $LibRoot 'SharedAi-Env.ps1')
 . (Join-Path $LibRoot 'Link-FromRepo.ps1')
 . (Join-Path $LibRoot 'Projects-Registry.ps1')
 . (Join-Path $LibRoot 'Apply-BootstrapProfile.ps1')
@@ -63,7 +63,7 @@ if (-not (Test-Path $projectPath)) {
 }
 
 $projectPath = (Resolve-Path -LiteralPath $projectPath).Path
-$env:HOSTDIME_IA_ROOT = if ($env:HOSTDIME_IA_ROOT) { $env:HOSTDIME_IA_ROOT } else { $MonorepoRoot }
+$env:SHARED_AI_ROOT = if ($env:SHARED_AI_ROOT) { $env:SHARED_AI_ROOT } else { $MonorepoRoot }
 
 if ($profileName) {
     if (-not (Test-ProfileName $profileName)) {
@@ -88,7 +88,7 @@ if ($profileName) {
 Write-Host ''
 Write-Host "Projeto preparado: $projectPath"
 Write-Host '  .cursor/rules/    → rules do projeto (*-project.mdc); orquestrador em ~/.cursor/rules/'
-Write-Host '  .cursor/commands/ → commands do projeto (opcional); hostdime em ~/.cursor/commands/'
-Write-Host '  memória / decisões → store Supabase'Write-Host '  .cursor/skills/   → overrides do projeto'
+Write-Host '  .cursor/commands/ → commands do projeto (opcional); shared-ai em ~/.cursor/commands/'
+Write-Host '  .cursor/skills/   → overrides do projeto'
 if ($profileName) { Write-Host "  perfil            → $profileName" }
 Write-Host '  .gitignore        → artefatos gerenciados (se .cursor/ não estiver ignorado)'

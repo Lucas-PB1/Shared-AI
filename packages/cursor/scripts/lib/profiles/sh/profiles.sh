@@ -2,7 +2,7 @@
 # Lista e valida perfis de bootstrap (packages/cursor/profiles/*).
 
 profiles_root_dir() {
-  local root="${HOSTDIME_IA_ROOT:-}"
+  local root="${SHARED_AI_ROOT:-}"
   [[ -n "$root" && -d "$root" ]] || return 1
   echo "$root/packages/cursor/profiles"
 }
@@ -42,6 +42,6 @@ detect_project_profile() {
   local script="${BASH_SOURCE[0]%/*}/../ts/detect-stack.ts"
   [[ -d "$project" ]] || return 0
   # shellcheck disable=SC1091
-  source "${BASH_SOURCE[0]%/*}/../../install/sh/hostdime-env.sh"
-  hostdime_tsx "$script" "$project" 2>/dev/null || true
+  source "${BASH_SOURCE[0]%/*}/../../install/sh/shared-ai-env.sh"
+  shared_ai_tsx "$script" "$project" 2>/dev/null || true
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Injeta sessionStart do hostdime-ia em hooks.json sem remover outros hooks. */
+/** Injeta sessionStart do shared-ai em hooks.json sem remover outros hooks. */
 import {
   atomicWriteJson,
   getHookEventList,

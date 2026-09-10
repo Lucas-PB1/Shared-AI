@@ -4,8 +4,8 @@ set -euo pipefail
 
 INPUT="$(cat)"
 LINK_SCRIPT="${CURSOR_LINK_PROJECT_SCRIPT:-${CURSOR_LINK_RULES_SCRIPT:-$HOME/.cursor/link-project.sh}}"
-REGISTRY_SCRIPT="${HOME}/.cursor/hostdime-projects-registry.sh"
-ENV_SCRIPT="${HOME}/.cursor/hostdime-env.sh"
+REGISTRY_SCRIPT="${HOME}/.cursor/shared-ai-projects-registry.sh"
+ENV_SCRIPT="${HOME}/.cursor/shared-ai-env.sh"
 
 read_json_field() {
   local field="$1"
@@ -50,16 +50,16 @@ if [[ -x "$REGISTRY_SCRIPT" ]]; then
   register_project "$ROOT" 2>/dev/null || true
 fi
 
-if [[ -f "${HOME}/.cursor/hostdime-ia.env" && -x "$ENV_SCRIPT" ]]; then
+if [[ -f "${HOME}/.cursor/shared-ai.env" && -x "$ENV_SCRIPT" ]]; then
   # shellcheck disable=SC1091
   source "$ENV_SCRIPT"
   # shellcheck disable=SC1090
-  source "${HOME}/.cursor/hostdime-ia.env"
-  if [[ -n "${HOSTDIME_IA_ROOT:-}" && -d "$HOSTDIME_IA_ROOT" ]]; then
-    current="$(hostdime_read_version "$HOSTDIME_IA_ROOT")"
-    installed="${HOSTDIME_IA_VERSION:-?}"
+  source "${HOME}/.cursor/shared-ai.env"
+  if [[ -n "${SHARED_AI_ROOT:-}" && -d "$SHARED_AI_ROOT" ]]; then
+    current="$(shared_ai_read_version "$SHARED_AI_ROOT")"
+    installed="${SHARED_AI_VERSION:-?}"
     if [[ "$current" != "$installed" && "$current" != "?" ]]; then
-      echo "HostDime IA: versão do clone ($current) difere da instalada ($installed). Rode: npm run sync" >&2
+      echo "Shared AI: versão do clone ($current) difere da instalada ($installed). Rode: npm run sync" >&2
     fi
   fi
 fi

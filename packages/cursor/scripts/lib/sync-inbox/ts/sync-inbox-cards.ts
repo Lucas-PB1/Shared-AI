@@ -36,7 +36,7 @@ function pickWithZenity(items: InboxItem[]): string | null {
   const cmd = [
     'zenity',
     '--list',
-    '--title=HostDime — O que retomar?',
+    '--title=Shared AI — O que retomar?',
     '--text=Escolha o projeto para continuar no Cursor:',
     '--column=Projeto',
     '--column=Resumo',
@@ -65,7 +65,7 @@ function main(): number {
   const inbox =
     process.argv.length > 2
       ? process.argv[2]!
-      : join(homedir(), '.cursor/hostdime-ia/sync-inbox.json');
+      : join(homedir(), '.cursor/shared-ai/sync-inbox.json');
 
   const items = loadItems(inbox);
   if (items.length === 0) return 0;

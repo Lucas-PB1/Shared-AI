@@ -1,6 +1,6 @@
 ---
 description: >-
-  Detecta stack via package.json, composer.json e hsproject.json (monorepo) e
+  Detecta stack via package.json e composer.json (monorepo) e
   sugere skills antes de implementar — complementa intent e globs
 alwaysApply: true
 ---
@@ -15,7 +15,6 @@ Antes de implementar, varrer manifestos na **raiz** e em **pacotes/workspaces** 
 - `composer.json`
 - `pyproject.toml`, `requirements.txt`, `setup.py`
 - `tsconfig.json` (presença indica TypeScript)
-- `hsproject.json` (HubSpot developer project)
 - `Dockerfile`, `docker-compose*.yml` / `compose*.yml` (containers)
 - `.github/workflows/*.yml`, `.gitlab-ci.yml` (CI/CD)
 - `*.tf`, `*.tfvars` (Terraform / IaC)
@@ -37,7 +36,6 @@ Antes de implementar, varrer manifestos na **raiz** e em **pacotes/workspaces** 
 | pacotes `laminas/*` ou `zendframework/*` | `zend-laminas`, `php` |
 | `pyproject.toml`, `requirements.txt` ou `.py` no escopo | `python` |
 | `pytest` em deps ou `[tool.pytest]` | `testing`, `python` |
-| `hsproject.json`, `@hubspot/cms-components` ou `@hubspot/cli` | `hubspot-cli` (se existir no projeto ou em `~/.cursor/skills/`) |
 | `Dockerfile`, `.dockerignore` | `docker` |
 | `docker-compose*.yml`, `compose*.yml` | `docker-compose`, `docker` |
 | `.github/workflows/*.yml`, `.gitlab-ci.yml` | `ci-cd` |

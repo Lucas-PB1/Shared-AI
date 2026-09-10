@@ -71,4 +71,3 @@ Recentes primeiro (nova seção no topo, após título/cabeçalho fixo).
 
 - Command `/historico`
 - Skill `okf` — quando `format=okf-log`
-- Analogia: memória v2 do code-review (`decisions.jsonl` + `context.yaml`)

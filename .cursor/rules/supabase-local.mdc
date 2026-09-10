@@ -1,0 +1,13 @@
+---
+description: Supabase neste repo é o Docker local
+alwaysApply: true
+---
+
+# Supabase — Docker local
+
+O dashboard usa o stack deste clone:
+
+```bash
+npm run supabase:start
+npm run supabase:reset    # recria o banco Docker
+```

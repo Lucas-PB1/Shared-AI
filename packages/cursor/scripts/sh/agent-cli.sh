@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wrapper hostdime para Cursor CLI — prepara review/ do projeto antes de rodar agent.
+# Wrapper shared-ai para Cursor CLI — prepara review/ do projeto antes de rodar agent.
 # Uso: npm run agent -- [args...]
 #      npm run agent -- --project=/path "prompt"
 set -euo pipefail
@@ -10,9 +10,9 @@ CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 if [[ -f "$SCRIPT_DIR/../lib/install/sh/cursor-cli.sh" ]]; then
   # shellcheck disable=SC1091
   source "$SCRIPT_DIR/../lib/install/sh/cursor-cli.sh"
-elif [[ -f "$CURSOR_DIR/hostdime-cursor-cli.sh" ]]; then
+elif [[ -f "$CURSOR_DIR/shared-ai-cursor-cli.sh" ]]; then
   # shellcheck disable=SC1091
-  source "$CURSOR_DIR/hostdime-cursor-cli.sh"
+  source "$CURSOR_DIR/shared-ai-cursor-cli.sh"
 else
   echo "Erro: lib cursor-cli.sh não encontrada" >&2
   exit 1

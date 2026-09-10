@@ -1,8 +1,8 @@
-# Remove symlinks hostdime-ia do projeto e opcionalmente desregistra do sync.
+# Remove symlinks shared-ai do projeto e opcionalmente desregistra do sync.
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
-. (Join-Path $LibRoot 'Hostdime-Env.ps1')
+. (Join-Path $LibRoot 'SharedAi-Env.ps1')
 . (Join-Path $LibRoot 'Link-FromRepo.ps1')
 . (Join-Path $LibRoot 'Projects-Registry.ps1')
 . (Join-Path $LibRoot 'Detach-Project.ps1')
@@ -39,11 +39,11 @@ if (-not $projectPath) {
     exit 1
 }
 
-$envData = Read-HostdimeEnv
-if ($envData['HOSTDIME_IA_ROOT']) {
-    $env:HOSTDIME_IA_ROOT = $envData['HOSTDIME_IA_ROOT']
+$envData = Read-SharedAiEnv
+if ($envData['SHARED_AI_ROOT']) {
+    $env:SHARED_AI_ROOT = $envData['SHARED_AI_ROOT']
 } else {
-    $env:HOSTDIME_IA_ROOT = $MonorepoRoot
+    $env:SHARED_AI_ROOT = $MonorepoRoot
 }
 
 if (-not (Test-Path $projectPath)) {
@@ -52,7 +52,7 @@ if (-not (Test-Path $projectPath)) {
 }
 
 $projectPath = (Resolve-Path -LiteralPath $projectPath).Path
-Remove-HostdimeFromProject $projectPath
+Remove-SharedAiFromProject $projectPath
 
 if (-not $keepRegistry) {
     if (Unregister-Project $projectPath) {

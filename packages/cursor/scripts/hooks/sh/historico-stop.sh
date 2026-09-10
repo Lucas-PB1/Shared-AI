@@ -7,14 +7,14 @@ WATCHES=".cursor/history/watches.json"
 [[ -f "$WATCHES" ]] || exit 0
 
 MATCHER=""
-HOSTDIME_ROOT="${HOSTDIME_IA_ROOT:-}"
-if [[ -z "$HOSTDIME_ROOT" && -f "${HOME}/.cursor/hostdime-ia.env" ]]; then
+SHARED_AI_ROOT="${SHARED_AI_ROOT:-}"
+if [[ -z "$SHARED_AI_ROOT" && -f "${HOME}/.cursor/shared-ai.env" ]]; then
   # shellcheck disable=SC1091
-  source "${HOME}/.cursor/hostdime-ia.env"
-  HOSTDIME_ROOT="${HOSTDIME_IA_ROOT:-}"
+  source "${HOME}/.cursor/shared-ai.env"
+  SHARED_AI_ROOT="${SHARED_AI_ROOT:-}"
 fi
-if [[ -n "$HOSTDIME_ROOT" ]]; then
-  MATCHER="$HOSTDIME_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
+if [[ -n "$SHARED_AI_ROOT" ]]; then
+  MATCHER="$SHARED_AI_ROOT/packages/cursor/scripts/lib/history/history-watch-match.ts"
 fi
 
 if [[ ! -f "$MATCHER" ]]; then
@@ -22,6 +22,6 @@ if [[ ! -f "$MATCHER" ]]; then
 fi
 
 # shellcheck disable=SC1091
-source "$HOSTDIME_ROOT/packages/cursor/scripts/lib/install/sh/hostdime-env.sh"
+source "$SHARED_AI_ROOT/packages/cursor/scripts/lib/install/sh/shared-ai-env.sh"
 
-exec hostdime_tsx "$MATCHER" stop
+exec shared_ai_tsx "$MATCHER" stop

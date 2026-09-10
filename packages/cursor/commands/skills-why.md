@@ -10,7 +10,7 @@ Explique **quais skills** o orquestrador escolheria para o pedido atual — sem 
 ## O que analisar
 
 1. **Mensagem do usuário** — palavras-chave (intent)
-2. **Manifestos** — `package.json`, `composer.json`, `tsconfig.json`, `hsproject.json` na raiz ou workspaces
+2. **Manifestos** — `package.json`, `composer.json`, `tsconfig.json` na raiz ou workspaces
 3. **Contexto** — arquivos abertos, editados ou no diff
 4. **Tier** — tier 1 (`clean-code`) vs tier 2 (+ `dry`, `solid`, `no-magic-numbers`)
 5. **Complemento** — `.cursor/SKILLS-ROUTING.md` do projeto, se existir

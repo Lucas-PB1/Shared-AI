@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Remove symlinks hostdime-ia do projeto e opcionalmente desregistra do sync.
+# Remove symlinks shared-ai do projeto e opcionalmente desregistra do sync.
 # Uso: npm run detach -- /caminho/do/repo [--keep-registry]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
-ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
+ENV_FILE="$CURSOR_DIR/shared-ai.env"
 
 PROJECT=""
 KEEP_REGISTRY=0
@@ -52,7 +52,7 @@ if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$ENV_FILE"
 fi
-HOSTDIME_IA_ROOT="${HOSTDIME_IA_ROOT:-$MONOREPO_ROOT}"
+SHARED_AI_ROOT="${SHARED_AI_ROOT:-$MONOREPO_ROOT}"
 
 if [[ ! -d "$PROJECT" ]]; then
   echo "Diretório não encontrado: $PROJECT" >&2
@@ -61,7 +61,7 @@ fi
 
 PROJECT="$(cd "$PROJECT" && pwd)"
 
-detach_hostdime_from_project "$PROJECT"
+detach_shared_ai_from_project "$PROJECT"
 
 if [[ "$KEEP_REGISTRY" -eq 0 ]]; then
   if unregister_project "$PROJECT"; then

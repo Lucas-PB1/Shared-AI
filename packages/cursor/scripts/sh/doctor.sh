@@ -6,10 +6,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
-ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
+ENV_FILE="$CURSOR_DIR/shared-ai.env"
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/../lib/install/sh/hostdime-env.sh"
+source "$SCRIPT_DIR/../lib/install/sh/shared-ai-env.sh"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../lib/install/sh/projects-registry.sh"
 
@@ -94,7 +94,7 @@ count_user_symlink_issues() {
     fi
   done
 
-  for skill in "$root/packages/cursor/skills"/*/ "$root/packages/code-review/skills"/*/; do
+  for skill in "$root/packages/cursor/skills"/*/; do
     [[ -d "$skill" ]] || continue
     dest="$CURSOR_DIR/skills/$(basename "$skill")"
     if [[ -e "$dest" && ! -L "$dest" ]]; then
@@ -106,7 +106,7 @@ count_user_symlink_issues() {
     fi
   done
 
-  for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
+  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
     dest="$CURSOR_DIR/commands/$cmd"
     if [[ -e "$dest" && ! -L "$dest" ]]; then
       skipped=$((skipped + 1))
@@ -120,21 +120,21 @@ count_user_symlink_issues() {
   echo "$broken $missing $skipped"
 }
 
-echo "HostDime IA — doctor"
+echo "Shared AI — doctor"
 
 section "Instalação"
 root=""
 if [[ ! -f "$ENV_FILE" ]]; then
-  fail "hostdime-ia.env — rode: npm run setup:skills"
+  fail "shared-ai.env — rode: npm run setup:skills"
 else
   # shellcheck disable=SC1090
   source "$ENV_FILE"
-  root="${HOSTDIME_IA_ROOT:-}"
-  ok "hostdime-ia.env"
+  root="${SHARED_AI_ROOT:-}"
+  ok "shared-ai.env"
   if [[ -d "$root" ]]; then
     ok "clone em $root"
-    current="$(hostdime_read_version "$root")"
-    installed="${HOSTDIME_IA_VERSION:-?}"
+    current="$(shared_ai_read_version "$root")"
+    installed="${SHARED_AI_VERSION:-?}"
     if [[ "$current" != "$installed" ]]; then
       warn "versão desatualizada (clone=$current, instalada=$installed) — git pull && npm run sync"
     else
@@ -152,10 +152,7 @@ else
   fail "Node.js — comando \`node\` não encontrado"
 fi
 check_cmd "npm" npm
-check_cmd "PHP" php
-check_cmd "Composer" composer
-check_cmd "Semgrep" semgrep
-if hostdime_tsx_bin >/dev/null 2>&1; then
+if shared_ai_tsx_bin >/dev/null 2>&1; then
   ok "tsx/Node (hooks JSON)"
 else
   fail "tsx/Node — rode: npm install (tsx para scripts/hooks JSON)"
@@ -166,25 +163,20 @@ if [[ -n "$root" && -d "$root" ]]; then
   if [[ -d "$root/node_modules" ]]; then
     ok "node_modules"
   else
-    fail "node_modules — rode: npm run setup:code-review"
-  fi
-  if [[ -x "$root/vendor/bin/phpstan" ]]; then
-    ok "PHPStan"
-  else
-    fail "PHPStan — rode: npm run setup:code-review"
+    fail "node_modules — rode: npm install"
   fi
 fi
 
 section "~/.cursor (artefatos)"
-for script in link-project.sh review-check.sh review-finalizar.sh review-diff.sh review-ci.sh; do
+for script in link-project.sh; do
   if [[ -x "$CURSOR_DIR/$script" ]]; then
     ok "$script"
   else
-    fail "$script — rode: npm run setup:skills && npm run setup:code-review"
+    fail "$script — rode: npm run setup:skills"
   fi
 done
 
-for cmd in avaliar.md finalizar.md avaliar-diff.md skills-why.md hubspot-mcp.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
+for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
   if [[ -L "$CURSOR_DIR/commands/$cmd" && -e "$CURSOR_DIR/commands/$cmd" ]]; then
     ok "command /${cmd%.md}"
   elif [[ -f "$CURSOR_DIR/commands/$cmd" ]]; then
@@ -200,22 +192,6 @@ elif [[ -f "$CURSOR_DIR/SKILLS-ROUTING.md" ]]; then
   warn "SKILLS-ROUTING.md — cópia local; prefira symlink (npm run sync -- --migrate)"
 else
   fail "SKILLS-ROUTING.md — rode: npm run setup:skills"
-fi
-
-if [[ -x "$CURSOR_DIR/install-hubspot-mcp.sh" ]]; then
-  ok "install-hubspot-mcp.sh"
-else
-  warn "install-hubspot-mcp.sh — rode: npm run setup:skills"
-fi
-
-# shellcheck disable=SC1091
-source "$SCRIPT_DIR/../lib/hubspot/sh/hubspot-mcp.sh"
-if hubspot_mcp_installed; then
-  ok "MCP HubSpotDev em mcp.json"
-elif [[ "$(hubspot_mcp_read_status)" == "declined" ]]; then
-  ok "MCP HubSpot — usuário optou por não instalar (/hubspot-mcp disponível)"
-else
-  warn "MCP HubSpotDev ausente — use /hubspot-mcp ou aguarde sugestão na primeira tarefa HubSpot"
 fi
 
 section "Hooks"
@@ -235,7 +211,7 @@ elif hooks_has_session_start "$hooks_file"; then
 else
   rc=$?
   if [[ "$rc" -eq 2 ]]; then
-    warn "hooks.json sem sessionStart do hostdime-ia — adicione ensure-project-cursor.sh"
+    warn "hooks.json sem sessionStart do shared-ai — adicione ensure-project-cursor.sh"
   else
     fail "hooks.json inválido ou ilegível"
   fi

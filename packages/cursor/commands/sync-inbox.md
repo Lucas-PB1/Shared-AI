@@ -13,20 +13,20 @@ Inbox de **projetos do sync** com alterações git não commitadas. Resumo objet
 
 ## O que faz
 
-1. Lê `~/.cursor/hostdime-ia/projects.json` (projetos do sync/bootstrap)
+1. Lê `~/.cursor/shared-ai/projects.json` (projetos do sync/bootstrap)
 2. Em cada repo: `git status --porcelain` — só entra se **dirty**
 3. Monta resumo heurístico (`summary` + `detail`):
    - **Pedido:** última mensagem sua no chat do Cursor (transcripts)
    - **Área:** módulo/pasta dos arquivos alterados ou abertos recentemente
    - **Branch** de feature quando não há chat
    - Projetos só com `.gitignore`/sync aparecem por último como "Setup Cursor"
-4. Grava `~/.cursor/hostdime-ia/sync-inbox.json`
+4. Grava `~/.cursor/shared-ai/sync-inbox.json`
 5. Menu no terminal ou zenity: escolhe projeto → `cursor /path/do/projeto`
 
 Exemplo:
 
 ```
-1. hostdime
+1. shared-ai
    → Pedido: tem alguma melhoria que vc me sugere?
    (Section-Trust-Indicators · 4 arquivos · SectionHeroGlobalNetworkMap)
 ```
@@ -43,13 +43,13 @@ npm run sync-inbox -- scan
 
 ## Boot
 
-- Estado: `~/.cursor/hostdime-ia/sync-inbox.env`
-- Log: `~/.cursor/hostdime-ia/sync-inbox.log`
+- Estado: `~/.cursor/shared-ai/sync-inbox.env`
+- Log: `~/.cursor/shared-ai/sync-inbox.log`
 - **Linux:** autostart `.desktop` + janela de progresso (scan) + **menu em cards** GTK (~12s após login)
 - Fallback sem GTK: zenity com resumo em coluna única
 - Se zenity ausente: notificação + log; rode `npm run sync-inbox -- run`
 
-Independente do `boot-sync` (git pull só no clone hostdime-ia). Pode usar os dois.
+Independente do `boot-sync` (git pull só no clone shared-ai). Pode usar os dois.
 
 ## Resposta ao usuário
 

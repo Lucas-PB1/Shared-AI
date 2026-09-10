@@ -21,7 +21,7 @@ export function LoginForm() {
     <Card className="w-full max-w-md">
       <CardTitle>Entrar</CardTitle>
       <CardDescription>
-        Use seu e-mail HostDime — sem confirmação de e-mail.
+        Use seu e-mail — sem confirmação de e-mail.
       </CardDescription>
 
       <form action={action} className="mt-6 flex flex-col gap-4">
@@ -48,7 +48,7 @@ export function LoginForm() {
           />
         </div>
         {state.error ? (
-          <p className="text-sm text-hd-danger" role="alert">
+          <p className="text-sm text-sa-danger" role="alert">
             {state.error}
           </p>
         ) : null}
@@ -57,7 +57,7 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <p className="mt-4 text-sm text-hd-muted">
+      <p className="mt-4 text-sm text-sa-muted">
         Não tem conta?{' '}
         <Link href="/signup" className="font-semibold">
           Criar conta

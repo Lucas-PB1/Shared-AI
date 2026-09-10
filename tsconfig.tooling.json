@@ -13,11 +13,9 @@
     "types": ["node"]
   },
   "include": [
-    "packages/code-review/src/**/*.ts",
-    "packages/code-review/bin/**/*.ts",
-    "packages/code-review/tests/**/*.ts",
     "packages/cursor/scripts/**/*.ts",
+    "src/entities/linked-project/slug.ts",
     "tests/**/*.ts"
   ],
-  "exclude": ["node_modules", "vendor", "app", "src"]
+  "exclude": ["node_modules", "vendor", "app"]
 }

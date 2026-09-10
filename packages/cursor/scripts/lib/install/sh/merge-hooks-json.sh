@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Merge idempotente do sessionStart hostdime-ia em ~/.cursor/hooks.json
+# Merge idempotente do sessionStart shared-ai em ~/.cursor/hooks.json
 #
 # Source: source .../merge-hooks-json.sh
-#         merge_hostdime_hooks_json "$cursor_pkg"
+#         merge_shared_ai_hooks_json "$cursor_pkg"
 
-merge_hostdime_hooks_json() {
+merge_shared_ai_hooks_json() {
   local cursor_pkg="$1"
   local cursor_dir="${CURSOR_USER_DIR:-$HOME/.cursor}"
   local hooks_file="$cursor_dir/hooks.json"
@@ -20,8 +20,8 @@ merge_hostdime_hooks_json() {
   mkdir -p "$cursor_dir/hooks"
 
   # shellcheck disable=SC1091
-  source "$(dirname "${BASH_SOURCE[0]}")/hostdime-env.sh"
-  result="$(hostdime_tsx "$merge_ts" "$hooks_file" "$example")" || rc=$?
+  source "$(dirname "${BASH_SOURCE[0]}")/shared-ai-env.sh"
+  result="$(shared_ai_tsx "$merge_ts" "$hooks_file" "$example")" || rc=$?
   if [[ "$rc" -ne 0 ]]; then
     echo "✗ hooks.json — merge falhou" >&2
     return 1
@@ -35,7 +35,7 @@ merge_hostdime_hooks_json() {
       echo "→ hooks.json atualizado (sessionStart → ensure-project-cursor, hooks existentes preservados)"
       ;;
     ok)
-      echo "→ hooks.json ok (sessionStart hostdime-ia já presente)"
+      echo "→ hooks.json ok (sessionStart shared-ai já presente)"
       ;;
     *)
       echo "✗ hooks.json — resposta inesperada do merge: $result" >&2

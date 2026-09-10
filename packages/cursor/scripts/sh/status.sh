@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Status do hostdime-ia: versão, projetos, symlinks, conflitos.
+# Status do shared-ai: versão, projetos, symlinks, conflitos.
 # Uso: npm run status
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
-ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
+ENV_FILE="$CURSOR_DIR/shared-ai.env"
 LIB="$SCRIPT_DIR/../lib/install/sh/link-from-repo.sh"
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/../lib/install/sh/hostdime-env.sh"
+source "$SCRIPT_DIR/../lib/install/sh/shared-ai-env.sh"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../lib/install/sh/projects-registry.sh"
 # shellcheck disable=SC1091
@@ -18,7 +18,7 @@ source "$LIB"
 
 issues=0
 
-echo "HostDime IA — status"
+echo "Shared AI — status"
 echo ""
 
 if [[ ! -f "$ENV_FILE" ]]; then
@@ -28,14 +28,14 @@ fi
 
 # shellcheck disable=SC1090
 source "$ENV_FILE"
-root="${HOSTDIME_IA_ROOT:-}"
+root="${SHARED_AI_ROOT:-}"
 
 if [[ ! -d "$root" ]]; then
   echo "✗ Clone não encontrado: $root"
   issues=$((issues + 1))
 else
-  current="$(hostdime_read_version "$root")"
-  installed="${HOSTDIME_IA_VERSION:-?}"
+  current="$(shared_ai_read_version "$root")"
+  installed="${SHARED_AI_VERSION:-?}"
   echo "Clone:     $root"
   echo "Versão:    clone=$current  instalada=$installed"
   if [[ "$current" != "$installed" ]]; then
@@ -44,12 +44,12 @@ else
   else
     echo "✓ Versão em dia"
   fi
-  echo "Último sync: ${HOSTDIME_IA_LAST_SYNC:-?}"
+  echo "Último sync: ${SHARED_AI_LAST_SYNC:-?}"
 fi
 
 echo ""
 echo "=== ~/.cursor/ (usuário) ==="
-export HOSTDIME_IA_ROOT="$root"
+export SHARED_AI_ROOT="$root"
 reset_link_counters
 LINK_REPORT_FILE="$(mktemp)"
 export LINK_REPORT_FILE
@@ -79,15 +79,11 @@ if [[ -d "$root" ]]; then
     [[ -f "$f" ]] || continue
     check_user_link "$f" "$CURSOR_DIR/rules/$(basename "$f")"
   done
-  for skill in "$root/packages/cursor/skills"/*/ "$root/packages/code-review/skills"/*/; do
+  for skill in "$root/packages/cursor/skills"/*/; do
     [[ -d "$skill" ]] || continue
     check_user_link "$skill" "$CURSOR_DIR/skills/$(basename "$skill")"
   done
-  check_user_link "$root/packages/code-review/commands/avaliar.md" "$CURSOR_DIR/commands/avaliar.md"
-  check_user_link "$root/packages/code-review/commands/finalizar.md" "$CURSOR_DIR/commands/finalizar.md"
-  check_user_link "$root/packages/code-review/commands/avaliar-diff.md" "$CURSOR_DIR/commands/avaliar-diff.md"
   check_user_link "$root/packages/cursor/commands/skills-why.md" "$CURSOR_DIR/commands/skills-why.md"
-  check_user_link "$root/packages/cursor/commands/hubspot-mcp.md" "$CURSOR_DIR/commands/hubspot-mcp.md"
 fi
 
 echo ""

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Scan projetos do registry hostdime por trabalho não commitado + contexto recente. */
+/** Scan projetos do registry shared-ai por trabalho não commitado + contexto recente. */
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
@@ -393,8 +393,8 @@ export function scanProjects(registryPath: string, cursorDir: string): ScanItem[
 
 function main(): number {
   const cursorDir = process.env.CURSOR_USER_DIR ?? join(homedir(), '.cursor');
-  let registry = join(cursorDir, 'hostdime-ia/projects.json');
-  let outPath = join(cursorDir, 'hostdime-ia/sync-inbox.json');
+  let registry = join(cursorDir, 'shared-ai/projects.json');
+  let outPath = join(cursorDir, 'shared-ai/sync-inbox.json');
 
   if (process.argv.length > 2 && process.argv[2] === '--registry') {
     registry = process.argv[3]!;

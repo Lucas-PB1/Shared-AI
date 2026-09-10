@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Saúde multi-projeto: repos registrados, symlinks, git, review inbox.
+# Saúde multi-projeto: repos registrados, symlinks, git.
 # Uso: npm run health [-- --json]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
-ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
+ENV_FILE="$CURSOR_DIR/shared-ai.env"
 JSON=0
 
 while [[ $# -gt 0 ]]; do
@@ -21,7 +21,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/../lib/install/sh/hostdime-env.sh"
+source "$SCRIPT_DIR/../lib/install/sh/shared-ai-env.sh"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../lib/install/sh/projects-registry.sh"
 # shellcheck disable=SC1091
@@ -37,10 +37,10 @@ installed=""
 if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$ENV_FILE"
-  root="${HOSTDIME_IA_ROOT:-}"
+  root="${SHARED_AI_ROOT:-}"
   if [[ -d "$root" ]]; then
-    current="$(hostdime_read_version "$root")"
-    installed="${HOSTDIME_IA_VERSION:-?}"
+    current="$(shared_ai_read_version "$root")"
+    installed="${SHARED_AI_VERSION:-?}"
     if [[ "$current" != "$installed" ]]; then
       machine_issues=$((machine_issues + 1))
     fi
@@ -53,18 +53,18 @@ fi
 
 if [[ "$JSON" -eq 1 ]]; then
   _registry_ensure
-  hostdime_tsx "$SCRIPT_DIR/../lib/install/ts/health-json.ts" "$ENV_FILE" "$REGISTRY_FILE"
+  shared_ai_tsx "$SCRIPT_DIR/../lib/install/ts/health-json.ts" "$ENV_FILE" "$REGISTRY_FILE"
   exit 0
 fi
 
-echo "HostDime IA — health (projetos registrados)"
+echo "Shared AI — health (projetos registrados)"
 echo ""
 
 section() { echo "=== $1 ==="; }
 
 section "Máquina"
 if [[ ! -f "$ENV_FILE" ]]; then
-  echo "  ✗ hostdime-ia não instalado — npm run setup:skills"
+  echo "  ✗ shared-ai não instalado — npm run setup:skills"
   machine_issues=$((machine_issues + 1))
 elif [[ ! -d "$root" ]]; then
   echo "  ✗ clone não encontrado: $root"

@@ -25,13 +25,6 @@ function packageDeps(pkgPath: string): Record<string, string> {
 export function detectProfile(rootInput: string): string {
   const root = resolve(rootInput);
 
-  try {
-    statSync(resolve(root, 'hsproject.json'));
-    return 'hubspot';
-  } catch {
-    // not a file
-  }
-
   const composer = readJson(resolve(root, 'composer.json'));
   if (composer) {
     const require = {
@@ -52,7 +45,6 @@ export function detectProfile(rootInput: string): string {
     const deps = packageDeps(pkg);
     if ('next' in deps) return 'next';
     if ('react' in deps || 'react-dom' in deps) return 'react';
-    if ('@hubspot/cms-components' in deps || '@hubspot/cli' in deps) return 'hubspot';
   } catch {
     // no package.json
   }

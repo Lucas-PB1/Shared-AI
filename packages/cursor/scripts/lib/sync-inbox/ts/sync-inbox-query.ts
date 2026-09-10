@@ -77,7 +77,7 @@ function cmdPickZenity(inbox: string): number {
   const cmd = [
     'zenity',
     '--list',
-    '--title=HostDime — O que retomar?',
+    '--title=Shared AI — O que retomar?',
     '--text=Escolha o projeto para continuar no Cursor:',
     '--column=Projeto',
     '--column=Resumo',

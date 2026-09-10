@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 # Wizard de configuração: atualiza monorepo, skills, perfil, bootstrap, extras.
-# Uso: npm run onboard [-- --project=PATH] [--profile=NAME] [--no-code-review] [--yes]
+# Uso: npm run onboard [-- --project=PATH] [--profile=NAME] [--yes]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
-ENV_FILE="$CURSOR_DIR/hostdime-ia.env"
+ENV_FILE="$CURSOR_DIR/shared-ai.env"
 SETUP_ENV="$MONOREPO_ROOT/scripts/setup-project.mjs"
 
 PROJECT=""
 PROFILE=""
-SKIP_CODE_REVIEW=0
 NON_INTERACTIVE=0
 SKIP_EXTRAS=0
 SKIP_PULL=0
@@ -28,7 +27,6 @@ while [[ $# -gt 0 ]]; do
       PROFILE="${2:?Informe o perfil}"
       shift 2
       ;;
-    --no-code-review) SKIP_CODE_REVIEW=1; shift ;;
     --yes | -y) NON_INTERACTIVE=1; shift ;;
     --skip-extras) SKIP_EXTRAS=1; shift ;;
     --skip-pull) SKIP_PULL=1; shift ;;
@@ -37,11 +35,10 @@ while [[ $# -gt 0 ]]; do
       cat <<'EOF'
 Uso: npm run onboard [-- opções]
 
-Atualiza o clone hostdime-ia (git pull + sync + .env vazio) e configura o projeto.
+Atualiza o clone shared-ai (git pull + sync + .env vazio) e configura o projeto.
 
   --project=PATH       Caminho do repositório (default: monorepo ou PWD)
   --profile=NAME       Perfil (laravel, next, python, …)
-  --no-code-review     Pula setup:code-review
   --yes, -y            Aceita defaults (sem prompts)
   --skip-extras        Não oferece boot-sync / sync-inbox / cursor-cli
   --skip-pull          Não faz git pull no monorepo
@@ -60,7 +57,7 @@ done
 
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../lib/profiles/sh/profiles.sh"
-export HOSTDIME_IA_ROOT="$MONOREPO_ROOT"
+export SHARED_AI_ROOT="$MONOREPO_ROOT"
 
 onboard_prompt() {
   local prompt="$1"
@@ -149,7 +146,7 @@ onboard_select_profile() {
   echo ""
 }
 
-echo "HostDime IA — onboarding"
+echo "Shared AI — onboarding"
 echo ""
 
 section() {
@@ -192,19 +189,7 @@ else
   (cd "$MONOREPO_ROOT" && npm run sync) || true
 fi
 
-section "3. Code review"
-if [[ "$SKIP_CODE_REVIEW" -eq 1 ]]; then
-  echo "  · pulado (--no-code-review)"
-elif [[ -x "$CURSOR_DIR/review-check.sh" ]]; then
-  echo "  ✓ ferramentas de review já instaladas"
-elif [[ "$NON_INTERACTIVE" -eq 1 ]] || onboard_confirm "Instalar code review (/avaliar, PHPStan, ESLint)?" "y"; then
-  echo "  → npm run setup:code-review"
-  (cd "$MONOREPO_ROOT" && npm run setup:code-review)
-else
-  echo "  · pulado (rode depois: npm run setup:code-review)"
-fi
-
-section "4. Projeto"
+section "3. Projeto"
 default_project="$MONOREPO_ROOT"
 if [[ -z "$PROJECT" ]]; then
   if [[ "$NON_INTERACTIVE" -eq 1 ]]; then
@@ -255,7 +240,7 @@ fi
 
 (cd "$MONOREPO_ROOT" && npm run bootstrap -- "${bootstrap_args[@]}")
 
-# Dashboard Next.js (monorepo hostdime-ia ou perfil next)
+# Dashboard Next.js (monorepo shared-ai ou perfil next)
 is_monorepo_project=0
 [[ "$PROJECT" == "$MONOREPO_ROOT" ]] && is_monorepo_project=1
 configure_next=0
@@ -274,20 +259,9 @@ if [[ "$configure_next" -eq 1 ]]; then
   fi
 
   if [[ "$supabase_up" -eq 1 ]]; then
-    echo "  → Supabase local up — npm run env:switch -- local --refresh-keys"
-    if (cd "$MONOREPO_ROOT" && npm run env:switch -- local --refresh-keys); then
-      echo "  ✓ bootstrap .env preenchido com keys locais"
-      echo "  → npm run connections:seed"
-      (cd "$MONOREPO_ROOT" && npm run connections:seed) || \
-        echo "  ! connections:seed falhou — rode depois com secret no .env" >&2
-    else
-      echo "  ! env:switch falhou — preencha o .env manualmente" >&2
-    fi
+    echo "  · Supabase local up — preencha NEXT_PUBLIC_SUPABASE_* no .env com npm run supabase:status"
   else
-    echo "  · Supabase local parado — .env permanece sem secrets"
-    echo "    Depois: npm run supabase:start"
-    echo "            npm run env:switch -- local --refresh-keys"
-    echo "            npm run connections:seed"
+    echo "  · Supabase local parado — depois: npm run supabase:start e copie as keys para o .env"
   fi
 
   echo "  · App: npm run dev  →  http://localhost:3000"
@@ -305,11 +279,6 @@ if [[ "$SKIP_EXTRAS" -eq 0 && "$NON_INTERACTIVE" -eq 0 ]]; then
     echo "  ✓ Cursor CLI (agent) já no PATH"
   elif onboard_confirm "Instalar Cursor CLI (agent)?"; then
     (cd "$MONOREPO_ROOT" && npm run cursor-cli -- install --skip-login || true)
-  fi
-  if [[ "$PROFILE" == "hubspot" ]] && onboard_confirm "Instalar MCP HubSpotDev?"; then
-    if [[ -x "$CURSOR_DIR/install-hubspot-mcp.sh" ]]; then
-      "$CURSOR_DIR/install-hubspot-mcp.sh" || true
-    fi
   fi
 fi
 
@@ -333,19 +302,16 @@ if [[ "$configure_next" -eq 1 ]]; then
   if [[ "$env_ready" -eq 0 ]]; then
     echo "Dashboard Next — ainda falta secrets no .env:"
     echo "  1. npm run supabase:start"
-    echo "  2. npm run env:switch -- local --refresh-keys"
-    echo "  3. npm run connections:seed"
-    echo "  4. npm run dev"
+    echo "  2. copie URL e keys do npm run supabase:status para o .env"
+    echo "  3. npm run dev"
   else
     echo "Dashboard Next — .env ok. Para subir:"
     echo "  npm run dev"
-    echo "  (supabase local já estava up e connections:seed tentado)"
   fi
 elif [[ "$env_ready" -eq 0 ]]; then
-  echo "Ainda falta (store) — .env sem secrets:"
-  echo "  1. Preencha $MONOREPO_ROOT/.env"
-  echo "     OU: npm run env:switch -- local --refresh-keys"
-  echo "  2. npm run connections:seed"
+  echo "Ainda falta — .env sem secrets:"
+  echo "  1. npm run supabase:start"
+  echo "  2. preencha $MONOREPO_ROOT/.env com as keys locais"
 else
   echo "Próximos passos: npm run health · abra o projeto no Cursor"
 fi

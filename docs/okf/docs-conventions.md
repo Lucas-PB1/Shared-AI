@@ -2,7 +2,7 @@
 type: Convention
 title: Convenções de documentação (OKF)
 description: >-
-  Como escrever e manter docs do hostdime-ia no Open Knowledge Format v0.1.
+  Como escrever e manter docs do shared-ai no Open Knowledge Format v0.1.
 tags: [okf, docs, convention]
 timestamp: 2026-08-10T16:00:00Z
 ---
@@ -20,7 +20,7 @@ Não confundir com Google Docs: OKF é **Markdown + YAML frontmatter** versionad
 | Concepts do produto / ops | `docs/okf/**/*.md` |
 | Índice / histórico do bundle | `docs/okf/index.md`, `docs/okf/log.md` |
 | Skill library genérica | `packages/cursor/skills/` (não OKF) |
-| README de pacote / CI | `packages/*/README.md`, `ci/README.md` |
+| README de pacote | `packages/*/README.md` |
 
 ## Regras por arquivo
 
@@ -28,7 +28,7 @@ Não confundir com Google Docs: OKF é **Markdown + YAML frontmatter** versionad
 2. Todo concept tem frontmatter com **`type`** (obrigatório).
 3. Campos recomendados: `title`, `description`, `tags`, `timestamp` (ISO-8601).
 4. **Reservados** (não são concepts): `index.md`, `log.md`.
-5. Links entre concepts: preferir path absoluto na raiz do bundle — `[texto](/review-store.md)` ou relativo estável `[texto](review-store.md)`.
+5. Links entre concepts: preferir path relativo estável `[texto](dashboard-web.md)`.
 6. Sem wikilinks `[[…]]`.
 7. Body: headings, tabelas e listas antes de prosa longa.
 8. Seções úteis: `# Schema`, `# Examples`, `# Citations` (quando couber).
@@ -40,7 +40,7 @@ Não confundir com Google Docs: OKF é **Markdown + YAML frontmatter** versionad
 | `Architecture` | Visão de sistema / fluxo |
 | `Schema` | Modelo de dados, env, contratos |
 | `Reference` | Superfícies de código / APIs internas |
-| `Playbook` | Passo a passo ops (local, cloud, Windows) |
+| `Playbook` | Passo a passo ops (local, Windows) |
 | `Convention` | Como trabalhamos (este arquivo) |
 
 Valores de `type` são livres; novos tipos são ok se documentados aqui ou no `log.md`.
@@ -54,7 +54,7 @@ Valores de `type` são livres; novos tipos são ok se documentados aqui ou no `l
 
 ## Relacionados
 
-- [Review store](review-store.md)
+- [Dashboard web](dashboard-web.md)
 - Spec oficial OKF (Citations)
 
 # Citations

@@ -7,12 +7,12 @@
 apply_bootstrap_profile() {
   local project="$1"
   local profile="$2"
-  local root="${HOSTDIME_IA_ROOT:-}"
+  local root="${SHARED_AI_ROOT:-}"
   local profile_dir
 
   [[ -n "$profile" ]] || return 0
   [[ -n "$root" && -d "$root" ]] || {
-    echo "Erro: HOSTDIME_IA_ROOT não configurado" >&2
+    echo "Erro: SHARED_AI_ROOT não configurado" >&2
     return 1
   }
 

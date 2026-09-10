@@ -1,5 +1,0 @@
-# Exclusões versionadas — usadas pelo /avaliar automático (CI)
-# Exportar do context local: review-export-exclusions.sh
-# Ou preencher manualmente após /memoria compactar.
-
-exclusions: []

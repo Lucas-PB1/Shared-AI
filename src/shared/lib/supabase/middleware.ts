@@ -1,15 +1,12 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { resolvePublicConfigFromEnvAndCookies } from '@/shared/config/connection-public';
+import { getPublicSupabaseConfig } from '@/shared/config/env';
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const config = resolvePublicConfigFromEnvAndCookies({
-    get: (name) => request.cookies.get(name),
-  });
-
+  const config = getPublicSupabaseConfig();
   if (!config) {
     return { user: null, supabaseResponse };
   }

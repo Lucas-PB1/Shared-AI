@@ -1,15 +1,15 @@
 ---
 type: Playbook
-title: HostDime IA no Windows
+title: Shared AI no Windows
 description: >-
-  Install, sync, hooks e limites do review no Windows (PowerShell nativo).
+  Install, sync e hooks no Windows (PowerShell nativo).
 tags: [windows, powershell, playbook]
-timestamp: 2026-08-10T16:00:00Z
+timestamp: 2026-09-10T16:00:00Z
 ---
 
 ## Contexto
 
-Suporte nativo via **PowerShell** (sem Git Bash ou WSL para install/sync/bootstrap).  
+Suporte nativo via **PowerShell** e **Node** (sem Git Bash ou WSL para install, sync, bootstrap, test e lint).  
 Plataformas: **Windows** e **Linux** apenas.
 
 ## Pré-requisitos
@@ -20,15 +20,13 @@ Plataformas: **Windows** e **Linux** apenas.
 | PowerShell | 5.1+ | sim |
 | Node.js | 20+ | sim |
 | Git | recente | recomendado |
-| PHP / Composer / Semgrep | — | só `setup:code-review` |
 
 ## Instalação
 
 ```powershell
-git clone https://github.com/hostdime/hostdime-ia.git
-cd hostdime-ia
+git clone https://github.com/your-org/shared-ai.git
+cd shared-ai
 npm run setup:skills
-npm run setup:code-review
 npm run bootstrap -- C:\caminho\do\seu\projeto
 # opcional: --profile=laravel
 ```
@@ -36,7 +34,7 @@ npm run bootstrap -- C:\caminho\do\seu\projeto
 ## Atualização
 
 ```powershell
-cd hostdime-ia
+cd shared-ai
 git pull
 npm run sync
 npm run status
@@ -64,22 +62,13 @@ Canal **Hooks** no Output do Cursor para diagnóstico.
 
 | Comando | Ação |
 | --- | --- |
-| `setup:skills` / `setup:code-review` | Install em `~\.cursor` |
+| `setup:skills` | Install em `~\.cursor` |
 | `bootstrap` / `detach` / `sync` | Projeto e machine |
 | `doctor` / `status` / `health` | Diagnóstico |
 | `cursor-cli` / `agent` | CLI agent + modo auto |
 | `historico` | Watches `/historico` (`merge-hooks` no projeto) |
+| `lint:ts` / `test` | Node (`scripts/run-task.mjs`) — sem bash |
 | `boot-sync` | Task Scheduler no logon |
-
-## Limites (bash)
-
-- **`review:ci` / pre-commit git**: ainda bash — use Git Bash, WSL ou confie no CI Linux.
-- Pular pre-commit: `$env:HOSTDIME_SKIP_PRE_COMMIT=1`.
-
-```bash
-# Git Bash / WSL
-HOSTDIME_IA_ROOT=/c/path/hostdime-ia npm run hooks:pre-commit -- /c/path/projeto
-```
 
 ## Cursor CLI
 
@@ -92,5 +81,4 @@ npm run cursor-cli -- login
 
 ## Relacionados
 
-- [Review store](review-store.md) (secrets iguais no tooling)
 - [README monorepo](../../README.md)

@@ -9,9 +9,9 @@ CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 if [[ -f "$SCRIPT_DIR/../lib/install/sh/cursor-cli.sh" ]]; then
   # shellcheck disable=SC1091
   source "$SCRIPT_DIR/../lib/install/sh/cursor-cli.sh"
-elif [[ -f "$CURSOR_DIR/hostdime-cursor-cli.sh" ]]; then
+elif [[ -f "$CURSOR_DIR/shared-ai-cursor-cli.sh" ]]; then
   # shellcheck disable=SC1091
-  source "$CURSOR_DIR/hostdime-cursor-cli.sh"
+  source "$CURSOR_DIR/shared-ai-cursor-cli.sh"
 else
   echo "Erro: lib cursor-cli.sh não encontrada" >&2
   exit 1

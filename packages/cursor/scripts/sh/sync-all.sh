@@ -14,16 +14,16 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MONOREPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CURSOR_DIR="${CURSOR_USER_DIR:-$HOME/.cursor}"
 LINK_SCRIPT="$CURSOR_DIR/link-project.sh"
-STATE_FILE="$CURSOR_DIR/hostdime-ia/sync-state.env"
+STATE_FILE="$CURSOR_DIR/shared-ai/sync-state.env"
 
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../lib/install/sh/install-packages.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/../lib/install/sh/hostdime-env.sh"
+source "$SCRIPT_DIR/../lib/install/sh/shared-ai-env.sh"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/../lib/install/sh/projects-registry.sh"
 
-echo "HostDime IA — sync"
+echo "Shared AI — sync"
 echo "Clone: $MONOREPO_ROOT"
 echo ""
 
@@ -32,7 +32,6 @@ if [[ "$MIGRATE" -eq 1 ]]; then
 fi
 
 install_skills_package "$MONOREPO_ROOT"
-install_code_review_package "$MONOREPO_ROOT"
 
 if [[ "$PRUNE" -eq 1 ]]; then
   echo "→ prune symlinks órfãos"
@@ -40,47 +39,32 @@ if [[ "$PRUNE" -eq 1 ]]; then
 fi
 
 needs_npm=0
-needs_composer=0
 mkdir -p "$(dirname "$STATE_FILE")"
 
 pkg_hash=""
-composer_hash=""
 if [[ -f "$MONOREPO_ROOT/package-lock.json" ]]; then
   pkg_hash="$(md5sum "$MONOREPO_ROOT/package-lock.json" | awk '{print $1}')"
 fi
-if [[ -f "$MONOREPO_ROOT/composer.lock" ]]; then
-  composer_hash="$(md5sum "$MONOREPO_ROOT/composer.lock" | awk '{print $1}')"
-fi
 
 prev_pkg=""
-prev_composer=""
 if [[ -f "$STATE_FILE" ]]; then
   prev_pkg="$(grep '^PACKAGE_LOCK_HASH=' "$STATE_FILE" 2>/dev/null | cut -d= -f2- || true)"
-  prev_composer="$(grep '^COMPOSER_LOCK_HASH=' "$STATE_FILE" 2>/dev/null | cut -d= -f2- || true)"
 fi
 
 if [[ -n "$pkg_hash" && "$pkg_hash" != "$prev_pkg" ]]; then
   needs_npm=1
   echo "package-lock.json alterado — npm install"
 fi
-if [[ -n "$composer_hash" && "$composer_hash" != "$prev_composer" ]]; then
-  needs_composer=1
-  echo "composer.lock alterado — composer install"
-fi
 
 if [[ "$needs_npm" -eq 1 ]]; then
   (cd "$MONOREPO_ROOT" && npm install)
 fi
-if [[ "$needs_composer" -eq 1 ]]; then
-  (cd "$MONOREPO_ROOT" && composer install --quiet)
-fi
 
 {
   [[ -n "$pkg_hash" ]] && echo "PACKAGE_LOCK_HASH=$pkg_hash"
-  [[ -n "$composer_hash" ]] && echo "COMPOSER_LOCK_HASH=$composer_hash"
 } >"$STATE_FILE"
 
-hostdime_update_sync_time
+shared_ai_update_sync_time
 
 prune_missing_projects
 

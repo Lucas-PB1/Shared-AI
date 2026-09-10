@@ -2,13 +2,13 @@
 $ErrorActionPreference = 'Continue'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
-. (Join-Path $LibRoot 'Hostdime-Env.ps1')
+. (Join-Path $LibRoot 'SharedAi-Env.ps1')
 . (Join-Path $LibRoot 'Link-FromRepo.ps1')
 . (Join-Path $LibRoot 'Projects-Registry.ps1')
 
 $MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $cursorDir = Get-CursorUserDir
-$envFile = Get-HostdimeEnvFile
+$envFile = Get-SharedAiEnvFile
 $issues = 0
 
 function Write-Ok { param([string]$Msg) Write-Host "  ✓ $Msg" }
@@ -65,47 +65,46 @@ function Get-UserSymlinkIssues {
 
     foreach ($f in Get-Item (Join-Path $Root 'packages/cursor/rules/skills-orchestrator-*.mdc') -ErrorAction SilentlyContinue) {
         $dest = Join-Path $cursorDir "rules/$($f.Name)"
-        if ((Test-Path $dest) -and -not (Test-HostdimeSymlink $dest)) { $skipped++ }
-        elseif ((Test-Path $dest) -and (Test-HostdimeSymlink $dest) -and -not (Test-Path $dest)) { $broken++ }
+        if ((Test-Path $dest) -and -not (Test-SharedAiSymlink $dest)) { $skipped++ }
+        elseif ((Test-Path $dest) -and (Test-SharedAiSymlink $dest) -and -not (Test-Path $dest)) { $broken++ }
         elseif (-not (Test-Path $dest)) { $missing++ }
     }
 
     foreach ($skill in @(
-        (Get-ChildItem (Join-Path $Root 'packages/cursor/skills') -Directory -ErrorAction SilentlyContinue),
-        (Get-ChildItem (Join-Path $Root 'packages/code-review/skills') -Directory -ErrorAction SilentlyContinue)
+        (Get-ChildItem (Join-Path $Root 'packages/cursor/skills') -Directory -ErrorAction SilentlyContinue)
     )) {
         foreach ($dir in $skill) {
             $dest = Join-Path $cursorDir "skills/$($dir.Name)"
-            if ((Test-Path $dest) -and -not (Test-HostdimeSymlink $dest)) { $skipped++ }
-            elseif ((Test-Path $dest) -and (Test-HostdimeSymlink $dest) -and -not (Test-Path $dest)) { $broken++ }
+            if ((Test-Path $dest) -and -not (Test-SharedAiSymlink $dest)) { $skipped++ }
+            elseif ((Test-Path $dest) -and (Test-SharedAiSymlink $dest) -and -not (Test-Path $dest)) { $broken++ }
             elseif (-not (Test-Path $dest)) { $missing++ }
         }
     }
 
-    foreach ($cmd in @('avaliar.md', 'finalizar.md', 'avaliar-diff.md', 'skills-why.md', 'hubspot-mcp.md')) {
+    foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md')) {
         $dest = Join-Path $cursorDir "commands/$cmd"
-        if ((Test-Path $dest) -and -not (Test-HostdimeSymlink $dest)) { $skipped++ }
-        elseif ((Test-Path $dest) -and (Test-HostdimeSymlink $dest) -and -not (Test-Path $dest)) { $broken++ }
+        if ((Test-Path $dest) -and -not (Test-SharedAiSymlink $dest)) { $skipped++ }
+        elseif ((Test-Path $dest) -and (Test-SharedAiSymlink $dest) -and -not (Test-Path $dest)) { $broken++ }
         elseif (-not (Test-Path $dest)) { $missing++ }
     }
 
     return @{ Broken = $broken; Missing = $missing; Skipped = $skipped }
 }
 
-Write-Host 'HostDime IA — doctor'
+Write-Host 'Shared AI — doctor'
 
 Write-Section 'Instalação'
 $root = ''
 if (-not (Test-Path $envFile)) {
-    Write-Fail 'hostdime-ia.env — rode: npm run setup:skills'
+    Write-Fail 'shared-ai.env — rode: npm run setup:skills'
 } else {
-    Write-Ok 'hostdime-ia.env'
-    $envData = Read-HostdimeEnv
-    $root = $envData['HOSTDIME_IA_ROOT']
+    Write-Ok 'shared-ai.env'
+    $envData = Read-SharedAiEnv
+    $root = $envData['SHARED_AI_ROOT']
     if ($root -and (Test-Path $root)) {
         Write-Ok "clone em $root"
-        $current = Get-HostdimeVersion $root
-        $installed = if ($envData['HOSTDIME_IA_VERSION']) { $envData['HOSTDIME_IA_VERSION'] } else { '?' }
+        $current = Get-SharedAiVersion $root
+        $installed = if ($envData['SHARED_AI_VERSION']) { $envData['SHARED_AI_VERSION'] } else { '?' }
         if ($current -ne $installed) {
             Write-WarnItem "versão desatualizada (clone=$current, instalada=$installed) — git pull && npm run sync"
         } else {
@@ -134,48 +133,40 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
 } else {
     Write-Fail 'tsx/Node — rode: npm install (tsx para scripts/hooks JSON)'
 }
-Test-CommandExists 'PHP (code-review)' 'php'
-Test-CommandExists 'Composer (code-review)' 'composer'
-Test-CommandExists 'Semgrep (code-review)' 'semgrep'
 
 Write-Section 'Dependências do clone'
 if ($root -and (Test-Path $root)) {
     if (Test-Path (Join-Path $root 'node_modules')) {
         Write-Ok 'node_modules'
     } else {
-        Write-Fail 'node_modules — rode: npm run setup:code-review'
-    }
-    if (Test-Path (Join-Path $root 'vendor/bin/phpstan')) {
-        Write-Ok 'PHPStan'
-    } else {
-        Write-Fail 'PHPStan — rode: npm run setup:code-review'
+        Write-Fail 'node_modules — rode: npm install'
     }
 }
 
 Write-Section '~/.cursor (artefatos)'
-foreach ($script in @('Link-Project.ps1', 'review-check.sh', 'review-finalizar.sh', 'review-diff.sh', 'review-ci.sh')) {
+foreach ($script in @('Link-Project.ps1')) {
     $path = Join-Path $cursorDir $script
     if (Test-Path $path) {
         Write-Ok $script
     } else {
-        Write-Fail "$script — rode: npm run setup:skills && npm run setup:code-review"
+        Write-Fail "$script — rode: npm run setup:skills"
     }
 }
 
-foreach ($cmd in @('avaliar.md', 'finalizar.md', 'avaliar-diff.md', 'skills-why.md', 'hubspot-mcp.md')) {
+foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md')) {
     $path = Join-Path $cursorDir "commands/$cmd"
     $name = $cmd -replace '\.md$', ''
-    if ((Test-Path $path) -and (Test-HostdimeSymlink $path)) {
+    if ((Test-Path $path) -and (Test-SharedAiSymlink $path)) {
         Write-Ok "command /$name"
     } elseif (Test-Path $path) {
         Write-WarnItem "command /$name — arquivo real (não symlink); rode npm run sync -- --migrate"
     } else {
-        Write-Fail "command /$name — rode: npm run setup:code-review"
+        Write-Fail "command /$name — rode: npm run setup:skills"
     }
 }
 
 $routing = Join-Path $cursorDir 'SKILLS-ROUTING.md'
-if ((Test-Path $routing) -and (Test-HostdimeSymlink $routing)) {
+if ((Test-Path $routing) -and (Test-SharedAiSymlink $routing)) {
     Write-Ok 'SKILLS-ROUTING.md'
 } elseif (Test-Path $routing) {
     Write-WarnItem 'SKILLS-ROUTING.md — cópia local; prefira symlink (npm run sync -- --migrate)'
@@ -199,7 +190,7 @@ if (-not (Test-Path $hooksFile)) {
 } elseif ($hookRc -eq 0) {
     Write-Ok 'hooks.json com sessionStart → ensure-project-cursor'
 } elseif ($hookRc -eq 2) {
-    Write-WarnItem 'hooks.json sem sessionStart do hostdime-ia — adicione ensure-project-cursor.ps1'
+    Write-WarnItem 'hooks.json sem sessionStart do shared-ai — adicione ensure-project-cursor.ps1'
 } else {
     Write-Fail 'hooks.json inválido ou ilegível'
 }
@@ -235,7 +226,7 @@ foreach ($project in Get-RegisteredProjects) {
     $rulesDir = Join-Path $project '.cursor/rules'
     if (Test-Path $rulesDir) {
         foreach ($f in Get-ChildItem $rulesDir -Force -ErrorAction SilentlyContinue) {
-            if ((Test-Path $f.FullName) -and (Test-HostdimeSymlink $f.FullName) -and -not (Test-Path $f.FullName)) {
+            if ((Test-Path $f.FullName) -and (Test-SharedAiSymlink $f.FullName) -and -not (Test-Path $f.FullName)) {
                 $broken++
             }
         }

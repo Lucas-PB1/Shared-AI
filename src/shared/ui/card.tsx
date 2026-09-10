@@ -9,7 +9,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-hd-2xl border border-hd-border bg-hd-canvas p-5 shadow-hd-md',
+        'rounded-sa-2xl border border-sa-border bg-sa-canvas p-5 shadow-sa-md',
         className,
       )}
       {...props}
@@ -23,7 +23,7 @@ export function CardTitle({
 }: React.ComponentProps<'h2'>) {
   return (
     <h2
-      className={cn('font-display text-lg font-semibold text-hd-ink', className)}
+      className={cn('font-display text-lg font-semibold text-sa-ink', className)}
       {...props}
     />
   );
@@ -34,6 +34,6 @@ export function CardDescription({
   ...props
 }: React.ComponentProps<'p'>) {
   return (
-    <p className={cn('mt-1 text-sm text-hd-muted', className)} {...props} />
+    <p className={cn('mt-1 text-sm text-sa-muted', className)} {...props} />
   );
 }

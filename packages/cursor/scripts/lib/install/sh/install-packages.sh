@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instala symlinks do hostdime-ia em ~/.cursor/
+# Instala symlinks do shared-ai em ~/.cursor/
 
 install_skills_package() {
   local monorepo_root="$1"
@@ -11,9 +11,9 @@ install_skills_package() {
   # shellcheck disable=SC1091
   source "$install_lib/link-from-repo.sh"
   # shellcheck disable=SC1091
-  source "$install_lib/hostdime-env.sh"
+  source "$install_lib/shared-ai-env.sh"
 
-  export HOSTDIME_IA_ROOT="$monorepo_root"
+  export SHARED_AI_ROOT="$monorepo_root"
   reset_link_counters
 
   mkdir -p "$cursor_dir"/{rules,skills,hooks}
@@ -49,81 +49,28 @@ install_skills_package() {
   install -m 755 "$cursor_pkg/scripts/sh/link-project-rules.sh" "$cursor_dir/"
   install -m 755 "$cursor_pkg/scripts/hooks/sh/ensure-project-cursor.sh" "$cursor_dir/hooks/"
   install -m 755 "$cursor_dir/hooks/ensure-project-cursor.sh" "$cursor_dir/hooks/ensure-project-rules.sh"
-  install -m 755 "$install_lib/projects-registry.sh" "$cursor_dir/hostdime-projects-registry.sh"
-  install -m 755 "$install_lib/hostdime-env.sh" "$cursor_dir/hostdime-env.sh"
-  install -m 755 "$install_lib/link-from-repo.sh" "$cursor_dir/hostdime-link-from-repo.sh"
-  install -m 755 "$cursor_pkg/scripts/sh/install-hubspot-mcp.sh" "$cursor_dir/"
+  install -m 755 "$install_lib/projects-registry.sh" "$cursor_dir/shared-ai-projects-registry.sh"
+  install -m 755 "$install_lib/shared-ai-env.sh" "$cursor_dir/shared-ai-env.sh"
+  install -m 755 "$install_lib/link-from-repo.sh" "$cursor_dir/shared-ai-link-from-repo.sh"
   install -m 755 "$cursor_pkg/scripts/sh/install-cursor-cli.sh" "$cursor_dir/"
   install -m 755 "$cursor_pkg/scripts/sh/agent-cli.sh" "$cursor_dir/run-agent.sh"
-  install -m 755 "$install_lib/cursor-cli.sh" "$cursor_dir/hostdime-cursor-cli.sh"
-  install -m 755 "$sync_lib/sync-inbox.sh" "$cursor_dir/hostdime-sync-inbox.sh"
+  install -m 755 "$install_lib/cursor-cli.sh" "$cursor_dir/shared-ai-cursor-cli.sh"
+  install -m 755 "$sync_lib/sync-inbox.sh" "$cursor_dir/shared-ai-sync-inbox.sh"
   install -m 755 "$cursor_pkg/scripts/sh/sync-inbox.sh" "$cursor_dir/"
 
-  hostdime_write_env "$monorepo_root"
+  shared_ai_write_env "$monorepo_root"
 
   echo "  symlinks: $LINK_LINKED ok, $LINK_SKIPPED pulados"
 
   # shellcheck disable=SC1091
   source "$install_lib/merge-hooks-json.sh"
-  merge_hostdime_hooks_json "$cursor_pkg"
-}
-
-install_code_review_package() {
-  local monorepo_root="$1"
-  local cursor_dir="${CURSOR_USER_DIR:-$HOME/.cursor}"
-  local review_pkg="$monorepo_root/packages/code-review"
-  local install_lib="$monorepo_root/packages/cursor/scripts/lib/install/sh"
-
-  # shellcheck disable=SC1091
-  source "$install_lib/link-from-repo.sh"
-  # shellcheck disable=SC1091
-  source "$install_lib/hostdime-env.sh"
-
-  export HOSTDIME_IA_ROOT="$monorepo_root"
-  reset_link_counters
-
-  mkdir -p "$cursor_dir"/{skills,commands}
-
-  echo "→ skills (review)"
-  local skill_dir
-  for skill_dir in "$review_pkg/skills"/*/; do
-    [[ -d "$skill_dir" ]] || continue
-    link_dir "$skill_dir" "$cursor_dir/skills"
-  done
-
-  echo "→ commands (/avaliar, /finalizar, /memoria)"
-  for cmd in avaliar.md finalizar.md avaliar-diff.md memoria.md skills-why.md hubspot-mcp.md; do
-    if [[ -e "$cursor_dir/commands/$cmd" && ! -L "$cursor_dir/commands/$cmd" ]]; then
-      rm -f "$cursor_dir/commands/$cmd"
-    fi
-  done
-  link_file "$review_pkg/commands/avaliar.md" "$cursor_dir/commands"
-  link_file "$review_pkg/commands/finalizar.md" "$cursor_dir/commands"
-  link_file "$review_pkg/commands/avaliar-diff.md" "$cursor_dir/commands"
-  link_file "$review_pkg/commands/memoria.md" "$cursor_dir/commands"
-
-  echo "→ ferramentas review"
-  install -m 755 "$review_pkg/tools/sh/check-inbox.sh" "$cursor_dir/review-check.sh"
-  install -m 755 "$review_pkg/tools/sh/finalizar-review.sh" "$cursor_dir/review-finalizar.sh"
-  install -m 755 "$review_pkg/tools/sh/review-diff.sh" "$cursor_dir/review-diff.sh"
-  install -m 755 "$review_pkg/tools/sh/review-ci.sh" "$cursor_dir/review-ci.sh"
-  install -m 755 "$review_pkg/tools/sh/review-github-pr.sh" "$cursor_dir/review-github-pr.sh"
-  install -m 755 "$review_pkg/tools/sh/review-memoria.sh" "$cursor_dir/review-memoria.sh"
-
-  if [[ -f "$cursor_dir/hostdime-ia.env" ]]; then
-    hostdime_update_sync_time
-  else
-    hostdime_write_env "$monorepo_root"
-  fi
-
-  echo "  symlinks: $LINK_LINKED ok, $LINK_SKIPPED pulados"
+  merge_shared_ai_hooks_json "$cursor_pkg"
 }
 
 migrate_managed_real_files() {
   local monorepo_root="$1"
   local cursor_dir="${CURSOR_USER_DIR:-$HOME/.cursor}"
   local cursor_pkg="$monorepo_root/packages/cursor"
-  local review_pkg="$monorepo_root/packages/code-review"
   local f d dest name
 
   echo "→ migrate (substituir cópias antigas por symlinks)"
@@ -132,11 +79,11 @@ migrate_managed_real_files() {
     dest="$cursor_dir/rules/$(basename "$f")"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
-  for cmd in avaliar.md finalizar.md avaliar-diff.md memoria.md skills-why.md hubspot-mcp.md; do
+  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
     dest="$cursor_dir/commands/$cmd"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
-  for d in "$cursor_pkg/skills"/*/ "$review_pkg/skills"/*/; do
+  for d in "$cursor_pkg/skills"/*/; do
     [[ -d "$d" ]] || continue
     name="$(basename "$d")"
     dest="$cursor_dir/skills/$name"
@@ -151,13 +98,12 @@ prune_user_symlinks_if_requested() {
   local monorepo_root="$1"
   local cursor_dir="${CURSOR_USER_DIR:-$HOME/.cursor}"
   local cursor_pkg="$monorepo_root/packages/cursor"
-  local review_pkg="$monorepo_root/packages/code-review"
   local lib_dir="$cursor_pkg/scripts/lib/install/sh"
   local names=() d f
 
   # shellcheck disable=SC1091
   source "$lib_dir/link-from-repo.sh"
-  export HOSTDIME_IA_ROOT="$monorepo_root"
+  export SHARED_AI_ROOT="$monorepo_root"
 
   for f in "$cursor_pkg/rules"/skills-orchestrator-*.mdc; do
     [[ -f "$f" ]] && names+=("$(basename "$f")")
@@ -165,11 +111,11 @@ prune_user_symlinks_if_requested() {
   prune_managed_symlinks "$cursor_dir/rules" "${names[@]}"
 
   names=()
-  for d in "$cursor_pkg/skills"/*/ "$review_pkg/skills"/*/; do
+  for d in "$cursor_pkg/skills"/*/; do
     [[ -d "$d" ]] && names+=("$(basename "$d")")
   done
   prune_managed_symlinks "$cursor_dir/skills" "${names[@]}"
 
-  names=(avaliar.md finalizar.md avaliar-diff.md memoria.md skills-why.md hubspot-mcp.md cursor-cli.md historico.md sync-inbox.md onboard.md)
+  names=(skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md)
   prune_managed_symlinks "$cursor_dir/commands" "${names[@]}"
 }

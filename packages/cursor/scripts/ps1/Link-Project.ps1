@@ -1,5 +1,5 @@
-# Prepara .cursor/ do projeto (store-only: remove .cursor/review se existir).
-# Rules/commands hostdime ficam só em ~/.cursor/.
+# Prepara .cursor/ do projeto.
+# Rules/commands shared-ai ficam só em ~/.cursor/.
 param(
     [switch]$Quiet,
     [Parameter(Position = 0)]
@@ -11,15 +11,15 @@ $ErrorActionPreference = 'Stop'
 $installedDir = if ($env:CURSOR_USER_DIR) { $env:CURSOR_USER_DIR } else { Join-Path $env:USERPROFILE '.cursor' }
 $repoLib = Join-Path $PSScriptRoot 'lib'
 
-if (Test-Path (Join-Path $installedDir 'hostdime-env.ps1')) {
-    . (Join-Path $installedDir 'hostdime-env.ps1')
-    . (Join-Path $installedDir 'hostdime-link-from-repo.ps1')
-} elseif (Test-Path (Join-Path $repoLib 'Hostdime-Env.ps1')) {
-    . (Join-Path $repoLib 'Hostdime-Env.ps1')
+if (Test-Path (Join-Path $installedDir 'shared-ai-env.ps1')) {
+    . (Join-Path $installedDir 'shared-ai-env.ps1')
+    . (Join-Path $installedDir 'shared-ai-link-from-repo.ps1')
+} elseif (Test-Path (Join-Path $repoLib 'SharedAi-Env.ps1')) {
+    . (Join-Path $repoLib 'SharedAi-Env.ps1')
     . (Join-Path $repoLib 'Link-FromRepo.ps1')
     . (Join-Path $repoLib 'Ensure-ProjectGitignore.ps1')
 } else {
-    Write-Error 'Bibliotecas hostdime não encontradas. Rode: npm run setup:skills'
+    Write-Error 'Bibliotecas shared-ai não encontradas. Rode: npm run setup:skills'
     exit 1
 }
 
@@ -28,33 +28,29 @@ if (-not $Target) {
     exit 1
 }
 
-$envData = Read-HostdimeEnv
-if ($envData['HOSTDIME_IA_ROOT']) {
-    $env:HOSTDIME_IA_ROOT = $envData['HOSTDIME_IA_ROOT']
+$envData = Read-SharedAiEnv
+if ($envData['SHARED_AI_ROOT']) {
+    $env:SHARED_AI_ROOT = $envData['SHARED_AI_ROOT']
 }
 
-if (-not $env:HOSTDIME_IA_ROOT -or -not (Test-Path $env:HOSTDIME_IA_ROOT)) {
-    if (-not $Quiet) { Write-Error 'HOSTDIME_IA_ROOT não configurado' }
+if (-not $env:SHARED_AI_ROOT -or -not (Test-Path $env:SHARED_AI_ROOT)) {
+    if (-not $Quiet) { Write-Error 'SHARED_AI_ROOT não configurado' }
     Write-Error 'Execute: npm run setup:skills'
     exit 1
 }
 
-$root = $env:HOSTDIME_IA_ROOT
+$root = $env:SHARED_AI_ROOT
 $gitignoreLib = Join-Path $root 'packages/cursor/scripts/ps1/lib/Ensure-ProjectGitignore.ps1'
 if ((Test-Path $gitignoreLib) -and -not (Get-Command Ensure-ProjectGitignore -ErrorAction SilentlyContinue)) {
     . $gitignoreLib
 }
 
-$env:HOSTDIME_IA_ROOT = $root
+$env:SHARED_AI_ROOT = $root
 Reset-LinkCounters
 
 $Target = (Resolve-Path -LiteralPath $Target).Path
 $rulesDir = Join-Path $Target '.cursor/rules'
 $commandsDir = Join-Path $Target '.cursor/commands'
-$removedReview = $false
-if (Get-Command Remove-ProjectReviewDir -ErrorAction SilentlyContinue) {
-    $removedReview = [bool](Remove-ProjectReviewDir $Target)
-}
 
 if (Test-Path $rulesDir) {
     Remove-ProjectOrchestratorRuleSymlinks -RulesDir $rulesDir
@@ -74,12 +70,8 @@ Ensure-ProjectGitignore $Target
 if (-not $Quiet) {
     Write-Host ''
     Write-Host "Concluído em $Target/.cursor/"
-    Write-Host '  memória / decisões → store Supabase'
     Write-Host '  orquestrador → ~/.cursor/rules/ (global)'
     Write-Host '  commands → ~/.cursor/commands/ (global)'
-    if ($removedReview) {
-        Write-Host '  removido: .cursor/review/'
-    }
     if ($script:LinkOrchestratorRemoved -gt 0) {
         Write-Host "  removidos do projeto: $script:LinkOrchestratorRemoved skills-orchestrator-*.mdc"
     }
