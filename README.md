@@ -41,7 +41,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | --- | --- | --- |
 | `npm run setup:skills` | Máquina | Rules, skills, hooks (merge), motor de sync |
 | `npm run bootstrap -- <repo>` | Projeto | Symlinks + registry |
-| `npm run bootstrap -- <repo> --profile=laravel\|react\|next\|python\|zend-laminas` | Projeto | + `SKILLS-ROUTING.md` e rule do stack |
+| `npm run bootstrap -- <repo> --profile=monorepo\|nestjs\|next\|react` | Projeto | + `SKILLS-ROUTING.md` e rule do stack |
 | `npm run detach -- <repo>` | Projeto | Remove symlinks gerenciados; desregistra do sync |
 | `npm run detach -- <repo> --keep-registry` | Projeto | Só remove symlinks; mantém no registry |
 | `npm run sync` | Máquina | Após `git pull` — symlinks, hooks (merge), deps, relink projetos |
@@ -60,6 +60,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run lint:shell` | Dev | ShellCheck nos `*.sh` versionados (skip se não instalado) |
 | `npm run lint:ts` | Dev | `tsc --noEmit` (scripts Cursor) |
 | `npm run test` | Dev | Slug do registry |
+| `npm run release -- patch\|minor\|major` | Dev | Bump `VERSION` + `package.json` + `CHANGELOG` (sem commit) |
 
 ## Plataformas
 

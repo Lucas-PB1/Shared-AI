@@ -106,7 +106,7 @@ count_user_symlink_issues() {
     fi
   done
 
-  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
+  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md; do
     dest="$CURSOR_DIR/commands/$cmd"
     if [[ -e "$dest" && ! -L "$dest" ]]; then
       skipped=$((skipped + 1))
@@ -176,7 +176,7 @@ for script in link-project.sh; do
   fi
 done
 
-for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
+for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md; do
   if [[ -L "$CURSOR_DIR/commands/$cmd" && -e "$CURSOR_DIR/commands/$cmd" ]]; then
     ok "command /${cmd%.md}"
   elif [[ -f "$CURSOR_DIR/commands/$cmd" ]]; then

@@ -1,57 +1,50 @@
 ---
 description: >-
-  Detecta stack via package.json e composer.json (monorepo) e
-  sugere skills antes de implementar — complementa intent e globs
+  Camada stack — detecta manifestos do repo e sugere skills (bias quando o
+  pedido é vago)
 alwaysApply: true
 ---
 
 # Orquestrador — stack
 
-Antes de implementar, varrer manifestos na **raiz** e em **pacotes/workspaces** (monorepo). Ler SKILL.md conforme **Localização** em `skills-orchestrator-base.mdc`.
+Responsabilidade: **manifestos no disco** → skills. Complementa intent; não substitui globs de arquivo aberto.
 
 ## Onde procurar
 
-- `package.json` (raiz e subpastas com deps do pacote)
-- `composer.json`
-- `pyproject.toml`, `requirements.txt`, `setup.py`
-- `tsconfig.json` (presença indica TypeScript)
-- `Dockerfile`, `docker-compose*.yml` / `compose*.yml` (containers)
-- `.github/workflows/*.yml`, `.gitlab-ci.yml` (CI/CD)
-- `*.tf`, `*.tfvars` (Terraform / IaC)
+- `package.json` (raiz e workspaces)
+- `pnpm-workspace.yaml`, `turbo.json`, `nx.json`
+- `tsconfig.json`
+- `Dockerfile`, `docker-compose*.yml` / `compose*.yml`
+- `.github/workflows/*.yml`, `.gitlab-ci.yml`
+- `vercel.json`, `**/*.sql`, `database/migrations`
 
-## Mapa manifesto → skills
+## Mapa
 
-| Detectar | Skills a considerar |
+| Detectar | Skills |
 | --- | --- |
-| `react` / `react-dom` | `react`; `typescript` se houver `tsconfig` ou `.ts`/`.tsx` no escopo |
-| `typescript` em deps ou `tsconfig.json` | `typescript` |
-| Projeto só `.js` sem TS | `javascript` |
+| `pnpm-workspace.yaml` / `workspaces` / turbo / nx | perfil `monorepo` no bootstrap; skills pelo **pacote** tocado |
+| `react` / `react-dom` | `react` (+ `typescript` se TS) |
+| `typescript` / `tsconfig.json` | `typescript` |
+| só `.js` sem TS | `javascript` |
 | `tailwindcss` | `tailwind`, `css`, `mobile-first` |
-| `motion` / `framer-motion` | `motion` |
 | `next` | `next` |
-| `vitest` / `jest` / `@testing-library/react` | `testing` |
+| `@nestjs/core` / `@nestjs/common` | `nestjs`, `typescript` |
+| `typeorm` / `@nestjs/typeorm` | `typeorm` |
+| `@supabase/supabase-js` / `@supabase/ssr` | `supabase` |
+| `@tanstack/react-query` | `tanstack-query` |
+| `react-hook-form` / forms com `zod` | `forms-rhf-zod` |
+| CVA / shadcn / `@base-ui/react` | `ui-shadcn` |
+| `vitest` / `jest` / `cypress` / RTL | `testing` |
 | `eslint` | `eslint` |
 | `prettier` | `prettier` |
-| `laravel/framework` | `laravel`, `php` |
-| pacotes `laminas/*` ou `zendframework/*` | `zend-laminas`, `php` |
-| `pyproject.toml`, `requirements.txt` ou `.py` no escopo | `python` |
-| `pytest` em deps ou `[tool.pytest]` | `testing`, `python` |
-| `Dockerfile`, `.dockerignore` | `docker` |
-| `docker-compose*.yml`, `compose*.yml` | `docker-compose`, `docker` |
-| `.github/workflows/*.yml`, `.gitlab-ci.yml` | `ci-cd` |
-| `*.tf`, `*.tfvars` | `infrastructure-as-code` |
-| `*.sh`, `*.bash` no escopo | `shell-scripting` |
-| `nginx*.conf`, `*.service`, `*.timer` | `nginx`, `linux-server` |
+| `Dockerfile` / `.dockerignore` | `docker` |
+| `docker-compose*` / `compose*` | `docker-compose`, `docker` |
+| workflows CI | `ci-cd` |
+| `vercel.json` / dep `vercel` | `vercel` |
+| `*.sql` / `database/migrations` | `postgresql-sql` |
+| `*.sh` / `*.bash` no escopo | `shell-scripting` |
 
-## Como usar
+## Notas
 
-- **Bias** quando o pedido é vago e nenhum arquivo relevante está aberto
-- **Confirma** escolhas de `intent` e rules glob (ex.: `react` + `typescript` no mesmo repo)
-- Não substitui globs — arquivo aberto ainda refinam o conjunto final
-- Específica > genérica: `laravel` > `php`, `typescript` > `javascript`
-
-## Composição
-
-- `skills-orchestrator-intent.mdc` — palavras do pedido
-- Rules **glob** — arquivos no contexto
-- `skills-orchestrator-base.mdc` — merge e cap final
+- Bias quando o pedido é vago e nenhum arquivo relevante está aberto
+- Específica > genérica no merge (`base`)

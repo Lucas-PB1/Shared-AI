@@ -142,7 +142,7 @@ function extractPathsFromJson(obj: unknown, out: Set<string>): void {
     for (const item of obj) extractPathsFromJson(item, out);
   } else if (typeof obj === 'string') {
     if (obj.includes('/') || obj.includes('\\')) {
-      if (/^[\w./\\-]+\.(md|ts|tsx|js|jsx|py|php|json|yaml|yml|sh|ps1)$/.test(obj)) {
+      if (/^[\w./\\-]+\.(md|ts|tsx|js|jsx|json|yaml|yml|sh|ps1)$/.test(obj)) {
         out.add(obj);
       }
     }

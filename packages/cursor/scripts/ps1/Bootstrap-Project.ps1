@@ -44,7 +44,7 @@ for ($i = 0; $i -lt $argList.Count; $i++) {
 if (-not $projectPath) {
     Write-Error @(
         'Informe o diretório raiz do projeto:',
-        '  npm run bootstrap -- C:\caminho\do\repo [--profile=laravel]'
+        '  npm run bootstrap -- C:\caminho\do\repo [--profile=next]'
     ) -join "`n"
     exit 1
 }

@@ -79,7 +79,7 @@ migrate_managed_real_files() {
     dest="$cursor_dir/rules/$(basename "$f")"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
-  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md; do
+  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md; do
     dest="$cursor_dir/commands/$cmd"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
@@ -116,6 +116,6 @@ prune_user_symlinks_if_requested() {
   done
   prune_managed_symlinks "$cursor_dir/skills" "${names[@]}"
 
-  names=(skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md)
+  names=(skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md)
   prune_managed_symlinks "$cursor_dir/commands" "${names[@]}"
 }

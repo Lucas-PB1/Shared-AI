@@ -1,39 +1,32 @@
 ---
 description: >-
-  Roteia skills react, accessibility, ux, atomic-design, motion e next em
-  componentes React — complementa intent e stack
+  Contexto — refina React, Next, FSD, UI e data-fetching em .tsx/.jsx
 globs: "**/*.{tsx,jsx}"
 alwaysApply: false
 ---
 
 # Orquestrador — React / UI
 
-Complementa `intent` e `stack` quando há `.tsx`/`.jsx` no contexto.
+Responsabilidade: skills de UI/front com componente React no contexto.
 
-## Sempre neste glob
+## Sempre
 
 - `react`
 
 ## Condicional
 
-| Sinal | Skill |
+| Sinal no contexto | Skills |
 | --- | --- |
-| Componente de UI, formulário, navegação, layout visível | `accessibility`, `ux` |
-| `*.test.tsx`, `*.spec.tsx`, hooks puros, `types.ts`, util sem markup | **não** forçar `accessibility`/`ux` |
-| Design system, biblioteca UI, componentes reutilizáveis | `atomic-design` |
-| `motion` / `framer-motion` em `package.json` (raiz ou pacote) | `motion` |
-| `next` em `package.json` ou pasta `app/`/`pages/` Next | `next` |
-| `tailwindcss` em `package.json` | `tailwind` (+ `css`, `mobile-first` se layout) |
-
-## Referências úteis
-
-- Estado/context → `react/references/state.md`, `context-api.md`
-- Forms → `react/references/forms.md`
-- Performance → `react/references/performance.md`
-
-(mesmo diretório da skill `react` resolvida — ver `base.mdc`)
+| UI visível (form, nav, layout) | `accessibility`, `ux` |
+| teste / hook / `types` sem markup | **não** forçar a11y/ux |
+| `next` no manifesto ou `app/` / `pages/` | `next` |
+| pastas FSD (`entities`…`shared`) | `fsd-architecture` |
+| `tailwindcss` | `tailwind` (+ `css`, `mobile-first` se layout) |
+| shadcn / CVA / Base UI | `ui-shadcn` |
+| react-hook-form / zod form | `forms-rhf-zod` |
+| `@tanstack/react-query` | `tanstack-query` |
+| `@supabase/*` | `supabase` |
 
 ## Composição
 
-- `skills-orchestrator-typescript-javascript.mdc` → `typescript` / `javascript`
-- `skills-orchestrator-intent.mdc` se pedido mencionar a11y/UX explicitamente
+Só roteia. Merge/cap em `skills-orchestrator-base.mdc`.

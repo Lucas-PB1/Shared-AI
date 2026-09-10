@@ -81,7 +81,7 @@ function Get-UserSymlinkIssues {
         }
     }
 
-    foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md')) {
+    foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md')) {
         $dest = Join-Path $cursorDir "commands/$cmd"
         if ((Test-Path $dest) -and -not (Test-SharedAiSymlink $dest)) { $skipped++ }
         elseif ((Test-Path $dest) -and (Test-SharedAiSymlink $dest) -and -not (Test-Path $dest)) { $broken++ }
@@ -153,7 +153,7 @@ foreach ($script in @('Link-Project.ps1')) {
     }
 }
 
-foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md')) {
+foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md')) {
     $path = Join-Path $cursorDir "commands/$cmd"
     $name = $cmd -replace '\.md$', ''
     if ((Test-Path $path) -and (Test-SharedAiSymlink $path)) {

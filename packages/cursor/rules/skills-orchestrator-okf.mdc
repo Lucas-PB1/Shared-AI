@@ -1,45 +1,30 @@
 ---
 description: >-
-  Roteia skill okf para Open Knowledge Format (Google Cloud v0.1) — bundles
-  Markdown com frontmatter para humanos e agentes
+  Contexto — roteia skill okf em bundles Markdown OKF (não ensina o formato)
 globs:
   - "**/okf/**/*.md"
   - "**/.okf/**/*.md"
   - "**/okf-bundle/**/*.md"
+  - "**/docs/okf/**/*.md"
 alwaysApply: false
 ---
 
-# Orquestrador — OKF (Open Knowledge Format)
+# Orquestrador — OKF
 
-Complementa `intent` quando há knowledge bundles OKF ou o pedido menciona OKF / knowledge bundle / concept document.
+Responsabilidade: acionar `okf` com arquivos de knowledge bundle no contexto. Detalhe do formato está na skill.
 
-**Não confundir** com Google Docs — OKF é diretório de `.md` com YAML frontmatter ([spec v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)).
-
-## Sempre neste glob
-
-1. Ler skill `okf` (localização em `skills-orchestrator-base.mdc`)
-2. Refs: `references/bundle-and-concepts.md`, `producing.md` ou `consuming.md` conforme tarefa
-
-## Detectar OKF fora do glob
-
-Se o arquivo aberto tiver frontmatter YAML com `type:` e estrutura de concept, aplicar a skill `okf` mesmo fora de `okf/`.
-
-## Produzir vs consumir
-
-| Tarefa | Ação |
+| Sinal no contexto / tarefa | Skills / refs |
 | --- | --- |
-| Criar bundle, concept, `index.md`, `log.md` | `references/producing.md` |
-| Responder perguntas, resumir, navegar grafo | `references/consuming.md` |
-| Validar estrutura | `references/bundle-and-concepts.md` — conformidade §9 |
+| qualquer concept/bundle sob glob | `okf` |
+| criar bundle, concept, `index.md`, `log.md` | `okf` → `producing.md` |
+| resumir, navegar, responder a partir do bundle | `okf` → `consuming.md` |
+| validar estrutura | `okf` → `bundle-and-concepts.md` |
+| frontmatter `type:` fora de `okf/` (concept solto) | `okf` |
 
-## Regras rápidas
+## Notas
 
-- **Obrigatório:** `type` no frontmatter de todo concept
-- **Reservados:** `index.md` (índice), `log.md` (histórico) — não são concepts
-- **Links:** Markdown `[texto](/path/no/bundle.md)`; preferir paths absolutos na raiz do bundle
-- **Um concept por arquivo** — atomizar em vez de documento monolítico
+- OKF ≠ Google Docs — é Markdown + YAML ([spec v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md))
 
 ## Composição
 
-- `skills-orchestrator-intent.mdc` — palavras OKF, knowledge bundle, LLM wiki
-- `git` — versionar bundle em repositório
+Só roteia. Merge/cap em `skills-orchestrator-base.mdc`. Palavras “OKF” também em intent.

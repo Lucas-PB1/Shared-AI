@@ -12,11 +12,13 @@ Complementa `~/.cursor/SKILLS-ROUTING.md`.
 
 | Skill | Reforçar quando |
 | --- | --- |
-| `react` | Componentes, hooks, estado, forms |
+| `react` | Componentes, hooks, estado |
+| `ui-shadcn` / `forms-rhf-zod` | Design system e forms |
+| `tanstack-query` | Fetching/cache no client |
 | `typescript` | Tipos, props, APIs (se TS no repo) |
 | `tailwind` | Estilização utility-first (se no manifesto) |
 | `accessibility` | UI interativa, forms, navegação |
-| `testing` | RTL, Vitest/Jest |
+| `testing` | RTL, Vitest |
 
 ## Rule do projeto
 

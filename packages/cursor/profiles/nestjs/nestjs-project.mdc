@@ -1,0 +1,17 @@
+---
+description: Convenções NestJS deste projeto
+globs:
+  - "**/*.{ts,js}"
+  - "src/**"
+  - "test/**"
+  - "nest-cli.json"
+alwaysApply: false
+---
+
+# NestJS — projeto
+
+- Modular monolith: um módulo por bounded context ou capacidade
+- Controllers finos; regras em services/handlers
+- DTOs na borda HTTP com class-validator; entity TypeORM ≠ DTO
+- Swagger atualizado quando o contrato público mudar
+- Preferir migrations/SQL versionados a `synchronize: true` em ambientes não-efêmeros

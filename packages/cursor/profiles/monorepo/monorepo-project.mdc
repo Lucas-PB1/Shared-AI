@@ -1,0 +1,20 @@
+---
+description: Convenções de monorepo / workspaces neste projeto
+globs:
+  - "**/package.json"
+  - "pnpm-workspace.yaml"
+  - "**/turbo.json"
+  - "**/nx.json"
+  - "packages/**"
+  - "apps/**"
+alwaysApply: false
+---
+
+# Monorepo — projeto
+
+- Escopar a tarefa a um pacote (`apps/*` / `packages/*`) antes de editar
+- Ler manifestos do **pacote tocado**, não só a raiz
+- Mudanças cross-package: atualizar contrato (types/API) de propósito, sem drift
+- Scripts e CI: preferir filtros do workspace (`pnpm --filter`, `npm -w`) em vez de `cd` ad hoc sem documentar
+- Env e secrets por pacote/app — não reutilizar `.env` de outro pacote sem alinhamento
+- Não rodar reset destrutivo de banco “global” sem confirmar qual app/serviço

@@ -28,7 +28,7 @@ git clone https://github.com/your-org/shared-ai.git
 cd shared-ai
 npm run setup:skills
 npm run bootstrap -- C:\caminho\do\seu\projeto
-# opcional: --profile=laravel
+# opcional: --profile=next
 ```
 
 ## Atualização

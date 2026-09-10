@@ -1,25 +1,24 @@
 ---
 description: >-
-  Roteia skill history-watch para /historico, history watch, log.md de escopo e
-  append de histórico versionado
-alwaysApply: true
+  Contexto — roteia history-watch ao editar watches/histórico de escopo
+globs:
+  - "**/.cursor/history/**"
+  - "**/history-watch-*.mdc"
+  - "**/watches.json"
+alwaysApply: false
 ---
 
 # Orquestrador — history watch
 
-## Intent
+Responsabilidade: com config/histórico de watch no contexto, acionar `history-watch`. Pedidos `/historico` sem arquivo aberto → **intent**.
 
-| Palavras no pedido | Skill / command |
+| Sinal no contexto | Skills / command |
 | --- | --- |
-| `/historico`, historico, history watch, watch de histórico | `history-watch` + command `/historico` |
-| log.md escopo, history.md escopo, memory.md escopo | `history-watch` |
-| append histórico, registrar alteração escopo | `history-watch` |
+| `.cursor/history/**`, `watches.json` | `history-watch` |
+| rule `history-watch-*.mdc` | `history-watch` |
+| `format=okf-log` no watch | `history-watch` + `okf` |
+| setup / off / status | command `/historico` |
 
 ## Composição
 
-- `format=okf-log` no watch → também `okf` + `skills-orchestrator-okf.mdc`
-- Setup inicial → command `/historico` (Agent gera artefatos no projeto)
-
-## Localização
-
-Skill: `history-watch/SKILL.md` (pacote cursor, symlink em `~/.cursor/skills/`).
+Só roteia. Merge/cap em `skills-orchestrator-base.mdc`.

@@ -1,40 +1,22 @@
 ---
 description: >-
-  Roteia skill testing — confirma framework quando há arquivos de teste no contexto
-globs: "**/*.{test,spec}.{ts,tsx,js,php},**/test_*.py,**/*_test.py,**/tests/**"
+  Contexto — confirma framework de teste (Vitest, Jest Nest, Cypress) pelos
+  arquivos de teste
+globs: "**/*.{test,spec}.{ts,tsx,js,mjs},**/tests/**,**/test/**,**/cypress/**"
 alwaysApply: false
 ---
 
 # Orquestrador — testes
 
-Intent (“teste”, “spec”, “coverage”) já aciona `testing`. Esta rule **confirma** framework e contexto quando há arquivos de teste abertos ou no diff.
+Responsabilidade: com arquivo de teste no contexto, apontar refs da skill `testing`. Intent já aciona `testing` por palavra.
 
-## JavaScript / TypeScript
-
-| Detectar | Skills |
+| Sinal no contexto | Skills / refs |
 | --- | --- |
-| Vitest, Jest, RTL, `*.test.ts(x)`, `*.spec.ts(x)` | `testing` |
-| Teste de componente UI | `testing` + `accessibility` (axe, roles) |
-
-Refs: `testing/references/vitest.md`, `react-testing-library.md`, `accessibility-testing.md` (dir. da skill resolvida)
-
-## PHP
-
-| Detectar | Skills |
-| --- | --- |
-| PHPUnit, Pest, `tests/` Laravel | `testing` + `laravel/references/testing.md` |
-| Teste unitário PHP sem Laravel | `testing` (adaptar) + `php` |
-
-## Python
-
-| Detectar | Skills |
-| --- | --- |
-| pytest, `test_*.py`, `*_test.py` | `testing` + `python` |
-| unittest stdlib | `testing` (adaptar) + `python` |
+| Vitest, RTL, `*.test.ts(x)` (front) | `testing` → `vitest.md`, `react-testing-library.md` |
+| Jest, `@nestjs/testing`, `test/` Nest | `testing` → `jest-nestjs.md` (+ `nestjs` se módulo Nest) |
+| Cypress, `cypress/` | `testing` → `cypress.md` |
+| teste de componente UI | `testing` + `accessibility` |
 
 ## Composição
 
-- `skills-orchestrator-react-ui.mdc` se teste em `.tsx`
-- `skills-orchestrator-php-stack.mdc` se teste em `.php`
-- `skills-orchestrator-python-stack.mdc` se teste em `.py`
-- `skills-orchestrator-base.mdc` (sempre)
+Só roteia. Merge/cap em `skills-orchestrator-base.mdc`.

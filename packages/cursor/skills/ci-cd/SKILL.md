@@ -46,5 +46,5 @@ description: >-
 
 - `docker` para build/push de imagem no pipeline
 - `env-secrets` para configuração e segredos por ambiente
-- `deployment-strategies` para a etapa de deploy (zero-downtime, rollback)
 - `testing` para os testes rodados no estágio de verificação
+- skill `vercel` (quando existir) para deploy serverless

@@ -1,18 +1,20 @@
 ---
 description: >-
-  Fluxo base do orquestrador — metodologia em tiers, merge das 3 camadas e cap
-  de skills por tarefa
+  Protocolo do orquestrador — tiers de metodologia, merge das 3 camadas, cap e
+  onde ler skills/rules
 alwaysApply: true
 ---
 
 # Orquestrador — base
 
+Responsabilidade: **como** escolher e limitar skills. Não lista gatilhos (isso é intent/stack/globs).
+
 ## Classificar tarefa
 
 | Tipo | Ação |
 | --- | --- |
-| Escrever, refatorar, revisar **código** | Fluxo abaixo |
-| Review, auditoria | metodologia tier 2 + intent + stack + globs |
+| Código (escrever, refatorar, revisar) | Fluxo abaixo |
+| Review / auditoria | tier 2 + intent + stack + globs |
 | Docs-only, git-only, deploy-only sem código | Não forçar skills de implementação |
 
 ## Metodologia (tiers)
@@ -20,46 +22,32 @@ alwaysApply: true
 | Tier | Quando | Skills |
 | --- | --- | --- |
 | 1 | Qualquer código | `clean-code` |
-| 2 | Refatorar, feature nova, review de código | + `dry`, `solid`, `no-magic-numbers` |
+| 2 | Feature nova, refatorar, review | + `dry`, `solid`, `no-magic-numbers` |
 | — | Docs-only / git-only | nenhuma de implementação |
 
-## Três camadas de roteamento
+## Três camadas
 
 1. **Intent** — `skills-orchestrator-intent.mdc` (palavras do pedido)
-2. **Stack** — `skills-orchestrator-stack.mdc` (manifestos do repo)
-3. **Contexto** — rules **glob** (arquivos abertos ou editados)
+2. **Stack** — `skills-orchestrator-stack.mdc` (manifestos)
+3. **Contexto** — rules com `globs` (arquivos abertos / no diff)
 
-Mapa genérico: `~/.cursor/SKILLS-ROUTING.md`. Complemento do projeto: `.cursor/SKILLS-ROUTING.md` se existir.
+Mapa: `~/.cursor/SKILLS-ROUTING.md`. Complemento do projeto: `.cursor/SKILLS-ROUTING.md` se existir.
 
-## Protocolo de merge
+## Merge
 
-1. Coletar skills das 3 camadas + tier de metodologia
-2. **Dedupe** por nome
-3. **Cap:** 6–8 skills por tarefa (`SKILL.md`); `references/` à parte
-4. **Prioridade:** específica > genérica (`laravel` > `php`, `typescript` > `javascript`)
-5. Implementar; não carregar as 31 skills de uma vez
+1. Coletar skills das 3 camadas + tier
+2. Dedupe por nome
+3. Cap **6–8** `SKILL.md` por tarefa (`references/` à parte)
+4. Específica > genérica (`nestjs` > `typescript`, `next` > `react`, `fsd-architecture` > `solid`)
+5. Stack detectada > suposição; mínimo necessário
 
-## Prioridade geral
+## Onde ler
 
-- Stack detectada > suposição
-- Skill mais específica > genérica
-- Mínimo necessário > pacote completo
-
-## Localização das skills
-
-Ao ler arquivos, resolver **nesta ordem**:
-
-1. `.cursor/skills/<nome>/SKILL.md` — skill **do projeto** (sobrescreve)
-2. `~/.cursor/skills/<nome>/SKILL.md` — pacote genérico do **usuário**
-
-Referências (`references/*.md`): no mesmo diretório da skill encontrada.
-
-## Localização das rules
-
-| Tipo | Onde vive |
+| Artefato | Ordem |
 | --- | --- |
-| Orquestrador genérico | `~/.cursor/rules/skills-orchestrator-*.mdc` (global; Cursor 2.1+) |
-| Rule do projeto | arquivo real em `.cursor/rules/` (ex.: `laravel-project.mdc`, history-watch) |
+| Skill | 1) `.cursor/skills/<nome>/SKILL.md` 2) `~/.cursor/skills/<nome>/SKILL.md` |
+| Refs | mesmo diretório da skill resolvida |
+| Orquestrador | `~/.cursor/rules/skills-orchestrator-*.mdc` |
+| Rule de projeto | `.cursor/rules/` (ex.: `next-project.mdc`, `history-watch-*.mdc`) |
 
-Instalar orquestrador e commands no usuário: `npm run setup:skills` / `npm run sync`.  
-Link do projeto: `~/.cursor/link-project.sh /caminho/do/repo` (não espelha orquestrador nem commands).
+Install: `npm run setup:skills` / `npm run sync`.

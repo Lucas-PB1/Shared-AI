@@ -26,6 +26,7 @@
     "lint:shell": "node scripts/run-task.mjs lint:shell",
     "lint:ts": "node scripts/run-task.mjs lint:ts",
     "test": "node scripts/run-task.mjs test",
+    "release": "node scripts/release.mjs",
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "supabase:status": "npx supabase status",

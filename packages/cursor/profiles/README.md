@@ -3,19 +3,19 @@
 Aplicados com:
 
 ```bash
-npm run bootstrap -- /caminho/do/repo --profile=laravel
+npm run bootstrap -- /caminho/do/repo --profile=next
+npm run bootstrap -- /caminho/do/repo --profile=monorepo
 npm run onboard                              # wizard interativo (escolhe perfil)
 ```
 
 | Perfil | Stack detectada |
 | --- | --- |
-| `laravel` | `composer.json` → `laravel/framework` |
-| `react` | `package.json` → `react` / `react-dom` |
+| `monorepo` | `pnpm-workspace.yaml`, `workspaces`, `turbo.json`, `nx.json` |
+| `nestjs` | `package.json` → `@nestjs/core` / `@nestjs/common` |
 | `next` | `package.json` → `next` |
-| `python` | `pyproject.toml`, `requirements.txt`, `setup.py` |
-| `zend-laminas` | `composer.json` → `laminas/*`, `zendframework/*` |
+| `react` | `package.json` → `react` / `react-dom` |
 
-Detecção automática: `packages/cursor/scripts/lib/profiles/ts/detect-stack.ts` (usado por `/onboard`).
+Detecção automática: `packages/cursor/scripts/lib/profiles/ts/detect-stack.ts` (monorepo → Nest → Next → React).
 
 Cada perfil cria **somente se não existir**:
 

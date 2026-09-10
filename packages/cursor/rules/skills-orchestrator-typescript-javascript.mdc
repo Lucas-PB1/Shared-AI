@@ -1,29 +1,20 @@
 ---
 description: >-
-  Roteia skills typescript e javascript quando arquivos TS/JS estão no contexto
+  Contexto — refina TypeScript vs JavaScript conforme extensão e tsconfig
 globs: "**/*.{ts,tsx,js,mjs,cjs}"
 alwaysApply: false
 ---
 
 # Orquestrador — TypeScript / JavaScript
 
-Complementa `intent` e `stack` quando há TS/JS no contexto.
+Responsabilidade: escolher `typescript` ou `javascript` com TS/JS no contexto.
 
-Ler SKILL.md conforme **Localização** em `skills-orchestrator-base.mdc`:
-
-| Detectar | Skill |
+| Sinal no contexto | Skills |
 | --- | --- |
-| `tsconfig.json` na raiz **ou** subpastas (monorepo) ou arquivo `.ts`/`.tsx` | `typescript` |
-| Arquivo `.js`/`.mjs`/`.cjs` sem TypeScript no projeto/pacote | `javascript` |
-| Monorepo com TS e JS | `typescript` em `.ts`/`.tsx`; `javascript` em `.js` puro |
-
-## Verificação rápida
-
-- `tsconfig.json` em qualquer pacote do workspace? → preferir `typescript`
-- Só `package.json` com `"type": "module"` e `.js` → `javascript`
+| `.ts` / `.tsx` ou `tsconfig` no pacote | `typescript` |
+| `.js` / `.mjs` / `.cjs` sem TS no pacote | `javascript` |
+| monorepo misto | `typescript` nos `.ts(x)`; `javascript` nos `.js` puros |
 
 ## Composição
 
-- `skills-orchestrator-react-ui.mdc` em `.tsx`/`.jsx`
-- `skills-orchestrator-arquitetura.mdc` em refactors estruturais
-- `skills-orchestrator-base.mdc` (sempre)
+Só roteia. Merge/cap em `skills-orchestrator-base.mdc`. Com `.tsx` também vale `skills-orchestrator-react-ui.mdc`.

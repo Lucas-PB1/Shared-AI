@@ -2,7 +2,7 @@
 # Aplica perfil de bootstrap (SKILLS-ROUTING + rule do projeto).
 #
 # Source: source .../apply-bootstrap-profile.sh
-#         apply_bootstrap_profile /caminho/repo laravel
+#         apply_bootstrap_profile /caminho/repo next
 
 apply_bootstrap_profile() {
   local project="$1"

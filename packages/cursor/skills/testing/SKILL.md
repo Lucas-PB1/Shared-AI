@@ -1,47 +1,50 @@
 ---
 name: testing
 description: >-
-  Orienta testes front-end: Vitest, React Testing Library, user-event e a11y. Use ao escrever ou revisar testes de componentes, ou quando o usuário pedir cobertura, queries acessíveis ou simulação de usuário.
+  Orienta testes: Vitest/RTL (front), Jest Nest, Cypress e2e e a11y. Use ao
+  escrever ou revisar testes unitários, de componente ou e2e.
 ---
 
 # Testing
 
 ## Quando usar
 
-- Testes unitários e de componente
-- Interações realistas
+- Testes unitários e de componente (Vitest + RTL)
+- Testes Nest (Jest + `@nestjs/testing` + supertest)
+- E2E (Cypress)
 - Checks de acessibilidade em testes
 
 ## Princípios
 
-- Testar comportamento visível ao usuário
-- Queries by role/label antes de testId
-- Arrange-Act-Assert claro
+- Testar comportamento observável
+- Front: queries by role/label antes de testId
+- API: testar contrato HTTP e guards; isolar DB com setup explícito
+- E2E para fluxos críticos, não para cada detalhe de UI
 
 ## Referências
 
 | Tópico | Arquivo |
 | --- | --- |
-| Vitest | [references/vitest.md](references/vitest.md) |
+| Vitest (front) | [references/vitest.md](references/vitest.md) |
 | RTL | [references/react-testing-library.md](references/react-testing-library.md) |
 | user-event | [references/user-event.md](references/user-event.md) |
 | A11y em testes | [references/accessibility-testing.md](references/accessibility-testing.md) |
+| Jest + Nest | [references/jest-nestjs.md](references/jest-nestjs.md) |
+| Cypress e2e | [references/cypress.md](references/cypress.md) |
 
 ## Como aplicar
 
-1. Ler o contexto do pedido e identificar qual referência cobre o caso
-2. Aplicar o padrão mínimo que resolve o problema sem over-engineering
-3. Validar com testes, lint ou revisão visual conforme o tipo de mudança
-4. Documentar exceções apenas quando o trade-off não for óbvio no código
+1. Escolher camada: unit/component (Vitest) vs Nest (Jest) vs e2e (Cypress)
+2. Ler a referência correspondente
+3. Cobrir o caminho feliz + 1–2 erros relevantes
+4. Manter testes determinísticos (sem flake de tempo/rede sem mock)
 
 ## Anti-padrões comuns
 
-- Copiar snippet sem adaptar nomes e contratos ao módulo atual
-- Misturar vários tópicos da skill `testing` em uma única refatoração grande
-- Ignorar acessibilidade, performance ou segurança quando o tópico exige
+- E2E para lógica que um unit resolve
+- Snapshot gigante sem asserção de comportamento
+- Teste Nest que depende de banco real sem documentar pré-requisito
 
 ## Relacionado
 
-- Combinar com outras skills da mesma categoria (metodologia, web, stack ou tooling)
-- Em dúvida, preferir solução mais simples e iterar depois
-
+- `react`, `next`, `nestjs`, `accessibility`

@@ -44,5 +44,4 @@ description: >-
 ## Relacionado
 
 - `ci-cd` para scripts usados em pipeline
-- `linux-server` para cron, systemd e tarefas de servidor
 - `git` para hooks e automação de repositório

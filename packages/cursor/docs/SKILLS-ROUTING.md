@@ -6,15 +6,18 @@ Skills genéricas em **`~/.cursor/skills/`** (fonte: `skills/` neste repo). Rule
 
 Skills **do projeto** (se existirem) em `.cursor/skills/<nome>/` **sobrescrevem** o pacote do usuário.
 
+Escopo: TypeScript / Next / React / Nest / Supabase / Docker / CI (DND Work + dashboard Shared AI).
+
 ## Camadas
 
-| Camada | Rule | Sinal |
-| --- | --- | --- |
-| Intent | `intent.mdc` | palavras do pedido |
-| Stack | `stack.mdc` | `package.json`, `composer.json`, `tsconfig` |
-| Contexto | rules glob | arquivos abertos ou no diff |
+| Camada | Rule | Sinal | alwaysApply |
+| --- | --- | --- | --- |
+| Protocolo | `base.mdc` | merge, tiers, cap, paths | sim |
+| Intent | `intent.mdc` | palavras do pedido | sim |
+| Stack | `stack.mdc` | manifestos do repo | sim |
+| Contexto | rules com `globs` | arquivos abertos / no diff | não |
 
-Merge, dedupe e cap (6–8 skills): `base.mdc`.
+Merge, dedupe e cap (6–8 skills): `base.mdc`. Rules de contexto **só roteiam** — o conteúdo fica na skill.
 
 ## Localização ao ler arquivos
 
@@ -29,13 +32,8 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `dry` | — | — | base tier 2 |
 | `solid` | arquitetura | — | base tier 2; arquitetura |
 | `no-magic-numbers` | — | — | base tier 2 |
-| `vertical-slice` | sim | — | arquitetura |
 | `domain-driven-design` | sim | — | arquitetura |
-| `repository` | sim | — | arquitetura |
-| `hexagonal-architecture` | sim | — | arquitetura |
-| `layered-architecture` | sim | — | arquitetura |
-| `clean-architecture` | sim | — | arquitetura |
-| `atomic-design` | sim | — | arquitetura; react-ui |
+| `fsd-architecture` | sim | — | arquitetura; react-ui |
 | `html` | sim | — | web-markup-styles |
 | `css` | sim | tailwind | web-markup-styles; react-ui |
 | `mobile-first` | sim | tailwind | web-markup-styles; react-ui |
@@ -44,50 +42,46 @@ Merge, dedupe e cap (6–8 skills): `base.mdc`.
 | `security` | sim | — | web-markup-styles |
 | `javascript` | sim | sim | typescript-javascript |
 | `typescript` | sim | sim | typescript-javascript |
-| `php` | — | sim | php-stack |
-| `laravel` | — | sim | php-stack |
-| `zend-laminas` | — | sim | php-stack |
-| `python` | sim | sim | python-stack |
 | `next` | sim (restrito) | sim | react-ui |
 | `react` | sim | sim | react-ui |
 | `tailwind` | sim | sim | react-ui; web-markup-styles |
-| `motion` | sim | sim | react-ui |
-| `testing` | sim | sim | testing |
+| `ui-shadcn` | sim | shadcn / CVA | react-ui |
+| `forms-rhf-zod` | sim | RHF / zod | react-ui |
+| `tanstack-query` | sim | `@tanstack/react-query` | react-ui |
+| `nestjs` | sim | `@nestjs/core` | — |
+| `typeorm` | sim | `typeorm` | — |
+| `supabase` | sim | `@supabase/*` | — |
+| `postgresql-sql` | sim | `.sql` / migrations | devops |
+| `vercel` | sim | `vercel.json` | devops |
+| `testing` | sim | vitest/jest/cypress | testing |
 | `eslint` | sim | sim | — |
 | `prettier` | sim | sim | — |
 | `git` | sim | — | — |
-| `docker` | docker, container, Dockerfile, imagem | `Dockerfile`, `.dockerignore` | devops |
-| `docker-compose` | compose, serviços locais | `docker-compose*.yml`, `compose*.yml` | devops |
-| `ci-cd` | pipeline, CI/CD, GitHub Actions, GitLab CI | workflows, `.gitlab-ci.yml` | devops |
-| `shell-scripting` | bash, shell script, `.sh` | `*.sh`, `*.bash` | devops |
-| `env-secrets` | env, `.env`, segredo, 12-factor | — | devops |
-| `linux-server` | systemd, cron, servidor Linux, permissões | `*.service`, `*.timer` | devops |
-| `nginx` | nginx, reverse proxy, TLS | `nginx*.conf`, `sites-available/**` | devops |
-| `observability` | log, métrica, health check, readiness | — | devops |
-| `deployment-strategies` | zero-downtime, blue-green, canary, rollback | — | devops |
-| `infrastructure-as-code` | Terraform, IaC, state, provisionar | `*.tf`, `*.tfvars` | devops |
-| `okf` | OKF, knowledge bundle, concept document | — | okf |
+| `docker` | docker, container, Dockerfile | `Dockerfile` | devops |
+| `docker-compose` | compose | `docker-compose*.yml` | devops |
+| `ci-cd` | pipeline, CI/CD | workflows | devops |
+| `shell-scripting` | bash, `.sh` | `*.sh` | devops |
+| `env-secrets` | env, segredo | — | devops |
+| `history-watch` | historico, watches | — | history-watch |
+| `okf` | OKF, knowledge bundle | — | okf |
 
-## Rules glob (no projeto)
+## Rules glob (contexto)
 
-| Rule | Glob |
-| --- | --- |
-| `typescript-javascript.mdc` | `*.{ts,tsx,js,mjs,cjs}` |
-| `react-ui.mdc` | `*.{tsx,jsx}` |
-| `web-markup-styles.mdc` | `*.{html,css,scss,blade.php}` |
-| `php-stack.mdc` | `*.{php,blade.php}` |
-| `python-stack.mdc` | `*.{py,pyi}` |
-| `arquitetura.mdc` | `*.{ts,tsx,js,php,py}` |
-| `testing.mdc` | `*.{test,spec}.*`, `tests/**` |
-| `devops.mdc` | `Dockerfile*`, `docker-compose*.yml`, `.github/workflows/*.yml`, `.gitlab-ci.yml`, `*.tf`, `*.sh`, `nginx*.conf`, `*.service` |
-| `okf.mdc` | `okf/**/*.md`, `.okf/**/*.md`, `okf-bundle/**/*.md` |
+| Rule | Glob | Responsabilidade |
+| --- | --- | --- |
+| `typescript-javascript.mdc` | `*.{ts,tsx,js,mjs,cjs}` | TS vs JS |
+| `react-ui.mdc` | `*.{tsx,jsx}` | React / Next / UI |
+| `web-markup-styles.mdc` | `*.{html,css,scss}` | markup / CSS |
+| `arquitetura.mdc` | `*.{ts,tsx,js,…}` | DDD / FSD / Nest |
+| `testing.mdc` | testes / cypress | framework de teste |
+| `devops.mdc` | Docker, CI, vercel, sql, sh | ops |
+| `okf.mdc` | `okf/**/*.md`, `docs/okf/**` | knowledge bundle |
+| `history-watch.mdc` | `.cursor/history/**`, watches | histórico de escopo |
 
-## Always-on (orquestrador)
+## Always-on
 
-Em `~/.cursor/rules/` (global; Cursor inclui a pasta home no contexto):
+- `base.mdc` — protocolo
+- `intent.mdc` — palavras
+- `stack.mdc` — manifestos
 
-- `base.mdc`
-- `intent.mdc`
-- `stack.mdc`
-
-Mais rules glob (react-ui, testing, …) no mesmo diretório. Rules do projeto (`*-project.mdc`, history-watch) ficam só em `.cursor/rules/` do repo.
+Rules do projeto (`*-project.mdc`, `history-watch-*.mdc`) ficam só em `.cursor/rules/` do repo.

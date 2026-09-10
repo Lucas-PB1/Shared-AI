@@ -85,7 +85,7 @@ function Migrate-ManagedRealFiles {
         }
     }
 
-    foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md')) {
+    foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md')) {
         $dest = Join-Path $cursorDir "commands/$cmd"
         if ((Test-Path $dest) -and -not (Test-SharedAiSymlink $dest)) {
             Remove-Item -LiteralPath $dest -Force
@@ -126,6 +126,6 @@ function Invoke-UserSymlinkPrune {
     Prune-ManagedSymlinks -Dir (Join-Path $cursorDir 'skills') -ManagedNames $names
 
     Prune-ManagedSymlinks -Dir (Join-Path $cursorDir 'commands') -ManagedNames @(
-        'skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md'
+        'skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md'
     )
 }

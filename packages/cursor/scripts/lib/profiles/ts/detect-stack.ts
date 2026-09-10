@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Detecta perfil de bootstrap a partir de manifestos na raiz do projeto. */
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -22,40 +22,43 @@ function packageDeps(pkgPath: string): Record<string, string> {
   return deps;
 }
 
+function isMonorepoRoot(root: string, pkgData: Record<string, unknown> | null): boolean {
+  if (existsSync(resolve(root, 'pnpm-workspace.yaml'))) return true;
+  if (existsSync(resolve(root, 'turbo.json'))) return true;
+  if (existsSync(resolve(root, 'nx.json'))) return true;
+  if (!pkgData) return false;
+  const workspaces = pkgData.workspaces;
+  if (Array.isArray(workspaces) && workspaces.length > 0) return true;
+  if (
+    workspaces &&
+    typeof workspaces === 'object' &&
+    Array.isArray((workspaces as { packages?: unknown }).packages) &&
+    ((workspaces as { packages: unknown[] }).packages?.length ?? 0) > 0
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function detectProfile(rootInput: string): string {
   const root = resolve(rootInput);
+  const pkgPath = resolve(root, 'package.json');
+  let pkgData: Record<string, unknown> | null = null;
 
-  const composer = readJson(resolve(root, 'composer.json'));
-  if (composer) {
-    const require = {
-      ...((composer.require as Record<string, string> | undefined) ?? {}),
-      ...((composer['require-dev'] as Record<string, string> | undefined) ?? {}),
-    };
-    if ('laravel/framework' in require) return 'laravel';
-    for (const pkg of Object.keys(require)) {
-      if (pkg.startsWith('laminas/') || pkg.startsWith('zendframework/')) {
-        return 'zend-laminas';
-      }
-    }
+  try {
+    statSync(pkgPath);
+    pkgData = readJson(pkgPath);
+  } catch {
+    // no package.json — still check pnpm-workspace etc.
   }
 
-  const pkg = resolve(root, 'package.json');
-  try {
-    statSync(pkg);
-    const deps = packageDeps(pkg);
+  if (isMonorepoRoot(root, pkgData)) return 'monorepo';
+
+  if (pkgData) {
+    const deps = packageDeps(pkgPath);
+    if ('@nestjs/core' in deps || '@nestjs/common' in deps) return 'nestjs';
     if ('next' in deps) return 'next';
     if ('react' in deps || 'react-dom' in deps) return 'react';
-  } catch {
-    // no package.json
-  }
-
-  for (const marker of ['pyproject.toml', 'requirements.txt', 'setup.py'] as const) {
-    try {
-      statSync(resolve(root, marker));
-      return 'python';
-    } catch {
-      // continue
-    }
   }
 
   return '';

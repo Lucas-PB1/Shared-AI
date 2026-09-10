@@ -9,6 +9,9 @@ cursor-cli.md
 historico.md
 sync-inbox.md
 onboard.md
+automations.md
+criar-skill.md
+criar-rule.md
 #
 # Skills (~/.cursor/skills/) — uma pasta por nome em:
 #   packages/cursor/skills/

@@ -20,7 +20,7 @@ Explique **quais skills** o orquestrador escolheria para o pedido atual — sem 
 1. Coletar candidatas das 3 camadas + tier
 2. Dedupe por nome
 3. Cap **6–8** skills (`SKILL.md`)
-4. Prioridade: específica > genérica (`laravel` > `php`)
+4. Prioridade: específica > genérica (`next` > `react`, `typescript` > `javascript`)
 
 Mapa: `~/.cursor/SKILLS-ROUTING.md` + `.cursor/SKILLS-ROUTING.md` do projeto.
 

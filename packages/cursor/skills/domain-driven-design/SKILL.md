@@ -42,8 +42,6 @@ description: >-
 
 ## Relacionado
 
-- `clean-architecture` — entidades e casos de uso hospedam o modelo tático
-- `hexagonal-architecture` — integração entre contextos via adaptadores
-- `vertical-slice` — fatia pode coincidir com capacidade dentro do contexto
-- `repository` — persistência de agregados
 - `solid` — encapsulamento e responsabilidade nos agregados
+- `typescript` — tipagem do modelo tático
+- `nestjs` / `typeorm` / `postgresql-sql` — hospedagem típica da API

@@ -7,6 +7,9 @@ $script:SharedAiGitignoreOrphans = @(
     '.cursor/commands/historico.md'
     '.cursor/commands/sync-inbox.md'
     '.cursor/commands/onboard.md'
+    '.cursor/commands/automations.md'
+    '.cursor/commands/criar-skill.md'
+    '.cursor/commands/criar-rule.md'
 )
 
 $script:LinkGitignoreScrubbed = 0

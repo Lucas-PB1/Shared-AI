@@ -1,24 +1,31 @@
-# Backlog Shared AI
+# Shared AI — status
 
-Itens **abertos**. Índice: [docs/okf/index.md](docs/okf/index.md).
+Baseline concluída. Índice: [docs/okf/index.md](docs/okf/index.md).
 
-## P3 — futuro
+## Concluído (esta onda)
 
-- [ ] **Cursor Automations** — templates no pacote
-- [ ] **Perfil `monorepo`** — roteamento por workspace/pacote
-- [ ] **`/criar-skill` e `/criar-rule`** — scaffolding com templates shared-ai
-- [ ] **Release automation** — VERSION + changelog
+| Área | Entrega |
+| --- | --- |
+| Escopo DND Work | Skills P0–P2 (Nest, FSD, Supabase, TypeORM, shadcn, …); perfis `nestjs` / `next` / `react` / `monorepo` |
+| Orquestrador | Rules padronizadas (base / intent / stack / globs) |
+| Automations | `/automations` + template de sync Shared AI (sem review/CI) |
+| Scaffold | `/criar-skill`, `/criar-rule` + templates |
+| Release | `CHANGELOG.md` + `npm run release` |
+| Limpeza | Remoto/cloud, review, HubSpot, stacks fora do escopo |
 
-## Manutenção contínua
+Skills de domínio DND (`dnd-router`, etc.) ficam nos repos `dnd-*`.
 
-- [ ] Smoke: todo perfil tem `SKILLS-ROUTING.md` + `*-project.mdc`
+## Manutenção
+
+- [ ] Na máquina: `npm run setup:skills` ou `npm run sync` para publicar em `~/.cursor`
 
 ## Docs vivas
 
 | Doc | Uso |
 | --- | --- |
-| [docs/okf/index.md](docs/okf/index.md) | Índice do knowledge bundle OKF |
+| [docs/okf/index.md](docs/okf/index.md) | Índice OKF |
 | [docs/okf/dashboard-web.md](docs/okf/dashboard-web.md) | Dashboard local |
-| [docs/okf/supabase-local.md](docs/okf/supabase-local.md) | Dev local |
+| [docs/okf/supabase-local.md](docs/okf/supabase-local.md) | Docker Auth |
 | [docs/okf/windows.md](docs/okf/windows.md) | Windows |
-| [docs/okf/docs-conventions.md](docs/okf/docs-conventions.md) | Como escrever docs (OKF) |
+| [docs/okf/docs-conventions.md](docs/okf/docs-conventions.md) | Convenções OKF |
+| [CHANGELOG.md](CHANGELOG.md) | Releases |

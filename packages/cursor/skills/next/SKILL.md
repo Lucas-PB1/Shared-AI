@@ -28,6 +28,8 @@ description: >-
 | Rotas e layouts | [references/routing-and-layouts.md](references/routing-and-layouts.md) |
 | Metadata e SEO | [references/metadata-and-seo.md](references/metadata-and-seo.md) |
 | Cache | [references/caching-and-revalidation.md](references/caching-and-revalidation.md) |
+| Proxy / sessão | [references/proxy-and-session.md](references/proxy-and-session.md) |
+| Route Handlers | [references/route-handlers.md](references/route-handlers.md) |
 
 ## Como aplicar
 
@@ -44,5 +46,8 @@ description: >-
 
 ## Relacionado
 
-- Skill react para UI, hooks e forms no client
-- Skill typescript para tipos de props e Server Actions
+- Skill `react` para UI, hooks e forms no client
+- Skill `typescript` para tipos de props e Server Actions
+- Skill `supabase` para Auth SSR / proxy de sessão
+- Skill `tanstack-query` para cache no client
+- Skill `fsd-architecture` para organização `src/`

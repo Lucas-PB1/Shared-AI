@@ -38,7 +38,7 @@ Uso: npm run onboard [-- opções]
 Atualiza o clone shared-ai (git pull + sync + .env vazio) e configura o projeto.
 
   --project=PATH       Caminho do repositório (default: monorepo ou PWD)
-  --profile=NAME       Perfil (laravel, next, python, …)
+  --profile=NAME       Perfil (monorepo, nestjs, next, react, …)
   --yes, -y            Aceita defaults (sem prompts)
   --skip-extras        Não oferece boot-sync / sync-inbox / cursor-cli
   --skip-pull          Não faz git pull no monorepo

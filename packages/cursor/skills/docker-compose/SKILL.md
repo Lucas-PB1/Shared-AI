@@ -45,4 +45,3 @@ description: >-
 
 - `docker` para o Dockerfile de cada serviço
 - `env-secrets` para `.env` e variáveis por ambiente
-- `observability` para logs e healthchecks dos serviços

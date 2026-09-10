@@ -12,11 +12,15 @@ Complementa `~/.cursor/SKILLS-ROUTING.md`.
 
 | Skill | Reforçar quando |
 | --- | --- |
-| `next` | App Router, RSC, layouts, metadata, cache, Server Actions |
-| `react` | Componentes, hooks, forms (Client Components) |
-| `typescript` | Tipos, props, APIs (se TS no repo) |
-| `tailwind` | Estilização utility-first (se no manifesto) |
-| `testing` | Vitest/Jest, testes de rotas e componentes |
+| `next` | App Router, RSC, layouts, metadata, cache, proxy, Route Handlers |
+| `fsd-architecture` | pastas `entities` / `features` / `widgets` / `shared` |
+| `react` | Componentes, hooks (Client Components) |
+| `supabase` | Auth SSR, sessão |
+| `tanstack-query` | Fetching/cache no client |
+| `ui-shadcn` / `forms-rhf-zod` | Design system e forms |
+| `typescript` | Tipos, props, APIs |
+| `tailwind` | Estilização utility-first |
+| `testing` | Vitest/RTL/Cypress |
 
 ## Rule do projeto
 

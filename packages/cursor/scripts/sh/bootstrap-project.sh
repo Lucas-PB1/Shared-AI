@@ -42,7 +42,7 @@ done
 
 [[ -n "$PROJECT" ]] || {
   echo "Informe o diretório raiz do projeto:" >&2
-  echo "  npm run bootstrap -- /caminho/do/repo [--profile=laravel]" >&2
+  echo "  npm run bootstrap -- /caminho/do/repo [--profile=next]" >&2
   exit 1
 }
 

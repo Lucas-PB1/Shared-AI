@@ -1,28 +1,22 @@
 ---
 description: >-
-  Roteia skills html, css, mobile-first, tailwind e security em markup e estilos
-globs: "**/*.{html,css,scss,blade.php}"
+  Contexto — refina html, css, mobile-first, tailwind e security em markup/CSS
+globs: "**/*.{html,css,scss}"
 alwaysApply: false
 ---
 
 # Orquestrador — markup e estilos
 
-Complementa `intent` e `stack` quando há markup/estilos no contexto.
+Responsabilidade: skills de markup/estilo com `.html` / `.css` / `.scss` no contexto. Tailwind em `.tsx` → `react-ui`.
 
-| Contexto | Skills |
+| Sinal no contexto | Skills |
 | --- | --- |
-| HTML, estrutura de documento, templates | `html` |
-| CSS, SCSS, estilos globais | `css`, `mobile-first` |
-| Layout responsivo, breakpoints | `mobile-first` |
-| `tailwindcss` no manifesto ou utility classes no arquivo | `tailwind` |
-| Formulários, inputs, links externos, escape de output | `security` |
-| Blade markup (`.blade.php`) | `html` + `skills-orchestrator-php-stack.mdc` |
-
-## Tailwind em TSX
-
-Arquivos `.tsx` com classes Tailwind: `skills-orchestrator-react-ui.mdc` + manifesto com `tailwindcss` → `tailwind`.
+| HTML / templates | `html` |
+| CSS / SCSS | `css`, `mobile-first` |
+| layout responsivo | `mobile-first` |
+| Tailwind no manifesto ou utilities no arquivo | `tailwind` |
+| forms, links externos, escape | `security` |
 
 ## Composição
 
-- `skills-orchestrator-php-stack.mdc` em `.blade.php`
-- `skills-orchestrator-intent.mdc` para a11y/segurança explícitos
+Só roteia. Merge/cap em `skills-orchestrator-base.mdc`.
