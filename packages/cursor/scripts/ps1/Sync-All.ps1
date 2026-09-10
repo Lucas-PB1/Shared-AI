@@ -1,5 +1,10 @@
-# Sincroniza após git pull: symlinks, deps, relink de todos os projetos.
+﻿# Sincroniza após git pull: symlinks, deps, relink de todos os projetos.
 # Uso: npm run sync [-- --prune] [-- --migrate]
+param(
+    [switch]$Prune,
+    [switch]$Migrate
+)
+
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
@@ -9,10 +14,13 @@ $LibRoot = Join-Path $PSScriptRoot 'lib'
 . (Join-Path $LibRoot 'Merge-HooksJson.ps1')
 . (Join-Path $LibRoot 'Install-Packages.ps1')
 
-$prune = $args -contains '--prune'
-$migrate = $args -contains '--migrate'
+# Compat: args soltos (--prune / --migrate) quando o caller não usa -Prune/-Migrate
+foreach ($a in $args) {
+    if ($a -eq '--prune' -or $a -eq '-Prune') { $Prune = $true }
+    if ($a -eq '--migrate' -or $a -eq '-Migrate') { $Migrate = $true }
+}
 
-$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
 $cursorDir = Get-CursorUserDir
 $linkScript = Join-Path $cursorDir 'Link-Project.ps1'
 $stateFile = Join-Path $cursorDir 'shared-ai/sync-state.env'
@@ -21,13 +29,13 @@ Write-Host 'Shared AI — sync'
 Write-Host "Clone: $MonorepoRoot"
 Write-Host ''
 
-if ($migrate) {
+if ($Migrate) {
     Migrate-ManagedRealFiles $MonorepoRoot
 }
 
 Install-SkillsPackage $MonorepoRoot
 
-if ($prune) {
+if ($Prune) {
     Write-Host '→ prune symlinks órfãos'
     Invoke-UserSymlinkPrune $MonorepoRoot
 }

@@ -1,4 +1,4 @@
-# Status do shared-ai: versão, projetos, symlinks, conflitos.
+﻿# Status do shared-ai: versão, projetos, symlinks, conflitos.
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
@@ -6,7 +6,7 @@ $LibRoot = Join-Path $PSScriptRoot 'lib'
 . (Join-Path $LibRoot 'Link-FromRepo.ps1')
 . (Join-Path $LibRoot 'Projects-Registry.ps1')
 
-$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
 $cursorDir = Get-CursorUserDir
 $envFile = Get-SharedAiEnvFile
 $issues = 0

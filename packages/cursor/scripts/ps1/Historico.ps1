@@ -1,11 +1,11 @@
-# CLI /historico — nativo PowerShell (tsx), sem Git Bash.
+﻿# CLI /historico — nativo PowerShell (tsx), sem Git Bash.
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
 . (Join-Path $LibRoot 'SharedAi-Env.ps1')
 . (Join-Path $LibRoot 'Profiles.ps1')
 
-$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
 $env:SHARED_AI_ROOT = $MonorepoRoot
 $tsx = Get-SharedAiTsx
 if (-not $tsx) {

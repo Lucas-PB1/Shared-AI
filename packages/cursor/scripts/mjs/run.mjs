@@ -67,13 +67,21 @@ const ALIASES = {
 
 function runPowerShell(script, args) {
   const shell = process.env.SHARED_AI_POWERSHELL ?? 'powershell.exe';
+  // PowerShell -File: switches com -- às vezes não caem em $args; normalizar.
+  const normalized = args.map((a) => {
+    if (a === '--migrate') return '-Migrate';
+    if (a === '--prune') return '-Prune';
+    if (a === '--help') return '-Help';
+    if (a === '--yes' || a === '-y') return '-Yes';
+    return a;
+  });
   const psArgs = [
     '-NoProfile',
     '-ExecutionPolicy',
     'Bypass',
     '-File',
     script,
-    ...args,
+    ...normalized,
   ];
   const result = spawnSync(shell, psArgs, { stdio: 'inherit', shell: false });
   process.exit(result.status ?? 1);

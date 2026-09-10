@@ -1,4 +1,4 @@
-# Executado no login/boot: git pull + sync se boot sync estiver ON.
+﻿# Executado no login/boot: git pull + sync se boot sync estiver ON.
 # Autossuficiente — funciona instalado em ~/.cursor ou no repo.
 $ErrorActionPreference = 'Continue'
 

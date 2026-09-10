@@ -1,4 +1,4 @@
-# Leitura/escrita de ~/.cursor/shared-ai.env e VERSION
+﻿# Leitura/escrita de ~/.cursor/shared-ai.env e VERSION
 
 function Get-CursorUserDir {
     if ($env:CURSOR_USER_DIR) { return $env:CURSOR_USER_DIR }

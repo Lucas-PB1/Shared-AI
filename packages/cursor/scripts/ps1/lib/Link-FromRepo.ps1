@@ -1,4 +1,4 @@
-# Symlink seguro com fallback Junction (dirs) / HardLink (files) no Windows.
+﻿# Symlink seguro com fallback Junction (dirs) / HardLink (files) no Windows.
 # Dot-source: . "$PSScriptRoot/lib/Link-FromRepo.ps1"
 
 $script:LinkLinked = 0
@@ -102,33 +102,41 @@ function New-SharedAiLink {
 
     $isDir = Test-Path -LiteralPath $srcFull -PathType Container
 
-    try {
-        if ($isDir) {
-            New-Item -ItemType SymbolicLink -Path $Dest -Target $srcFull -Force | Out-Null
-        } else {
-            New-Item -ItemType SymbolicLink -Path $Dest -Target $srcFull -Force | Out-Null
-        }
-        return 'SymbolicLink'
-    } catch {
-        if ($isDir) {
-            $null = cmd /c mklink /J "$Dest" "$srcFull" 2>&1
-            if ($LASTEXITCODE -eq 0) { return 'Junction' }
-            throw "Falha ao criar junction: $Dest -> $srcFull"
-        }
+    # Prefer cmd mklink: com Developer Mode funciona sem admin; New-Item
+    # -ItemType SymbolicLink ainda exige elevação em alguns hosts Windows.
+    if ($isDir) {
+        $null = cmd /c "mklink /D `"$Dest`" `"$srcFull`"" 2>&1
+        if ($LASTEXITCODE -eq 0) { return 'SymbolicLink' }
 
-        if (-not (Get-SameVolume $srcFull $Dest)) {
-            throw @(
-                "HardLink exige mesmo volume que o destino.",
-                "Clone: $srcFull",
-                "Destino: $Dest",
-                "Ative Developer Mode (symlink) ou coloque o clone no mesmo drive que $env:USERPROFILE"
-            ) -join "`n"
-        }
+        try {
+            New-Item -ItemType SymbolicLink -Path $Dest -Target $srcFull -Force | Out-Null
+            return 'SymbolicLink'
+        } catch { }
 
-        $null = cmd /c mklink /H "$Dest" "$srcFull" 2>&1
-        if ($LASTEXITCODE -eq 0) { return 'HardLink' }
-        throw "Falha ao criar hardlink: $Dest -> $srcFull"
+        $null = cmd /c "mklink /J `"$Dest`" `"$srcFull`"" 2>&1
+        if ($LASTEXITCODE -eq 0) { return 'Junction' }
+
+        Copy-Item -LiteralPath $srcFull -Destination $Dest -Recurse -Force
+        Write-Warning "Cópia (sem link): $Dest — ative Developer Mode ou rode como admin"
+        return 'Copied'
     }
+
+    $null = cmd /c "mklink `"$Dest`" `"$srcFull`"" 2>&1
+    if ($LASTEXITCODE -eq 0) { return 'SymbolicLink' }
+
+    try {
+        New-Item -ItemType SymbolicLink -Path $Dest -Target $srcFull -Force | Out-Null
+        return 'SymbolicLink'
+    } catch { }
+
+    if (Get-SameVolume $srcFull $Dest) {
+        $null = cmd /c "mklink /H `"$Dest`" `"$srcFull`"" 2>&1
+        if ($LASTEXITCODE -eq 0) { return 'HardLink' }
+    }
+
+    Copy-Item -LiteralPath $srcFull -Destination $Dest -Force
+    Write-Warning "Cópia (sem link): $Dest — ative Developer Mode ou rode como admin"
+    return 'Copied'
 }
 
 function Test-SharedAiSymlink {

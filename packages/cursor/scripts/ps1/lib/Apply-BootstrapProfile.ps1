@@ -1,4 +1,4 @@
-# Aplica perfil de bootstrap (SKILLS-ROUTING + rule do projeto).
+﻿# Aplica perfil de bootstrap (SKILLS-ROUTING + rule do projeto).
 
 function Apply-BootstrapProfile {
     param(

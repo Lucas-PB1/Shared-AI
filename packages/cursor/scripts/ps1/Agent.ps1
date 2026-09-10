@@ -1,4 +1,4 @@
-# Wrapper shared-ai para Cursor CLI — alinha projeto antes de rodar agent.
+﻿# Wrapper shared-ai para Cursor CLI — alinha projeto antes de rodar agent.
 param(
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$RawArgs = @()

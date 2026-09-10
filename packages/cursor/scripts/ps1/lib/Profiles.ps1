@@ -1,4 +1,4 @@
-# Lista e valida perfis de bootstrap.
+﻿# Lista e valida perfis de bootstrap.
 
 function Get-ProfilesRoot {
     $root = $env:SHARED_AI_ROOT

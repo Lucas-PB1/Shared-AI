@@ -1,4 +1,4 @@
-# Sync automático ao iniciar o computador (git pull + npm run sync).
+﻿# Sync automático ao iniciar o computador (git pull + npm run sync).
 
 function Get-BootSyncStateFile {
     return Join-Path (Get-CursorUserDir) 'shared-ai/boot-sync.env'

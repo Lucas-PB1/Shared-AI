@@ -1,4 +1,4 @@
-# Remove symlinks shared-ai do projeto e opcionalmente desregistra do sync.
+﻿# Remove symlinks shared-ai do projeto e opcionalmente desregistra do sync.
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
@@ -7,7 +7,7 @@ $LibRoot = Join-Path $PSScriptRoot 'lib'
 . (Join-Path $LibRoot 'Projects-Registry.ps1')
 . (Join-Path $LibRoot 'Detach-Project.ps1')
 
-$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
 
 $projectPath = $null
 $keepRegistry = $false

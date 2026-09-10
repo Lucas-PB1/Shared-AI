@@ -1,4 +1,4 @@
-# Instala pacote skills (rules, skills cursor, motor) em ~/.cursor/
+﻿# Instala pacote skills (rules, skills cursor, motor) em ~/.cursor/
 # Uso: npm run setup:skills
 $ErrorActionPreference = 'Stop'
 
@@ -8,7 +8,7 @@ $LibRoot = Join-Path $PSScriptRoot 'lib'
 . (Join-Path $LibRoot 'Merge-HooksJson.ps1')
 . (Join-Path $LibRoot 'Install-Packages.ps1')
 
-$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
 $cursorDir = Get-CursorUserDir
 
 Write-Host "Skills — instalando em $cursorDir"

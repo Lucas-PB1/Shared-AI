@@ -1,4 +1,4 @@
-# Merge idempotente do sessionStart shared-ai em ~/.cursor/hooks.json
+﻿# Merge idempotente do sessionStart shared-ai em ~/.cursor/hooks.json
 
 function Get-SharedAiTsx {
     param([string]$Root)

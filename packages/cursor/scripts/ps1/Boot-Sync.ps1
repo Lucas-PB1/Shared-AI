@@ -1,4 +1,4 @@
-# Liga/desliga sync automático ao iniciar o computador.
+﻿# Liga/desliga sync automático ao iniciar o computador.
 param(
     [Parameter(Position = 0)]
     [ValidateSet('on', 'off', 'status', 'run', 'enable', 'disable', 'help')]

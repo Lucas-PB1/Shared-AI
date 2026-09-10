@@ -1,11 +1,11 @@
-# Saúde multi-projeto — nativo PowerShell (tsx health-json.ts).
+﻿# Saúde multi-projeto — nativo PowerShell (tsx health-json.ts).
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
 . (Join-Path $LibRoot 'SharedAi-Env.ps1')
 . (Join-Path $LibRoot 'Profiles.ps1')
 
-$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
 $env:SHARED_AI_ROOT = $MonorepoRoot
 $cursorDir = Get-CursorUserDir
 $envFile = Get-SharedAiEnvFile

@@ -1,4 +1,4 @@
-# Cursor CLI — instalação e config auto (approvalMode unrestricted)
+﻿# Cursor CLI — instalação e config auto (approvalMode unrestricted)
 
 function Get-CursorCliStateFile {
     Join-Path $env:USERPROFILE '.cursor/shared-ai-cursor-cli.state'

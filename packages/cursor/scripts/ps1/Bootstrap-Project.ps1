@@ -1,4 +1,4 @@
-# Prepara um repositório: rules, commands, pastas review, perfil opcional.
+﻿# Prepara um repositório: rules, commands, pastas review, perfil opcional.
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
@@ -8,7 +8,7 @@ $LibRoot = Join-Path $PSScriptRoot 'lib'
 . (Join-Path $LibRoot 'Apply-BootstrapProfile.ps1')
 . (Join-Path $LibRoot 'Profiles.ps1')
 
-$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+$MonorepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
 $cursorDir = Get-CursorUserDir
 $linkScript = if ($env:CURSOR_LINK_PROJECT_SCRIPT) {
     $env:CURSOR_LINK_PROJECT_SCRIPT

@@ -1,4 +1,4 @@
-# Instala e configura Cursor CLI (agent) — modo auto.
+﻿# Instala e configura Cursor CLI (agent) — modo auto.
 param(
     [Parameter(Position = 0)]
     [ValidateSet('install', 'configure', 'status', 'login', 'help')]

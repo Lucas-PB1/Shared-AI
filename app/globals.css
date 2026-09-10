@@ -1,31 +1,31 @@
 @import "tailwindcss";
 
 /*
-  Shared Review — tokens de marca + dashboard UI
+  Shared AI — tokens de marca + dashboard UI (azul)
 */
 
 :root {
-  --sa-primary: #ff5800;
-  --sa-primary-alt: #ff7303;
-  --sa-primary-strong: #e64e00;
-  --sa-primary-hover: #ea580c;
-  --sa-primary-soft: #fff7ed;
-  --sa-primary-rgb: 255, 88, 0;
+  --sa-primary: #1b6ef3;
+  --sa-primary-alt: #3b82f6;
+  --sa-primary-strong: #1d4ed8;
+  --sa-primary-hover: #1559d6;
+  --sa-primary-soft: #eff6ff;
+  --sa-primary-rgb: 27, 110, 243;
 
-  --sa-secondary: #4e5159;
+  --sa-secondary: #475569;
   --sa-muted: #64748b;
-  --sa-surface: #f3f1ef;
-  --sa-accent-purple: #9013fe;
-  --sa-accent-cyan: #50e3dc;
+  --sa-surface: #f1f5f9;
+  --sa-accent-purple: #0c4a6e;
+  --sa-accent-cyan: #22d3ee;
 
   --sa-ink: #0f172a;
-  --sa-text: #374151;
-  --sa-text-strong: #1f2937;
-  --sa-border: #e7e2dc;
+  --sa-text: #334155;
+  --sa-text-strong: #1e293b;
+  --sa-border: #e2e8f0;
   --sa-canvas: #ffffff;
   --sa-danger: #b91c1c;
-  --sa-success: #5bd49e;
-  --sa-focus: #2563eb;
+  --sa-success: #10b981;
+  --sa-focus: #1b6ef3;
 
   --sa-container: 80rem;
   --sa-radius-md: 0.625rem;
@@ -83,7 +83,7 @@
       ),
       radial-gradient(
         ellipse 60% 40% at 100% 0%,
-        rgba(78, 81, 89, 0.06),
+        rgba(34, 211, 238, 0.08),
         transparent 50%
       );
     background-attachment: fixed;

@@ -1,4 +1,4 @@
-# Registro de projetos ligados ao shared-ai
+﻿# Registro de projetos ligados ao shared-ai
 
 function Get-RegistryDir {
     return Join-Path (Get-CursorUserDir) 'shared-ai'
@@ -22,6 +22,15 @@ function Test-EphemeralPath {
     return $false
 }
 
+function Write-RegistryJson {
+    param(
+        [Parameter(Mandatory)][string]$File,
+        [Parameter(Mandatory)]$Data
+    )
+    $json = ($Data | ConvertTo-Json -Depth 5) + "`n"
+    [System.IO.File]::WriteAllText($File, $json) # UTF-8 sem BOM
+}
+
 function Ensure-Registry {
     $dir = Get-RegistryDir
     if (-not (Test-Path $dir)) {
@@ -29,7 +38,7 @@ function Ensure-Registry {
     }
     $file = Get-RegistryFile
     if (-not (Test-Path $file)) {
-        Set-Content -Path $file -Value '{"projects":[]}' -Encoding UTF8
+        [System.IO.File]::WriteAllText($file, "{`"projects`":[]}`n")
     }
 }
 
@@ -44,14 +53,15 @@ function Register-Project {
 
     $file = Get-RegistryFile
     $data = Get-Content $file -Raw | ConvertFrom-Json
-    if (-not $data.projects) {
+    if ($null -eq $data.PSObject.Properties['projects']) {
         $data | Add-Member -NotePropertyName projects -NotePropertyValue @()
     }
 
+    $projects = @($data.projects)
     $now = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     $found = $false
 
-    foreach ($p in $data.projects) {
+    foreach ($p in $projects) {
         $existing = (Get-AbsolutePath $p.path)
         if ($existing -eq $realPath) {
             $p.lastLinked = $now
@@ -61,14 +71,15 @@ function Register-Project {
     }
 
     if (-not $found) {
-        $data.projects += [PSCustomObject]@{
+        $projects += [PSCustomObject]@{
             path        = $realPath
             firstLinked = $now
             lastLinked  = $now
         }
     }
 
-    ($data | ConvertTo-Json -Depth 5) + "`n" | Set-Content -Path $file -Encoding UTF8
+    $data.projects = @($projects)
+    Write-RegistryJson -File $file -Data $data
 }
 
 function Get-RegisteredProjects {
@@ -95,7 +106,7 @@ function Unregister-Project {
     )
 
     $after = @($data.projects).Count
-    ($data | ConvertTo-Json -Depth 5) + "`n" | Set-Content -Path $file -Encoding UTF8
+    Write-RegistryJson -File $file -Data $data
     return ($before -gt $after)
 }
 
@@ -111,5 +122,5 @@ function Remove-MissingProjects {
         }
     )
 
-    ($data | ConvertTo-Json -Depth 5) + "`n" | Set-Content -Path $file -Encoding UTF8
+    Write-RegistryJson -File $file -Data $data
 }

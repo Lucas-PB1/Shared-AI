@@ -1,4 +1,4 @@
-# Prepara .cursor/ do projeto.
+﻿# Prepara .cursor/ do projeto.
 # Rules/commands shared-ai ficam só em ~/.cursor/.
 param(
     [switch]$Quiet,

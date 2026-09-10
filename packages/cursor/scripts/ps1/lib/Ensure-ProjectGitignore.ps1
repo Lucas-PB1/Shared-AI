@@ -1,4 +1,4 @@
-# Remove ignores órfãos de installs antigos (orquestrador/commands globais).
+﻿# Remove ignores órfãos de installs antigos (orquestrador/commands globais).
 
 $script:SharedAiGitignoreOrphans = @(
     '.cursor/rules/skills-orchestrator-*.mdc'

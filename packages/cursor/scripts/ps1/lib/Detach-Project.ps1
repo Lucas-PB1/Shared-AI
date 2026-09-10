@@ -1,4 +1,4 @@
-# Remove symlinks gerenciados pelo shared-ai no projeto (preserva arquivos reais).
+﻿# Remove symlinks gerenciados pelo shared-ai no projeto (preserva arquivos reais).
 
 function Remove-SharedAiFromProject {
     param([Parameter(Mandatory)][string]$Project)

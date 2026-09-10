@@ -1,4 +1,4 @@
-# Instala symlinks do shared-ai em ~/.cursor/
+﻿# Instala symlinks do shared-ai em ~/.cursor/
 
 function Copy-SharedAiScript {
     param(
