@@ -1,4 +1,12 @@
 ﻿# Wizard de configuração nativo (PowerShell) — sem Git Bash.
+param(
+    [switch]$Yes,
+    [switch]$SkipExtras,
+    [switch]$SkipPull,
+    [string]$Project,
+    [string]$Profile
+)
+
 $ErrorActionPreference = 'Stop'
 
 $LibRoot = Join-Path $PSScriptRoot 'lib'
@@ -10,11 +18,7 @@ $env:SHARED_AI_ROOT = $MonorepoRoot
 $cursorDir = Get-CursorUserDir
 $envFile = Get-SharedAiEnvFile
 
-$Project = $null
-$Profile = $null
-$NonInteractive = $false
-$SkipExtras = $false
-$SkipPull = $false
+$NonInteractive = [bool]$Yes
 
 $argList = @($args)
 for ($i = 0; $i -lt $argList.Count; $i++) {
@@ -23,11 +27,11 @@ for ($i = 0; $i -lt $argList.Count; $i++) {
     elseif ($arg -eq '--project') { $Project = $argList[++$i] }
     elseif ($arg -match '^--profile=(.+)$') { $Profile = $Matches[1] }
     elseif ($arg -eq '--profile') { $Profile = $argList[++$i] }
-    elseif ($arg -in @('--yes', '-y')) { $NonInteractive = $true }
-    elseif ($arg -eq '--skip-extras') { $SkipExtras = $true }
-    elseif ($arg -eq '--skip-pull') { $SkipPull = $true }
+    elseif ($arg -in @('--yes', '-y', '-Yes')) { $NonInteractive = $true }
+    elseif ($arg -eq '--skip-extras' -or $arg -eq '-SkipExtras') { $SkipExtras = $true }
+    elseif ($arg -eq '--skip-pull' -or $arg -eq '-SkipPull') { $SkipPull = $true }
     elseif ($arg -eq 'run') { }
-    elseif ($arg -in @('-h', '--help')) {
+    elseif ($arg -in @('-h', '--help', '-Help')) {
         @'
 Uso: npm run onboard [-- opções]
 
@@ -153,15 +157,19 @@ if ($Project -eq $MonorepoRoot -and -not $Profile) {
 
 Write-Host ''
 Write-Host '=== 6. Bootstrap ==='
-$bootArgs = @($Project)
-if ($Profile) {
-    $bootArgs = @("--profile=$Profile", $Project)
-    Write-Host "  → npm run bootstrap -- --profile=$Profile $Project"
+Push-Location $MonorepoRoot
+try {
+    if ($Profile) {
+        Write-Host "  → bootstrap --profile=$Profile $Project"
+        & node (Join-Path $MonorepoRoot 'packages/cursor/scripts/mjs/run.mjs') bootstrap "--profile=$Profile" $Project
+    }
+    else {
+        Write-Host "  → bootstrap $Project"
+        & node (Join-Path $MonorepoRoot 'packages/cursor/scripts/mjs/run.mjs') bootstrap $Project
+    }
+    if ($LASTEXITCODE -ne 0) { throw "bootstrap falhou (código $LASTEXITCODE)" }
 }
-else {
-    Write-Host "  → npm run bootstrap -- $Project"
-}
-Invoke-Npm run bootstrap -- @bootArgs
+finally { Pop-Location }
 
 $configureNext = ($Project -eq $MonorepoRoot) -or ($Profile -eq 'next')
 if ($configureNext) {
