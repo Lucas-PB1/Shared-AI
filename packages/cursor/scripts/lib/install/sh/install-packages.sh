@@ -49,6 +49,7 @@ install_skills_package() {
   install -m 755 "$cursor_pkg/scripts/sh/link-project-rules.sh" "$cursor_dir/"
   install -m 755 "$cursor_pkg/scripts/hooks/sh/ensure-project-cursor.sh" "$cursor_dir/hooks/"
   install -m 755 "$cursor_dir/hooks/ensure-project-cursor.sh" "$cursor_dir/hooks/ensure-project-rules.sh"
+  install -m 755 "$cursor_pkg/scripts/hooks/sh/routing-log-stop.sh" "$cursor_dir/hooks/"
   install -m 755 "$install_lib/projects-registry.sh" "$cursor_dir/shared-ai-projects-registry.sh"
   install -m 755 "$install_lib/shared-ai-env.sh" "$cursor_dir/shared-ai-env.sh"
   install -m 755 "$install_lib/link-from-repo.sh" "$cursor_dir/shared-ai-link-from-repo.sh"
@@ -79,7 +80,7 @@ migrate_managed_real_files() {
     dest="$cursor_dir/rules/$(basename "$f")"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
-  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md; do
+  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md promover-skill.md; do
     dest="$cursor_dir/commands/$cmd"
     [[ -e "$dest" && ! -L "$dest" ]] && rm -f "$dest"
   done
@@ -116,6 +117,6 @@ prune_user_symlinks_if_requested() {
   done
   prune_managed_symlinks "$cursor_dir/skills" "${names[@]}"
 
-  names=(skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md)
+  names=(skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md promover-skill.md)
   prune_managed_symlinks "$cursor_dir/commands" "${names[@]}"
 }

@@ -56,6 +56,25 @@ function Test-HooksSessionStart {
     }
 }
 
+function Test-HooksRoutingLogStop {
+    param([string]$HooksFile)
+
+    if (-not (Test-Path $HooksFile)) { return 1 }
+    try {
+        $data = Get-Content $HooksFile -Raw | ConvertFrom-Json
+        $stop = @($data.hooks.stop)
+        foreach ($entry in $stop) {
+            $cmd = $entry.command
+            if ($cmd -match 'routing-log-stop') {
+                return 0
+            }
+        }
+        return 2
+    } catch {
+        return 1
+    }
+}
+
 function Get-UserSymlinkIssues {
     param([string]$Root)
 
@@ -81,7 +100,7 @@ function Get-UserSymlinkIssues {
         }
     }
 
-    foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md')) {
+    foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md', 'promover-skill.md')) {
         $dest = Join-Path $cursorDir "commands/$cmd"
         if ((Test-Path $dest) -and -not (Test-SharedAiSymlink $dest)) { $skipped++ }
         elseif ((Test-Path $dest) -and (Test-SharedAiSymlink $dest) -and -not (Test-Path $dest)) { $broken++ }
@@ -153,7 +172,7 @@ foreach ($script in @('Link-Project.ps1')) {
     }
 }
 
-foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md')) {
+foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md', 'promover-skill.md')) {
     $path = Join-Path $cursorDir "commands/$cmd"
     $name = $cmd -replace '\.md$', ''
     if ((Test-Path $path) -and (Test-SharedAiSymlink $path)) {
@@ -177,11 +196,18 @@ if ((Test-Path $routing) -and (Test-SharedAiSymlink $routing)) {
 Write-Section 'Hooks'
 $hooksFile = Join-Path $cursorDir 'hooks.json'
 $hookScript = Join-Path $cursorDir 'hooks/ensure-project-cursor.ps1'
+$routingStopScript = Join-Path $cursorDir 'hooks/routing-log-stop.ps1'
 
 if (Test-Path $hookScript) {
     Write-Ok 'ensure-project-cursor.ps1'
 } else {
     Write-Fail 'ensure-project-cursor.ps1 — rode: npm run setup:skills'
+}
+
+if (Test-Path $routingStopScript) {
+    Write-Ok 'routing-log-stop.ps1'
+} else {
+    Write-Fail 'routing-log-stop.ps1 — rode: npm run setup:skills'
 }
 
 $hookRc = Test-HooksSessionStart $hooksFile
@@ -193,6 +219,13 @@ if (-not (Test-Path $hooksFile)) {
     Write-WarnItem 'hooks.json sem sessionStart do shared-ai — adicione ensure-project-cursor.ps1'
 } else {
     Write-Fail 'hooks.json inválido ou ilegível'
+}
+
+$stopRc = Test-HooksRoutingLogStop $hooksFile
+if ((Test-Path $hooksFile) -and $stopRc -eq 0) {
+    Write-Ok 'hooks.json com stop → routing-log-stop'
+} elseif ((Test-Path $hooksFile) -and $stopRc -eq 2) {
+    Write-WarnItem 'hooks.json sem stop routing-log — rode: npm run sync'
 }
 
 Write-Section 'Symlinks (~/.cursor)'

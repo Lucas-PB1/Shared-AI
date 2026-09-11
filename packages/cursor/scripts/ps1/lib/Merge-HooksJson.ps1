@@ -55,9 +55,9 @@ function Merge-SharedAiHooksJson {
 
     $action = ($result | Select-Object -Last 1).ToString().Trim()
     switch ($action) {
-        'created' { Write-Host '→ hooks.json criado (sessionStart → ensure-project-cursor)' }
-        'merged'  { Write-Host '→ hooks.json atualizado (sessionStart → ensure-project-cursor, hooks existentes preservados)' }
-        'ok'      { Write-Host '→ hooks.json ok (sessionStart shared-ai já presente)' }
+        'created' { Write-Host '→ hooks.json criado (sessionStart + routing-log stop)' }
+        'merged'  { Write-Host '→ hooks.json atualizado (sessionStart + routing-log stop; hooks existentes preservados)' }
+        'ok'      { Write-Host '→ hooks.json ok (sessionStart + routing-log stop shared-ai)' }
         default {
             Write-Error "hooks.json — resposta inesperada do merge: $action"
             return $false

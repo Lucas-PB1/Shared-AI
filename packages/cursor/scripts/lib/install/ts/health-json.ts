@@ -34,14 +34,14 @@ function parseDotenvText(raw: string): Record<string, string> {
   return out;
 }
 
-interface MachineReport {
+export interface MachineReport {
   ok: boolean;
   version_clone: string | null;
   version_installed: string | null;
   issues: string[];
 }
 
-interface ProjectReport {
+export interface ProjectReport {
   path: string;
   ok: boolean;
   issues: string[];
@@ -50,7 +50,7 @@ interface ProjectReport {
   suggested_profile?: string;
 }
 
-interface HealthResult {
+export interface HealthResult {
   machine: MachineReport;
   projects: ProjectReport[];
   summary: { project_count: number; issues: number };
@@ -143,13 +143,7 @@ function runHealthProject(project: string): ProjectReport {
   return item;
 }
 
-function main(): number {
-  const [envFile, registryFile] = process.argv.slice(2);
-  if (!envFile || !registryFile) {
-    process.stderr.write('Uso: health-json.ts <env_file> <registry_file>\n');
-    return 2;
-  }
-
+export function collectHealth(envFile: string, registryFile: string): HealthResult {
   const result: HealthResult = {
     machine: {
       ok: true,
@@ -187,6 +181,14 @@ function main(): number {
         const path = entry.path ?? '';
         if (path && existsSync(path) && statSync(path).isDirectory()) {
           result.projects.push(runHealthProject(path));
+        } else if (path) {
+          result.projects.push({
+            path,
+            ok: false,
+            issues: ['missing'],
+            profile: '—',
+            git_dirty: 0,
+          });
         }
       }
     } catch {
@@ -200,6 +202,17 @@ function main(): number {
     result.summary.issues += result.machine.issues.length;
   }
 
+  return result;
+}
+
+function main(): number {
+  const [envFile, registryFile] = process.argv.slice(2);
+  if (!envFile || !registryFile) {
+    process.stderr.write('Uso: health-json.ts <env_file> <registry_file>\n');
+    return 2;
+  }
+
+  const result = collectHealth(envFile, registryFile);
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   return 0;
 }

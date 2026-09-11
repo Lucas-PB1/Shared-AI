@@ -80,3 +80,13 @@ Mapa: `~/.cursor/SKILLS-ROUTING.md` + `.cursor/SKILLS-ROUTING.md` do projeto.
 ````
 
 Não carregar todas as 31 skills — só listar as **relevantes** ao pedido e ao merge.
+
+## Routing log
+
+Ao final da resposta `/skills-why`, **também** append no log (calibração manual):
+
+```bash
+npx tsx packages/cursor/scripts/lib/routing/append-routing-log.ts append --source=skills-why --skills=<merge final csv> --ask="<pedido em uma linha>" --project="<cwd>" --excluded=<excluídas csv opcional>
+```
+
+Arquivo: `~/.cursor/shared-ai/routing-log.jsonl`. Em tarefas de código normais o log é automático (orquestrador + hook stop) — `/skills-why` é só debug.

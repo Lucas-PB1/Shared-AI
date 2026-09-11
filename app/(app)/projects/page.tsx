@@ -1,10 +1,18 @@
 import {
+  getRegistryHealth,
   LinkedProjectsGrid,
   listLinkedProjects,
 } from '@/entities/linked-project';
 
 export default async function ProjectsPage() {
   const projects = listLinkedProjects();
+  const health = getRegistryHealth();
+  const healthByPath = Object.fromEntries(
+    health.projects.map((report) => [
+      report.path.replace(/\\/g, '/').toLowerCase(),
+      report,
+    ]),
+  );
 
   return (
     <div className="space-y-10">
@@ -20,11 +28,13 @@ export default async function ProjectsPage() {
           <code className="text-sa-ink">~/.cursor/shared-ai/projects.json</code>.
         </p>
         <p className="mt-4 text-sm font-medium text-sa-muted">
-          {projects.length} projeto{projects.length === 1 ? '' : 's'}
+          {projects.length} projeto{projects.length === 1 ? '' : 's'} ·{' '}
+          {health.summary.issues} aviso
+          {health.summary.issues === 1 ? '' : 's'} de saúde
         </p>
       </section>
 
-      <LinkedProjectsGrid projects={projects} />
+      <LinkedProjectsGrid projects={projects} healthByPath={healthByPath} />
     </div>
   );
 }

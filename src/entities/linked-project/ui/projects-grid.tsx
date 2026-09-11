@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 
-import type { LinkedProject } from '@/entities/linked-project';
+import type { LinkedProject, ProjectReport } from '@/entities/linked-project';
 import { LinkedProjectCard } from '@/entities/linked-project/ui/project-card';
 import { EmptyState } from '@/shared/ui/empty-state';
 
@@ -15,8 +15,10 @@ type SortKey = 'recent' | 'name';
 
 export function LinkedProjectsGrid({
   projects,
+  healthByPath = {},
 }: {
   projects: LinkedProject[];
+  healthByPath?: Record<string, ProjectReport>;
 }) {
   const [query, setQuery] = useState('');
   const [pathFilter, setPathFilter] = useState<PathFilter>('all');
@@ -104,11 +106,17 @@ export function LinkedProjectsGrid({
         />
       ) : (
         <ul className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((project) => (
-            <li key={project.slug} className="h-full">
-              <LinkedProjectCard project={project} />
-            </li>
-          ))}
+          {filtered.map((project) => {
+            const key = project.path.replace(/\\/g, '/').toLowerCase();
+            return (
+              <li key={project.slug} className="h-full">
+                <LinkedProjectCard
+                  project={project}
+                  health={healthByPath[key]}
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

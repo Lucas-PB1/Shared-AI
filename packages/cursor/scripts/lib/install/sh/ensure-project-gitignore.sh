@@ -10,6 +10,7 @@ SHARED_AI_GITIGNORE_ORPHANS=(
   '.cursor/commands/automations.md'
   '.cursor/commands/criar-skill.md'
   '.cursor/commands/criar-rule.md'
+  '.cursor/commands/promover-skill.md'
 )
 
 LINK_GITIGNORE_SCRUBBED=0

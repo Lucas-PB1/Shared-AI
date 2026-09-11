@@ -5,6 +5,11 @@
       {
         "command": "./hooks/ensure-project-cursor.sh"
       }
+    ],
+    "stop": [
+      {
+        "command": "./hooks/routing-log-stop.sh"
+      }
     ]
   }
 }

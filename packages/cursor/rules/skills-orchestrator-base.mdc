@@ -51,3 +51,19 @@ Mapa: `~/.cursor/SKILLS-ROUTING.md`. Complemento do projeto: `.cursor/SKILLS-ROU
 | Rule de projeto | `.cursor/rules/` (ex.: `next-project.mdc`, `history-watch-*.mdc`) |
 
 Install: `npm run setup:skills` / `npm run sync`.
+
+## Routing log (automático)
+
+Após **tarefa de código** (não docs/git-only), registre o merge final de skills no log local — o usuário **não** precisa lembrar de `/skills-why`.
+
+1. Liste as skills do merge (≤8) que você de fato usou
+2. Append uma linha:
+
+```bash
+npx tsx packages/cursor/scripts/lib/routing/append-routing-log.ts append --source=agent --skills=a,b,c --ask="pedido curto" --project="<cwd do projeto>"
+```
+
+Arquivo: `~/.cursor/shared-ai/routing-log.jsonl` (só nesta máquina — **fora** do repo do projeto; não precisa de `.gitignore` alheio).  
+O campo `--project` é só metadado para filtrar no dashboard.  
+O hook `stop` (`routing-log-stop`) reforça o follow-up se o turno editou código e o log ainda não foi feito.  
+`/skills-why` também grava (`--source=skills-why`) quando usado para calibração manual.

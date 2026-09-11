@@ -84,6 +84,7 @@ if [[ -d "$root" ]]; then
     check_user_link "$skill" "$CURSOR_DIR/skills/$(basename "$skill")"
   done
   check_user_link "$root/packages/cursor/commands/skills-why.md" "$CURSOR_DIR/commands/skills-why.md"
+  check_user_link "$root/packages/cursor/commands/promover-skill.md" "$CURSOR_DIR/commands/promover-skill.md"
 fi
 
 echo ""

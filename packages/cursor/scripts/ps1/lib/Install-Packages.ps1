@@ -59,6 +59,7 @@ function Install-SkillsPackage {
     Copy-SharedAiScript (Join-Path $ps1Dir 'Link-Project.ps1') (Join-Path $cursorDir 'Link-Project-Rules.ps1')
     Copy-SharedAiScript (Join-Path $cursorPkg 'scripts/hooks/ps1/ensure-project-cursor.ps1') (Join-Path $cursorDir 'hooks/ensure-project-cursor.ps1')
     Copy-SharedAiScript (Join-Path $cursorDir 'hooks/ensure-project-cursor.ps1') (Join-Path $cursorDir 'hooks/ensure-project-rules.ps1')
+    Copy-SharedAiScript (Join-Path $cursorPkg 'scripts/hooks/ps1/routing-log-stop.ps1') (Join-Path $cursorDir 'hooks/routing-log-stop.ps1')
     Copy-SharedAiScript (Join-Path $ps1Dir 'lib/Projects-Registry.ps1') (Join-Path $cursorDir 'shared-ai-projects-registry.ps1')
     Copy-SharedAiScript (Join-Path $ps1Dir 'lib/SharedAi-Env.ps1') (Join-Path $cursorDir 'shared-ai-env.ps1')
     Copy-SharedAiScript (Join-Path $ps1Dir 'lib/Link-FromRepo.ps1') (Join-Path $cursorDir 'shared-ai-link-from-repo.ps1')
@@ -85,7 +86,7 @@ function Migrate-ManagedRealFiles {
         }
     }
 
-    foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md')) {
+    foreach ($cmd in @('skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md', 'promover-skill.md')) {
         $dest = Join-Path $cursorDir "commands/$cmd"
         if ((Test-Path $dest) -and -not (Test-SharedAiSymlink $dest)) {
             Remove-Item -LiteralPath $dest -Force
@@ -126,6 +127,6 @@ function Invoke-UserSymlinkPrune {
     Prune-ManagedSymlinks -Dir (Join-Path $cursorDir 'skills') -ManagedNames $names
 
     Prune-ManagedSymlinks -Dir (Join-Path $cursorDir 'commands') -ManagedNames @(
-        'skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md'
+        'skills-why.md', 'cursor-cli.md', 'historico.md', 'sync-inbox.md', 'onboard.md', 'automations.md', 'criar-skill.md', 'criar-rule.md', 'promover-skill.md'
     )
 }

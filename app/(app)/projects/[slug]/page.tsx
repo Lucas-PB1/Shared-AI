@@ -1,9 +1,16 @@
 import { notFound } from 'next/navigation';
 
 import {
+  findProjectHealth,
   getLinkedProjectBySlug,
+  getRegistryHealth,
   unregisterLinkedProjectAction,
 } from '@/entities/linked-project';
+import {
+  listProjectRoutingLog,
+  ProjectRoutingLog,
+  routingLogFilePath,
+} from '@/entities/routing-log';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
@@ -27,6 +34,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const project = getLinkedProjectBySlug(slug);
   if (!project) notFound();
 
+  const health = findProjectHealth(getRegistryHealth(), project.path);
+  const routingEntries = listProjectRoutingLog(project.path, 90);
+  const logPath = routingLogFilePath();
+
   return (
     <div className="space-y-5">
       <LinkedProjectHeader project={project} />
@@ -47,6 +58,26 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             </dt>
             <dd className="mt-1">
               <Badge>{project.pathExists ? 'existe' : 'ausente'}</Badge>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
+              Saúde
+            </dt>
+            <dd className="mt-1 text-sm text-sa-ink">
+              {!health
+                ? '—'
+                : health.ok
+                  ? 'ok'
+                  : health.issues.join(', ') || 'aviso'}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
+              Git dirty
+            </dt>
+            <dd className="mt-1 text-sm text-sa-ink">
+              {health ? health.git_dirty : '—'}
             </dd>
           </div>
           <div>
@@ -96,6 +127,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             .
           </p>
         </form>
+      </Card>
+
+      <Card className="p-5">
+        <ProjectRoutingLog entries={routingEntries} logPath={logPath} />
       </Card>
     </div>
   );

@@ -10,6 +10,7 @@ $script:SharedAiGitignoreOrphans = @(
     '.cursor/commands/automations.md'
     '.cursor/commands/criar-skill.md'
     '.cursor/commands/criar-rule.md'
+    '.cursor/commands/promover-skill.md'
 )
 
 $script:LinkGitignoreScrubbed = 0

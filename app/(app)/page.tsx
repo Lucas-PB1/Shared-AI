@@ -1,4 +1,6 @@
 import {
+  findProjectHealth,
+  getRegistryHealth,
   listLinkedProjects,
   summarizeLinkedProjects,
 } from '@/entities/linked-project';
@@ -19,7 +21,9 @@ function formatWhen(iso: string | null) {
 export default async function HomePage() {
   const projects = listLinkedProjects();
   const summary = summarizeLinkedProjects(projects);
+  const health = getRegistryHealth();
   const recent = projects.slice(0, 6);
+  const unhealthy = health.projects.filter((p) => !p.ok).length;
 
   return (
     <div className="space-y-6">
@@ -36,11 +40,17 @@ export default async function HomePage() {
         </p>
       </section>
 
-      <dl className="grid gap-3 sm:grid-cols-3">
+      <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           ['Ligados', summary.total],
           ['Pasta ausente', summary.missing],
-          ['Último link', formatWhen(summary.lastLinked)],
+          [
+            'Máquina',
+            health.machine.ok
+              ? 'ok'
+              : health.machine.issues.join(', ') || 'aviso',
+          ],
+          ['Com aviso', unhealthy],
         ].map(([label, value]) => (
           <Card key={label as string} className="p-4">
             <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
@@ -50,6 +60,9 @@ export default async function HomePage() {
           </Card>
         ))}
       </dl>
+      <p className="text-xs text-sa-muted">
+        Último link: {formatWhen(summary.lastLinked)}
+      </p>
 
       {recent.length === 0 ? (
         <EmptyState
@@ -62,7 +75,10 @@ export default async function HomePage() {
           <ul className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {recent.map((project) => (
               <li key={project.slug} className="h-full">
-                <LinkedProjectCard project={project} />
+                <LinkedProjectCard
+                  project={project}
+                  health={findProjectHealth(health, project.path)}
+                />
               </li>
             ))}
           </ul>

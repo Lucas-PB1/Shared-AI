@@ -88,6 +88,7 @@ if ($root -and (Test-Path $root)) {
         }
     }
     Test-UserLink (Join-Path $root 'packages/cursor/commands/skills-why.md') (Join-Path $cursorDir 'commands/skills-why.md')
+    Test-UserLink (Join-Path $root 'packages/cursor/commands/promover-skill.md') (Join-Path $cursorDir 'commands/promover-skill.md')
 }
 
 Write-Host ''

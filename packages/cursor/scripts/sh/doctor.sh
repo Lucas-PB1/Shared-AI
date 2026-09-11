@@ -77,6 +77,29 @@ process.exit(2);
 ' "$hooks_file"
 }
 
+hooks_has_routing_log_stop() {
+  local hooks_file="$1"
+  node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const path = process.argv[1];
+let data;
+try {
+  data = JSON.parse(readFileSync(path, "utf-8"));
+} catch {
+  process.exit(1);
+}
+const stop = data?.hooks?.stop ?? [];
+for (const entry of stop) {
+  if (!entry || typeof entry !== "object") continue;
+  const cmd = entry.command ?? "";
+  if (typeof cmd === "string" && cmd.includes("routing-log-stop")) {
+    process.exit(0);
+  }
+}
+process.exit(2);
+' "$hooks_file"
+}
+
 count_user_symlink_issues() {
   local root="$1"
   local broken=0 missing=0 skipped=0
@@ -106,7 +129,7 @@ count_user_symlink_issues() {
     fi
   done
 
-  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md; do
+  for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md promover-skill.md; do
     dest="$CURSOR_DIR/commands/$cmd"
     if [[ -e "$dest" && ! -L "$dest" ]]; then
       skipped=$((skipped + 1))
@@ -176,7 +199,7 @@ for script in link-project.sh; do
   fi
 done
 
-for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md; do
+for cmd in skills-why.md cursor-cli.md historico.md sync-inbox.md onboard.md automations.md criar-skill.md criar-rule.md promover-skill.md; do
   if [[ -L "$CURSOR_DIR/commands/$cmd" && -e "$CURSOR_DIR/commands/$cmd" ]]; then
     ok "command /${cmd%.md}"
   elif [[ -f "$CURSOR_DIR/commands/$cmd" ]]; then
@@ -197,11 +220,18 @@ fi
 section "Hooks"
 hooks_file="$CURSOR_DIR/hooks.json"
 hook_script="$CURSOR_DIR/hooks/ensure-project-cursor.sh"
+routing_stop_script="$CURSOR_DIR/hooks/routing-log-stop.sh"
 
 if [[ -x "$hook_script" ]]; then
   ok "ensure-project-cursor.sh"
 else
   fail "ensure-project-cursor.sh — rode: npm run setup:skills"
+fi
+
+if [[ -x "$routing_stop_script" ]]; then
+  ok "routing-log-stop.sh"
+else
+  fail "routing-log-stop.sh — rode: npm run setup:skills"
 fi
 
 if [[ ! -f "$hooks_file" ]]; then
@@ -214,6 +244,15 @@ else
     warn "hooks.json sem sessionStart do shared-ai — adicione ensure-project-cursor.sh"
   else
     fail "hooks.json inválido ou ilegível"
+  fi
+fi
+
+if [[ -f "$hooks_file" ]] && hooks_has_routing_log_stop "$hooks_file"; then
+  ok "hooks.json com stop → routing-log-stop"
+elif [[ -f "$hooks_file" ]]; then
+  rc=$?
+  if [[ "$rc" -eq 2 ]]; then
+    warn "hooks.json sem stop routing-log — rode: npm run sync"
   fi
 fi
 
