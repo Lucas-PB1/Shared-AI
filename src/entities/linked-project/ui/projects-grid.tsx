@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 
-import type { LinkedProject, ProjectReport } from '@/entities/linked-project';
-import { LinkedProjectCard } from '@/entities/linked-project/ui/project-card';
+import type { LinkedProject } from '../types';
+import type { ProjectReport } from '../health-types';
+import { LinkedProjectCard } from './project-card';
 import { EmptyState } from '@/shared/ui/empty-state';
 
 const selectClass =

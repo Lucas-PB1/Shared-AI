@@ -1,9 +1,9 @@
+import { listLinkedProjects, summarizeLinkedProjects } from '@/entities/linked-project/api';
 import {
+  countSetupAttention,
   findProjectHealth,
   getRegistryHealth,
-  listLinkedProjects,
-  summarizeLinkedProjects,
-} from '@/entities/linked-project';
+} from '@/entities/linked-project/health';
 import { LinkedProjectCard } from '@/entities/linked-project/ui/project-card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { Card } from '@/shared/ui/card';
@@ -23,7 +23,7 @@ export default async function HomePage() {
   const summary = summarizeLinkedProjects(projects);
   const health = getRegistryHealth();
   const recent = projects.slice(0, 6);
-  const unhealthy = health.projects.filter((p) => !p.ok).length;
+  const needsAttention = countSetupAttention(health);
 
   return (
     <div className="space-y-6">
@@ -50,7 +50,7 @@ export default async function HomePage() {
               ? 'ok'
               : health.machine.issues.join(', ') || 'aviso',
           ],
-          ['Com aviso', unhealthy],
+          ['Precisa atenção', needsAttention],
         ].map(([label, value]) => (
           <Card key={label as string} className="p-4">
             <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
@@ -61,7 +61,9 @@ export default async function HomePage() {
         ))}
       </dl>
       <p className="text-xs text-sa-muted">
-        Último link: {formatWhen(summary.lastLinked)}
+        Último link: {formatWhen(summary.lastLinked)}. “Precisa atenção” cobre
+        pasta ausente, symlink quebrado ou perfil faltando — não conta
+        alterações locais sem commit.
       </p>
 
       {recent.length === 0 ? (

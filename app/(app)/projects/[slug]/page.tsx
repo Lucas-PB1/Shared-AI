@@ -1,16 +1,17 @@
 import { notFound } from 'next/navigation';
 
+import { getLinkedProjectBySlug } from '@/entities/linked-project/api';
+import { unregisterLinkedProjectAction } from '@/entities/linked-project/actions';
 import {
   findProjectHealth,
-  getLinkedProjectBySlug,
   getRegistryHealth,
-  unregisterLinkedProjectAction,
-} from '@/entities/linked-project';
+} from '@/entities/linked-project/health';
+import { presentProjectHealth } from '@/entities/linked-project/present-health';
 import {
   listProjectRoutingLog,
-  ProjectRoutingLog,
   routingLogFilePath,
-} from '@/entities/routing-log';
+} from '@/entities/routing-log/api';
+import { ProjectRoutingLog } from '@/entities/routing-log/ui/project-routing-log';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
@@ -35,6 +36,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   if (!project) notFound();
 
   const health = findProjectHealth(getRegistryHealth(), project.path);
+  const view = presentProjectHealth(health, project.pathExists);
   const routingEntries = listProjectRoutingLog(project.path, 90);
   const logPath = routingLogFilePath();
 
@@ -60,25 +62,32 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               <Badge>{project.pathExists ? 'existe' : 'ausente'}</Badge>
             </dd>
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
-              Saúde
+              Saúde do setup
             </dt>
-            <dd className="mt-1 text-sm text-sa-ink">
-              {!health
-                ? '—'
-                : health.ok
-                  ? 'ok'
-                  : health.issues.join(', ') || 'aviso'}
-            </dd>
+            <dd className="mt-1 text-sm text-sa-ink">{view.statusLabel}</dd>
+            {view.setupMessages.length > 0 ? (
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-sa-secondary">
+                {view.setupMessages.map((msg) => (
+                  <li key={msg}>{msg}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-xs text-sa-muted">
+                Symlinks, perfil e pasta ok — nada a corrigir no Shared AI.
+              </p>
+            )}
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">
-              Git dirty
+              Alterações locais (git)
             </dt>
-            <dd className="mt-1 text-sm text-sa-ink">
-              {health ? health.git_dirty : '—'}
-            </dd>
+            <dd className="mt-1 text-sm text-sa-ink">{view.dirtyLabel}</dd>
+            <p className="mt-1 text-xs text-sa-muted">
+              Contagem de arquivos modificados/não commitados. É normal no dia a
+              dia e não indica problema no Shared AI.
+            </p>
           </div>
           <div>
             <dt className="text-[10px] font-semibold uppercase tracking-wide text-sa-muted">

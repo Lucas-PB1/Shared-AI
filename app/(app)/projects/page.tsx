@@ -1,12 +1,11 @@
-import {
-  getRegistryHealth,
-  LinkedProjectsGrid,
-  listLinkedProjects,
-} from '@/entities/linked-project';
+import { countSetupAttention, getRegistryHealth } from '@/entities/linked-project/health';
+import { listLinkedProjects } from '@/entities/linked-project/api';
+import { LinkedProjectsGrid } from '@/entities/linked-project/ui/projects-grid';
 
 export default async function ProjectsPage() {
   const projects = listLinkedProjects();
   const health = getRegistryHealth();
+  const needsAttention = countSetupAttention(health);
   const healthByPath = Object.fromEntries(
     health.projects.map((report) => [
       report.path.replace(/\\/g, '/').toLowerCase(),
@@ -28,9 +27,10 @@ export default async function ProjectsPage() {
           <code className="text-sa-ink">~/.cursor/shared-ai/projects.json</code>.
         </p>
         <p className="mt-4 text-sm font-medium text-sa-muted">
-          {projects.length} projeto{projects.length === 1 ? '' : 's'} ·{' '}
-          {health.summary.issues} aviso
-          {health.summary.issues === 1 ? '' : 's'} de saúde
+          {projects.length} projeto{projects.length === 1 ? '' : 's'}
+          {needsAttention > 0
+            ? ` · ${needsAttention} com setup a revisar`
+            : ' · setups ok'}
         </p>
       </section>
 

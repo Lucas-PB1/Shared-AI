@@ -1,18 +1,13 @@
 import { ArrowUpRight, FolderGit2, FolderX } from 'lucide-react';
 import Link from 'next/link';
 
-import type { LinkedProject, ProjectReport } from '@/entities/linked-project';
+import type { LinkedProject } from '../types';
+import type { ProjectReport } from '../health-types';
+import { presentProjectHealth } from '../present-health';
 import { cn } from '@/shared/lib/cn';
 
 function projectInitial(name: string) {
   return (name.trim()[0] ?? 'P').toUpperCase();
-}
-
-function healthLabel(report: ProjectReport | undefined, pathExists: boolean) {
-  if (!pathExists) return { text: 'ausente', tone: 'warn' as const };
-  if (!report) return { text: '—', tone: 'muted' as const };
-  if (report.ok) return { text: 'ok', tone: 'ok' as const };
-  return { text: `${report.issues.length} aviso(s)`, tone: 'warn' as const };
 }
 
 export function LinkedProjectCard({
@@ -22,7 +17,7 @@ export function LinkedProjectCard({
   project: LinkedProject;
   health?: ProjectReport;
 }) {
-  const status = healthLabel(health, project.pathExists);
+  const view = presentProjectHealth(health, project.pathExists);
 
   return (
     <Link
@@ -64,13 +59,14 @@ export function LinkedProjectCard({
         <p
           className={cn(
             'mt-3 pl-2 text-[10px] font-semibold uppercase tracking-wide',
-            status.tone === 'ok' && 'text-sa-primary',
-            status.tone === 'warn' && 'text-amber-700',
-            status.tone === 'muted' && 'text-sa-muted',
+            view.setupOk ? 'text-sa-primary' : 'text-amber-700',
           )}
         >
-          Saúde: {status.text}
+          {view.statusLabel}
         </p>
+        {view.dirtyCount > 0 ? (
+          <p className="mt-1 pl-2 text-xs text-sa-muted">{view.dirtyLabel}</p>
+        ) : null}
 
         <p
           className={cn(

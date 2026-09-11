@@ -1,12 +1,11 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import {
-  collectHealth,
-  type HealthResult,
-  type ProjectReport,
-} from '../../../packages/cursor/scripts/lib/install/ts/health-json';
+import { collectHealth } from '../../../packages/cursor/scripts/lib/install/ts/health-json';
 import { defaultRegistryPath } from '../../../packages/cursor/scripts/lib/install/ts/projects-registry';
+
+import type { HealthResult, ProjectReport } from './health-types';
+import { countSetupAttention } from './present-health';
 
 function defaultEnvPath(): string {
   return join(homedir(), '.cursor', 'shared-ai.env');
@@ -34,4 +33,10 @@ export function findProjectHealth(
   return healthByPath(health).get(key);
 }
 
-export type { HealthResult, ProjectReport };
+export { countSetupAttention };
+export type {
+  HealthResult,
+  MachineReport,
+  ProjectHealthView,
+  ProjectReport,
+} from './health-types';
