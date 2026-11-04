@@ -234,6 +234,12 @@ else
   fail "routing-log-stop.sh — rode: npm run setup:skills"
 fi
 
+if [[ -f "$CURSOR_DIR/shared-ai-routing-log.mjs" ]]; then
+  ok "shared-ai-routing-log.mjs (wrapper do routing log)"
+else
+  fail "shared-ai-routing-log.mjs — rode: npm run setup:skills"
+fi
+
 if [[ ! -f "$hooks_file" ]]; then
   fail "hooks.json ausente — rode: npm run setup:skills ou npm run sync"
 elif hooks_has_session_start "$hooks_file"; then

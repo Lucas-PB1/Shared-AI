@@ -27,12 +27,9 @@ description: >-
 | Volumes e env | [references/volumes-and-env.md](references/volumes-and-env.md) |
 | Healthchecks e dependências | [references/healthchecks.md](references/healthchecks.md) |
 
-## Como aplicar
+## Validar
 
-1. Ler o contexto do pedido e identificar qual referência cobre o caso
-2. Aplicar o padrão mínimo que resolve o problema sem over-engineering
-3. Validar com `docker compose config` e `docker compose up` limpo
-4. Documentar exceções apenas quando o trade-off não for óbvio no arquivo
+- Validar com `docker compose config` e `docker compose up` limpo
 
 ## Anti-padrões comuns
 

@@ -1,4 +1,4 @@
-# Hook stop (usuário): follow-up de routing-log se o turno editou código.
+﻿# Hook stop (usuário): follow-up de routing-log se o turno editou código.
 $ErrorActionPreference = 'Stop'
 
 function Get-SharedAiRoot {

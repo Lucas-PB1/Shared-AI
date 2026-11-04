@@ -48,9 +48,9 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run sync -- --migrate` | Máquina | Igual ao sync, mas substitui cópias antigas por symlinks |
 | `npm run status` | Máquina | Versão, projetos, conflitos, symlinks quebrados |
 | `npm run doctor` | Máquina | Diagnóstico rápido: ferramentas, hooks, instalação |
-| `npm run boot-sync -- on\|off\|status` | Máquina | Sync automático ao iniciar o computador (git pull + sync) |
+| `npm run boot-sync -- on\|check\|off\|status` | Máquina | Ao iniciar o computador: `on` = git pull + sync; `check` = só fetch + log de pendências |
 | `npm run historico -- status\|validate\|merge-hooks` | Projeto | CLI do command `/historico` (watches, hook stop) |
-| `npm run cursor-cli -- install\|status\|login` | Máquina | Instala `agent` + config modo auto (`approvalMode=unrestricted`) |
+| `npm run cursor-cli -- install\|status\|login` | Máquina | Instala `agent` + config (`approvalMode=allowlist`; `--unrestricted` é opt-in) |
 | `npm run agent -- [args]` | Projeto | Roda `agent` com rules/commands alinhados à IDE |
 | `npm run sync-inbox -- on\|run\|status` | Máquina | Inbox de projetos sync com git dirty ao iniciar sessão |
 | `npm run onboard` | Máquina + projeto | Wizard: setup, perfil, bootstrap, extras |
@@ -59,7 +59,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run setup -- --env-only` | Dev | Só cria/recria `.env` (use `--force` para sobrescrever) |
 | `npm run lint:shell` | Dev | ShellCheck nos `*.sh` versionados (skip se não instalado) |
 | `npm run lint:ts` | Dev | `tsc --noEmit` (scripts Cursor) |
-| `npm run test` | Dev | Slug do registry |
+| `npm run test` | Dev | Testes unitários (`tests/*.test.{ts,mjs}`) |
 | `npm run release -- patch\|minor\|major` | Dev | Bump `VERSION` + `package.json` + `CHANGELOG` (sem commit) |
 
 ## Plataformas
@@ -90,13 +90,22 @@ npm run bootstrap -- /caminho/do/seu/projeto
 Na **primeira** `npm run sync` interativa, pergunta se deseja `git pull` + sync automático ao logar. Controle manual:
 
 ```bash
-npm run boot-sync -- on      # liga
+npm run boot-sync -- on      # liga (git pull + sync)
+npm run boot-sync -- check   # só git fetch + lista commits pendentes no log
 npm run boot-sync -- off     # desliga
 npm run boot-sync -- status  # estado + log
 npm run boot-sync -- run     # testar agora
 ```
 
-Log: `~/.cursor/shared-ai/boot-sync.log` — agendamento via **systemd** (Linux) ou **Task Scheduler** (Windows).
+Log: `~/.cursor/shared-ai/boot-sync.log` — agendamento via **systemd** (Linux) ou **Task Scheduler** (Windows). No modo `on`, o log registra o intervalo de commits aplicado.
+
+## Segurança
+
+O Shared AI roda scripts do clone na sua máquina (hooks do Cursor, `sync`, boot-sync). Na prática, **quem pode dar push na branch que você acompanha executa código no seu computador**.
+
+- **Proteja a branch padrão** no GitHub: PR obrigatório, review aprovado, sem force-push.
+- **Boot-sync**: `check` não executa nada novo — prefira-o em times; `on` aplica e roda o código novo sem revisão.
+- **Cursor CLI**: o padrão é `approvalMode=allowlist`. `unrestricted` (Run Everything) é opt-in via `npm run cursor-cli -- configure --unrestricted`. `permissions.deny` é rede de proteção, não sandbox.
 
 ## Atualização
 

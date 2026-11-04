@@ -269,8 +269,9 @@ fi
 
 if [[ "$SKIP_EXTRAS" -eq 0 && "$NON_INTERACTIVE" -eq 0 ]]; then
   section "8. Extras (opcional)"
-  if onboard_confirm "Ativar boot-sync (git pull + sync ao logar)?"; then
-    (cd "$MONOREPO_ROOT" && npm run boot-sync -- on)
+  # Onboarding liga o modo só-leitura; git pull + sync automático é opt-in (npm run boot-sync -- on).
+  if onboard_confirm "Ativar boot-sync em modo check (git fetch + aviso de commits pendentes ao logar)?"; then
+    (cd "$MONOREPO_ROOT" && npm run boot-sync -- check)
   fi
   if onboard_confirm "Ativar sync-inbox (projetos dirty ao logar)?"; then
     (cd "$MONOREPO_ROOT" && npm run sync-inbox -- on)

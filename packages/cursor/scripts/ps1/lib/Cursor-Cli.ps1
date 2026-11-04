@@ -1,4 +1,5 @@
-﻿# Cursor CLI — instalação e config auto (approvalMode unrestricted)
+﻿# Cursor CLI — instalação e config.
+# Padrão: approvalMode allowlist. Run Everything (unrestricted) só com -Unrestricted.
 
 function Get-CursorCliStateFile {
     Join-Path $env:USERPROFILE '.cursor/shared-ai-cursor-cli.state'
@@ -62,7 +63,24 @@ function Get-SharedAiTsx {
     return $null
 }
 
+function Get-CursorCliApprovalMode {
+    $config = Get-CursorCliConfigFile
+    if (-not (Test-Path -LiteralPath $config)) { return '' }
+    try {
+        $json = Get-Content -LiteralPath $config -Raw | ConvertFrom-Json
+        if ($json.approvalMode) { return [string]$json.approvalMode }
+    } catch {}
+    return ''
+}
+
+function Write-CursorCliUnrestrictedWarning {
+    Write-Warning 'approvalMode=unrestricted — o agent executa qualquer comando sem pedir confirmação.'
+    Write-Warning 'permissions.deny é só uma rede de proteção (ex.: Remove-Item, git clean, mv passam).'
+    Write-Warning "Para voltar ao modo seguro, troque approvalMode para ""allowlist"" em $(Get-CursorCliConfigFile)."
+}
+
 function Set-CursorCliAutoConfig {
+    param([switch]$Unrestricted)
     $config = Get-CursorCliConfigFile
     $template = Get-CursorCliTemplateFile
     $mergeTs = Get-CursorCliMergeTs
@@ -70,10 +88,15 @@ function Set-CursorCliAutoConfig {
     if (-not $template) { throw 'Template cli-config.auto.json não encontrado (SHARED_AI_ROOT?)' }
     if (-not $mergeTs) { throw 'merge-cursor-cli-config.ts não encontrado' }
     if (-not $tsx) { throw 'tsx não encontrado (npm install na raiz do monorepo)' }
-    $result = & $tsx $mergeTs $config $template
+    $mergeArgs = @($mergeTs, $config, $template)
+    if ($Unrestricted) { $mergeArgs += '--unrestricted' }
+    $result = & $tsx @mergeArgs
+    $mode = Get-CursorCliApprovalMode
+    if (-not $mode) { $mode = 'allowlist' }
     $stateDir = Split-Path -Parent (Get-CursorCliStateFile)
     New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
-    Set-Content -LiteralPath (Get-CursorCliStateFile) -Value "STATUS=configured`nCONFIGURED=auto`n"
+    Set-Content -LiteralPath (Get-CursorCliStateFile) -Value "STATUS=configured`nCONFIGURED=$mode`n"
+    if ($mode -eq 'unrestricted') { Write-CursorCliUnrestrictedWarning }
     return $result
 }
 
@@ -93,21 +116,27 @@ function Install-CursorCliBinary {
 }
 
 function Install-CursorCli {
-    param([switch]$DryRun, [switch]$SkipLogin)
+    param([switch]$DryRun, [switch]$SkipLogin, [switch]$Unrestricted)
     Install-CursorCliBinary -DryRun:$DryRun
     if ($DryRun) {
-        Write-Host 'dry-run: merge cli-config auto (approvalMode=unrestricted)'
+        if ($Unrestricted) { Write-Host 'dry-run: merge cli-config (approvalMode=unrestricted)' }
+        else { Write-Host 'dry-run: merge cli-config (approvalMode=allowlist se ainda não definido)' }
         Write-Host 'dry-run: ensure PATH + login'
         return
     }
-    Set-CursorCliAutoConfig | Out-Null
+    Set-CursorCliAutoConfig -Unrestricted:$Unrestricted | Out-Null
     Ensure-CursorCliPathProfile
     if (-not $SkipLogin) { Ensure-CursorCliLogin | Out-Null }
+    $mode = Get-CursorCliApprovalMode
+    if (-not $mode) { $mode = 'allowlist' }
     $stateDir = Split-Path -Parent (Get-CursorCliStateFile)
     New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
-    Set-Content -LiteralPath (Get-CursorCliStateFile) -Value "STATUS=installed`nCONFIGURED=auto`n"
+    Set-Content -LiteralPath (Get-CursorCliStateFile) -Value "STATUS=installed`nCONFIGURED=$mode`n"
     Write-Host ''
-    Write-Host 'Pronto: modo auto (Run Everything) = approvalMode unrestricted'
+    Write-Host "Pronto: approvalMode=$mode"
+    if ($mode -ne 'unrestricted') {
+        Write-Host '         (Run Everything é opt-in: npm run cursor-cli -- configure --unrestricted)'
+    }
     Write-Host 'Uso:     agent'
     Write-Host '         npm run agent -- "prompt"'
 }
@@ -165,6 +194,7 @@ function Show-CursorCliStatus {
         $json = Get-Content -LiteralPath $config -Raw | ConvertFrom-Json
         Write-Host "  cli-config: $config"
         Write-Host "  approvalMode: $($json.approvalMode)"
+        if ($json.approvalMode -eq 'unrestricted') { Write-CursorCliUnrestrictedWarning }
     } else {
         Write-Host "  cli-config: ausente ($config)"
     }
@@ -231,7 +261,10 @@ function Invoke-CursorAgent {
         $defaults += '--approve-mcps'
         $hasPrint = $AgentArgs -contains '-p' -or $AgentArgs -contains '--print'
         $hasForce = $AgentArgs -contains '-f' -or $AgentArgs -contains '--force' -or $AgentArgs -contains '--yolo'
-        if ($hasPrint -and -not $hasForce) { $defaults += '--force' }
+        # --force automático só para quem optou por unrestricted; senão, passe --force explicitamente.
+        if ($hasPrint -and -not $hasForce -and (Get-CursorCliApprovalMode) -eq 'unrestricted') {
+            $defaults += '--force'
+        }
     }
     $start = if ($Project) { $Project } else { (Get-Location).Path }
     $root = Find-CursorProjectRoot -StartDir $start

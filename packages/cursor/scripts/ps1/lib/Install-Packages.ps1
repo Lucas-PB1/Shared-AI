@@ -60,6 +60,7 @@ function Install-SkillsPackage {
     Copy-SharedAiScript (Join-Path $cursorPkg 'scripts/hooks/ps1/ensure-project-cursor.ps1') (Join-Path $cursorDir 'hooks/ensure-project-cursor.ps1')
     Copy-SharedAiScript (Join-Path $cursorDir 'hooks/ensure-project-cursor.ps1') (Join-Path $cursorDir 'hooks/ensure-project-rules.ps1')
     Copy-SharedAiScript (Join-Path $cursorPkg 'scripts/hooks/ps1/routing-log-stop.ps1') (Join-Path $cursorDir 'hooks/routing-log-stop.ps1')
+    Copy-SharedAiScript (Join-Path $cursorPkg 'scripts/mjs/routing-log.mjs') (Join-Path $cursorDir 'shared-ai-routing-log.mjs')
     Copy-SharedAiScript (Join-Path $ps1Dir 'lib/Projects-Registry.ps1') (Join-Path $cursorDir 'shared-ai-projects-registry.ps1')
     Copy-SharedAiScript (Join-Path $ps1Dir 'lib/SharedAi-Env.ps1') (Join-Path $cursorDir 'shared-ai-env.ps1')
     Copy-SharedAiScript (Join-Path $ps1Dir 'lib/Link-FromRepo.ps1') (Join-Path $cursorDir 'shared-ai-link-from-repo.ps1')

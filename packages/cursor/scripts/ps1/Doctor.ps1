@@ -210,6 +210,12 @@ if (Test-Path $routingStopScript) {
     Write-Fail 'routing-log-stop.ps1 — rode: npm run setup:skills'
 }
 
+if (Test-Path (Join-Path $cursorDir 'shared-ai-routing-log.mjs')) {
+    Write-Ok 'shared-ai-routing-log.mjs (wrapper do routing log)'
+} else {
+    Write-Fail 'shared-ai-routing-log.mjs — rode: npm run setup:skills'
+}
+
 $hookRc = Test-HooksSessionStart $hooksFile
 if (-not (Test-Path $hooksFile)) {
     Write-Fail 'hooks.json ausente — rode: npm run setup:skills ou npm run sync'

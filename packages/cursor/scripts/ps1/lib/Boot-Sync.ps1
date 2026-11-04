@@ -26,7 +26,7 @@ function Read-BootSyncState {
 
 function Write-BootSyncState {
     param(
-        [ValidateSet('on', 'off')]
+        [ValidateSet('on', 'check', 'off')]
         [string]$Mode = 'off',
         [string]$Asked = '1'
     )
@@ -45,7 +45,7 @@ function Write-BootSyncState {
 function Get-BootSyncMode {
     $state = Read-BootSyncState
     if (-not $state['BOOT_SYNC_ASKED']) { return 'unset' }
-    if ($state['BOOT_SYNC'] -eq 'on') { return 'on' }
+    if ($state['BOOT_SYNC'] -in @('on', 'check')) { return $state['BOOT_SYNC'] }
     return 'off'
 }
 
@@ -130,6 +130,15 @@ function Enable-BootSync {
     Write-BootSyncState -Mode 'on'
     Install-BootSyncHook | Out-Null
     Write-Host 'Boot sync: ON — git pull + sync ao iniciar sessão'
+    Write-Host '  Atenção: executa o código novo do clone sem revisão. Proteja a branch (PR + review obrigatório).'
+    Write-Host '  Alternativa só-leitura: npm run boot-sync -- check'
+    Write-Host "Log: $(Get-BootSyncLogFile)"
+}
+
+function Enable-BootSyncCheck {
+    Write-BootSyncState -Mode 'check'
+    Install-BootSyncHook | Out-Null
+    Write-Host 'Boot sync: CHECK — só git fetch ao iniciar sessão; commits pendentes vão para o log'
     Write-Host "Log: $(Get-BootSyncLogFile)"
 }
 
@@ -150,7 +159,8 @@ function Show-BootSyncStatus {
     $kind = Get-BootSyncHookKind
 
     switch ($mode) {
-        'on' { Write-Host 'Boot sync: ON' }
+        'on' { Write-Host 'Boot sync: ON (git pull + sync)' }
+        'check' { Write-Host 'Boot sync: CHECK (só fetch + log de pendências)' }
         'off' { Write-Host 'Boot sync: OFF' }
         default { Write-Host 'Boot sync: não configurado (pergunta na próxima sync interativa)' }
     }
@@ -183,10 +193,13 @@ function Prompt-BootSyncIfNeeded {
 
     Write-Host ''
     Write-Host 'Sincronizar Shared AI automaticamente ao iniciar o computador?'
-    Write-Host '  (git pull + npm run sync no clone — desligar: npm run boot-sync -- off)'
-    $ans = Read-Host '[s/N]'
+    Write-Host '  s = git pull + npm run sync (executa o código novo do clone sem revisão)'
+    Write-Host '  c = só verificar: git fetch + lista commits pendentes no log'
+    Write-Host '  N = não (mude depois com: npm run boot-sync -- on|check|off)'
+    $ans = Read-Host '[s/c/N]'
     switch ($ans.ToLowerInvariant()) {
         { $_ -in @('s', 'sim', 'y', 'yes') } { Enable-BootSync }
+        { $_ -in @('c', 'check') } { Enable-BootSyncCheck }
         default { Disable-BootSync }
     }
 }

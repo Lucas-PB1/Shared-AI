@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Instala e configura Cursor CLI (agent) com approvalMode unrestricted (modo auto).
-# Uso: install-cursor-cli.sh [install|configure|status|login] [--dry-run]
+# Instala e configura Cursor CLI (agent). Padrão: approvalMode allowlist.
+# Uso: install-cursor-cli.sh [install|configure|status|login] [--dry-run] [--unrestricted]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -20,17 +20,22 @@ fi
 action=install
 dry_run=0
 skip_login=0
+unrestricted=0
 for arg in "$@"; do
   case "$arg" in
     install | configure | status | login) action="$arg" ;;
     --dry-run) dry_run=1 ;;
     --skip-login) skip_login=1 ;;
+    --unrestricted) unrestricted=1 ;;
     --help | -h)
       cat <<'EOF'
-Uso: install-cursor-cli.sh [install|configure|status|login] [--dry-run]
+Uso: install-cursor-cli.sh [install|configure|status|login] [--dry-run] [--unrestricted]
 
-  install    Instala agent (se ausente) + configura modo auto (default)
-  configure  Só merge cli-config.json (approvalMode=unrestricted)
+  install    Instala agent (se ausente) + merge cli-config.json (default)
+  configure  Só merge cli-config.json
+             approvalMode=allowlist se ainda não definido (nunca sobrescreve o seu)
+
+  --unrestricted  Opt-in: approvalMode=unrestricted (Run Everything, sem prompt)
   status     Versão, auth e approvalMode
   login      agent login (browser)
 EOF
@@ -41,14 +46,14 @@ done
 
 case "$action" in
   install)
-    cursor_cli_install_and_configure "$dry_run" "$skip_login"
+    cursor_cli_install_and_configure "$dry_run" "$skip_login" "$unrestricted"
     ;;
   configure)
     if [[ "$dry_run" -eq 1 ]]; then
-      echo "dry-run: configure auto"
+      echo "dry-run: configure (unrestricted=$unrestricted)"
       exit 0
     fi
-    cursor_cli_configure_auto
+    cursor_cli_configure_auto "$unrestricted"
     cursor_cli_ensure_path_profile
     ;;
   status)

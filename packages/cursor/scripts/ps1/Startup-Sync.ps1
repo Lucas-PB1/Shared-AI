@@ -1,4 +1,6 @@
-﻿# Executado no login/boot: git pull + sync se boot sync estiver ON.
+﻿# Executado no login/boot.
+#   BOOT_SYNC=on    → git pull --ff-only + npm run sync (executa o código novo do clone)
+#   BOOT_SYNC=check → só git fetch + registra no log os commits pendentes (não executa nada novo)
 # Autossuficiente — funciona instalado em ~/.cursor ou no repo.
 $ErrorActionPreference = 'Continue'
 
@@ -22,7 +24,7 @@ if (Test-Path $stateFile) {
         if ($_ -match '^BOOT_SYNC=(.+)$') { $bootSync = $Matches[1] }
     }
 }
-if ($bootSync -ne 'on') { exit 0 }
+if ($bootSync -notin @('on', 'check')) { exit 0 }
 
 $root = $null
 if (Test-Path $envFile) {
@@ -38,21 +40,44 @@ if (-not $root -or -not (Test-Path -LiteralPath $root)) {
     exit 0
 }
 
-Write-StartupLog "início boot sync (root=$root)"
+Write-StartupLog "início boot sync (mode=$bootSync, root=$root)"
 
-if (Get-Command git -ErrorAction SilentlyContinue) {
-    Push-Location $root
-    try {
-        $pullOut = git pull --ff-only 2>&1
-        $pullOut | Out-File -FilePath $logFile -Append -Encoding UTF8
-        Write-StartupLog 'git pull ok'
-    } catch {
-        Write-StartupLog 'git pull falhou (sync local continua)'
-    } finally {
-        Pop-Location
-    }
-} else {
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     Write-StartupLog 'git indisponível'
+    if ($bootSync -eq 'check') { exit 0 }
+} elseif ($bootSync -eq 'check') {
+    $fetchOut = git -C $root fetch --quiet 2>&1
+    $fetchOut | Out-File -FilePath $logFile -Append -Encoding UTF8
+    if ($LASTEXITCODE -ne 0) {
+        Write-StartupLog 'git fetch falhou'
+        exit 0
+    }
+    $pending = git -C $root log --oneline 'HEAD..@{upstream}' 2>$null
+    if ($pending) {
+        Write-StartupLog 'commits pendentes (revise e rode git pull && npm run sync):'
+        $pending | ForEach-Object { "    $_" } | Out-File -FilePath $logFile -Append -Encoding UTF8
+    } else {
+        Write-StartupLog 'clone em dia com o upstream'
+    }
+    Write-StartupLog 'fim boot sync (check — nada executado)'
+    exit 0
+} else {
+    $before = git -C $root rev-parse HEAD 2>$null
+    $pullOut = git -C $root pull --ff-only 2>&1
+    $pullCode = $LASTEXITCODE
+    $pullOut | Out-File -FilePath $logFile -Append -Encoding UTF8
+    if ($pullCode -eq 0) {
+        $after = git -C $root rev-parse HEAD 2>$null
+        if ($before -and $before -ne $after) {
+            Write-StartupLog "git pull ok — aplicado $($before.Substring(0, 12))..$($after.Substring(0, 12)):"
+            git -C $root log --oneline "$before..$after" 2>$null |
+                ForEach-Object { "    $_" } | Out-File -FilePath $logFile -Append -Encoding UTF8
+        } else {
+            Write-StartupLog 'git pull ok (sem mudanças)'
+        }
+    } else {
+        Write-StartupLog 'git pull falhou (sync local continua)'
+    }
 }
 
 if (Get-Command node -ErrorAction SilentlyContinue) {

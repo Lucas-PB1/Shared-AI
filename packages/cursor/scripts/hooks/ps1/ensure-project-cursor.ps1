@@ -1,4 +1,4 @@
-# Garante symlinks e registra projeto no sessionStart.
+﻿# Garante symlinks e registra projeto no sessionStart.
 $ErrorActionPreference = 'SilentlyContinue'
 
 $cursorDir = if ($env:CURSOR_USER_DIR) { $env:CURSOR_USER_DIR } else { Join-Path $env:USERPROFILE '.cursor' }

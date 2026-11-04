@@ -50,6 +50,7 @@ install_skills_package() {
   install -m 755 "$cursor_pkg/scripts/hooks/sh/ensure-project-cursor.sh" "$cursor_dir/hooks/"
   install -m 755 "$cursor_dir/hooks/ensure-project-cursor.sh" "$cursor_dir/hooks/ensure-project-rules.sh"
   install -m 755 "$cursor_pkg/scripts/hooks/sh/routing-log-stop.sh" "$cursor_dir/hooks/"
+  install -m 644 "$cursor_pkg/scripts/mjs/routing-log.mjs" "$cursor_dir/shared-ai-routing-log.mjs"
   install -m 755 "$install_lib/projects-registry.sh" "$cursor_dir/shared-ai-projects-registry.sh"
   install -m 755 "$install_lib/shared-ai-env.sh" "$cursor_dir/shared-ai-env.sh"
   install -m 755 "$install_lib/link-from-repo.sh" "$cursor_dir/shared-ai-link-from-repo.sh"
