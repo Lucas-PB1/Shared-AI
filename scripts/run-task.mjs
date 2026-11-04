@@ -9,7 +9,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const UNIT_TESTS = ['tests/linked-project-slug.test.ts'];
 
 const task = process.argv[2];
 
@@ -101,8 +100,27 @@ Depois: npm run lint:shell`);
   );
 }
 
+function unitTests() {
+  return gitLsAll(['tests/*.test.ts', 'tests/*.test.mjs']);
+}
+
+function gitLsAll(patterns) {
+  const result = spawnSync('git', ['-C', ROOT, 'ls-files', '--cached', '--others', '--exclude-standard', ...patterns], {
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  if (result.status !== 0) return [];
+  return String(result.stdout ?? '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .sort();
+}
+
 function testAll() {
-  process.exit(runNode(tsxEntry(), ['--test', ...UNIT_TESTS], { cwd: ROOT }));
+  const files = unitTests();
+  if (files.length === 0) fail('Nenhum teste em tests/*.test.{ts,mjs}.');
+  process.exit(runNode(tsxEntry(), ['--test', ...files], { cwd: ROOT }));
 }
 
 const TASKS = {

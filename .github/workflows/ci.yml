@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux — lint, testes e build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck (scripts Cursor + testes)
+        run: npm run lint:ts
+
+      - name: ESLint (dashboard)
+        run: npm run lint
+
+      - name: ShellCheck
+        run: |
+          shellcheck --version
+          npm run lint:shell
+
+      - name: Testes
+        run: npm test
+
+      - name: Build do dashboard
+        run: npm run build
+
+  windows:
+    name: Windows — testes e parse PowerShell
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Testes
+        run: npm test
+
+      - name: Parse de todos os .ps1 (Windows PowerShell 5.1, o runtime dos hooks)
+        shell: powershell
+        run: |
+          $failed = $false
+          foreach ($file in git ls-files '*.ps1') {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file).Path, [ref]$tokens, [ref]$errors) | Out-Null
+            foreach ($err in $errors) {
+              $failed = $true
+              Write-Host "::error file=$file,line=$($err.Extent.StartLineNumber)::$($err.Message)"
+            }
+          }
+          if ($failed) { exit 1 }
+          Write-Host "ok: $((git ls-files '*.ps1').Count) arquivos"

@@ -1,4 +1,4 @@
-# Hook stop: follow-up se arquivos do escopo /historico foram alterados.
+﻿# Hook stop: follow-up se arquivos do escopo /historico foram alterados.
 # Project hook — cwd = raiz do projeto.
 $ErrorActionPreference = 'Stop'
 

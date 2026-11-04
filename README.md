@@ -59,7 +59,7 @@ npm run bootstrap -- /caminho/do/seu/projeto
 | `npm run setup -- --env-only` | Dev | Só cria/recria `.env` (use `--force` para sobrescrever) |
 | `npm run lint:shell` | Dev | ShellCheck nos `*.sh` versionados (skip se não instalado) |
 | `npm run lint:ts` | Dev | `tsc --noEmit` (scripts Cursor) |
-| `npm run test` | Dev | Slug do registry |
+| `npm run test` | Dev | Testes unitários (`tests/*.test.{ts,mjs}`) |
 | `npm run release -- patch\|minor\|major` | Dev | Bump `VERSION` + `package.json` + `CHANGELOG` (sem commit) |
 
 ## Plataformas

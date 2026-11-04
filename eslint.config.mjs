@@ -17,6 +17,7 @@ const eslintConfig = [
       'tests/**',
       'supabase/**',
       '.next/**',
+      'next-env.d.ts',
       'node_modules/**',
     ],
   },
