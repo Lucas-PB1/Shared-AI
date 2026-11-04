@@ -36,8 +36,4 @@ if [[ -z "$TSX" ]]; then
   exit 0
 fi
 
-if [[ -t 0 ]]; then
-  "$TSX" "$SCRIPT"
-else
-  "$TSX" "$SCRIPT"
-fi
+"$TSX" "$SCRIPT"

@@ -60,9 +60,10 @@ Após **tarefa de código** (não docs/git-only), registre o merge final de skil
 2. Append uma linha:
 
 ```bash
-npx tsx packages/cursor/scripts/lib/routing/append-routing-log.ts append --source=agent --skills=a,b,c --ask="pedido curto" --project="<cwd do projeto>"
+node "$HOME/.cursor/shared-ai-routing-log.mjs" append --source=agent --skills=a,b,c --ask="pedido curto" --project="<cwd do projeto>"
 ```
 
+Funciona de qualquer projeto (bash e PowerShell): o wrapper em `~/.cursor/` resolve o clone via `SHARED_AI_ROOT` / `~/.cursor/shared-ai.env`.  
 Arquivo: `~/.cursor/shared-ai/routing-log.jsonl` (só nesta máquina — **fora** do repo do projeto; não precisa de `.gitignore` alheio).  
 O campo `--project` é só metadado para filtrar no dashboard.  
 O hook `stop` (`routing-log-stop`) reforça o follow-up se o turno editou código e o log ainda não foi feito.  

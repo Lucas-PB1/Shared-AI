@@ -54,10 +54,10 @@ function buildFollowup(project: string | null): string {
   return [
     'Shared AI — routing log: este turno editou código.',
     'Append **uma linha** no log de roteamento com as skills que você de fato usou neste turno (orquestrador).',
-    'Rode na raiz do clone shared-ai (ou com SHARED_AI_ROOT):',
+    'Rode (de qualquer diretório, bash ou PowerShell):',
     '',
     '```bash',
-    `npx tsx packages/cursor/scripts/lib/routing/append-routing-log.ts append --source=agent --skills=skill1,skill2 --ask="resumo curto do pedido"${projectFlag}`,
+    `node "$HOME/.cursor/shared-ai-routing-log.mjs" append --source=agent --skills=skill1,skill2 --ask="resumo curto do pedido"${projectFlag}`,
     '```',
     '',
     'Liste só as skills do merge final (≤8). Não implemente mais código neste follow-up — só o log.',
