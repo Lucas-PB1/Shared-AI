@@ -184,8 +184,9 @@ if ($configureNext) {
 if (-not $SkipExtras -and -not $NonInteractive) {
     Write-Host ''
     Write-Host '=== 8. Extras (opcional) ==='
-    if (Confirm-Onboard 'Ativar boot-sync (git pull + sync ao logar)?') {
-        Invoke-Npm run boot-sync -- on
+    # Onboarding liga o modo só-leitura; git pull + sync automático é opt-in (npm run boot-sync -- on).
+    if (Confirm-Onboard 'Ativar boot-sync em modo check (git fetch + aviso de commits pendentes ao logar)?') {
+        Invoke-Npm run boot-sync -- check
     }
     if (Confirm-Onboard 'Ativar sync-inbox (projetos dirty ao logar)?') {
         Invoke-Npm run sync-inbox -- on

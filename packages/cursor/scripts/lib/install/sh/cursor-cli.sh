@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Instalação e configuração do Cursor CLI (agent) — modo auto (approval unrestricted).
+# Instalação e configuração do Cursor CLI (agent).
+# Padrão: approvalMode allowlist. Run Everything (unrestricted) só com --unrestricted.
 # Source: packages/cursor/scripts/lib/install/sh/cursor-cli.sh
 # CLI: npm run cursor-cli -- [install|configure|status|login]
 
@@ -162,8 +163,30 @@ cursor_cli_merge_ts() {
   return 1
 }
 
+# approvalMode atual de ~/.cursor/cli-config.json (vazio se ausente/ilegível).
+cursor_cli_approval_mode() {
+  local config
+  config="$(cursor_cli_config_file)"
+  [[ -f "$config" ]] || return 0
+  node --input-type=module -e '
+import { readFileSync } from "node:fs";
+try {
+  const data = JSON.parse(readFileSync(process.argv[1], "utf-8"));
+  process.stdout.write(String(data.approvalMode ?? ""));
+} catch {}
+' "$config" 2>/dev/null || true
+}
+
+cursor_cli_warn_unrestricted() {
+  echo "AVISO: approvalMode=unrestricted — o agent executa qualquer comando sem pedir confirmação." >&2
+  echo "       permissions.deny é só uma rede de proteção (ex.: find -delete, git clean, mv passam)." >&2
+  echo "       Para voltar ao modo seguro, troque approvalMode para \"allowlist\" em $(cursor_cli_config_file)." >&2
+}
+
 cursor_cli_configure_auto() {
-  local template ts config result
+  local unrestricted="${1:-0}"
+  local template ts config result mode
+  local -a merge_flags=()
   config="$(cursor_cli_config_file)"
   template="$(cursor_cli_template_file)" || {
     echo "Erro: template cli-config.auto.json não encontrado (SHARED_AI_ROOT?)" >&2
@@ -175,8 +198,11 @@ cursor_cli_configure_auto() {
   }
   # shellcheck disable=SC1091
   source "$(dirname "${BASH_SOURCE[0]}")/shared-ai-env.sh"
-  result="$(shared_ai_tsx "$ts" "$config" "$template")"
-  cursor_cli_write_status "configured" "auto"
+  [[ "$unrestricted" -eq 1 ]] && merge_flags+=(--unrestricted)
+  result="$(shared_ai_tsx "$ts" "$config" "$template" ${merge_flags[@]+"${merge_flags[@]}"})"
+  mode="$(cursor_cli_approval_mode)"
+  cursor_cli_write_status "configured" "${mode:-allowlist}"
+  [[ "$mode" == "unrestricted" ]] && cursor_cli_warn_unrestricted
   printf '%s\n' "$result"
 }
 
@@ -234,6 +260,7 @@ try {
 ' "$config")"
     echo "  cli-config: $config"
     echo "  approvalMode: $approval"
+    [[ "$approval" == "unrestricted" ]] && cursor_cli_warn_unrestricted
   else
     echo "  cli-config: ausente ($config)"
   fi
@@ -252,19 +279,29 @@ cursor_cli_login() {
 cursor_cli_install_and_configure() {
   local dry_run="${1:-0}"
   local skip_login="${2:-0}"
+  local unrestricted="${3:-0}"
   cursor_cli_install_binary "$dry_run"
   if [[ "$dry_run" -eq 1 ]]; then
-    echo "dry-run: merge cli-config auto (approvalMode=unrestricted)"
+    if [[ "$unrestricted" -eq 1 ]]; then
+      echo "dry-run: merge cli-config (approvalMode=unrestricted)"
+    else
+      echo "dry-run: merge cli-config (approvalMode=allowlist se ainda não definido)"
+    fi
     echo "dry-run: ensure PATH + login"
     return 0
   fi
   cursor_cli_agent_env
-  cursor_cli_configure_auto
+  cursor_cli_configure_auto "$unrestricted"
   cursor_cli_ensure_path_profile
   cursor_cli_ensure_login "$skip_login"
-  cursor_cli_write_status "installed" "auto"
+  local mode
+  mode="$(cursor_cli_approval_mode)"
+  cursor_cli_write_status "installed" "${mode:-allowlist}"
   echo ""
-  echo "Pronto: modo auto (Run Everything) = approvalMode unrestricted"
+  echo "Pronto: approvalMode=${mode:-allowlist}"
+  if [[ "$mode" != "unrestricted" ]]; then
+    echo "         (Run Everything é opt-in: npm run cursor-cli -- configure --unrestricted)"
+  fi
   echo "Uso:     agent              # de qualquer pasta (PATH no shell)"
   echo "         npm run agent -- \"prompt\"   # com relink shared-ai"
 }
@@ -353,7 +390,8 @@ cursor_cli_run_agent() {
       [[ "$a" == "-p" || "$a" == "--print" ]] && has_print=1
       [[ "$a" == "-f" || "$a" == "--force" || "$a" == "--yolo" ]] && has_force=1
     done
-    if [[ "$has_print" -eq 1 && "$has_force" -eq 0 ]]; then
+    # --force automático só para quem optou por unrestricted; senão, passe --force explicitamente.
+    if [[ "$has_print" -eq 1 && "$has_force" -eq 0 && "$(cursor_cli_approval_mode)" == "unrestricted" ]]; then
       shared_ai_defaults+=(--force)
     fi
   fi

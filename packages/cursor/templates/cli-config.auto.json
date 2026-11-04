@@ -1,16 +1,38 @@
 {
   "version": 1,
   "editor": { "vimMode": false },
-  "approvalMode": "unrestricted",
+  "approvalMode": "allowlist",
   "permissions": {
-    "allow": [],
+    "allow": [
+      "Shell(ls)",
+      "Shell(pwd)",
+      "Shell(cat)",
+      "Shell(head)",
+      "Shell(tail)",
+      "Shell(wc)",
+      "Shell(grep)",
+      "Shell(rg)",
+      "Shell(which)"
+    ],
     "deny": [
       "Shell(rm)",
       "Shell(sudo rm)",
+      "Shell(sudo)",
       "Shell(shred)",
+      "Shell(dd)",
+      "Shell(mkfs)",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Read(**/.env.production)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/.ssh/**)",
       "Write(**/.env*)",
       "Write(**/*.pem)",
-      "Write(**/*.key)"
+      "Write(**/*.key)",
+      "Write(**/.ssh/**)",
+      "Write(**/.git/hooks/**)"
     ]
   },
   "hints": true,

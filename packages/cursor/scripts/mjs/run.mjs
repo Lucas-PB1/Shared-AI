@@ -65,10 +65,21 @@ const ALIASES = {
   'setup:skills': 'install',
 };
 
-function runPowerShell(script, args) {
+/** Switches extras por comando (só onde o .ps1 declara o parâmetro). */
+const PS1_COMMAND_SWITCHES = {
+  'cursor-cli': {
+    '--skip-login': '-SkipLogin',
+    '--unrestricted': '-Unrestricted',
+    '--dry-run': '-DryRun',
+  },
+};
+
+function runPowerShell(script, args, key) {
   const shell = process.env.SHARED_AI_POWERSHELL ?? 'powershell.exe';
+  const extra = PS1_COMMAND_SWITCHES[key] ?? {};
   // PowerShell -File: switches com -- às vezes não caem em $args; normalizar.
   const normalized = args.map((a) => {
+    if (extra[a]) return extra[a];
     if (a === '--migrate') return '-Migrate';
     if (a === '--prune') return '-Prune';
     if (a === '--help') return '-Help';
@@ -107,7 +118,7 @@ if (!script || !existsSync(script)) {
 }
 
 if (isWin) {
-  runPowerShell(script, args);
+  runPowerShell(script, args, key);
 } else {
   const env = { ...process.env, SHARED_AI_ROOT: process.env.SHARED_AI_ROOT ?? repoRoot };
   const result = spawnSync('bash', [script, ...args], {

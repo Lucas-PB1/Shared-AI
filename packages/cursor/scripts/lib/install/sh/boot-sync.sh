@@ -193,6 +193,15 @@ boot_sync_enable() {
   boot_sync_write_state "on" "1"
   boot_sync_install_hook
   echo "Boot sync: ON — git pull + sync ao iniciar sessão"
+  echo "  Atenção: executa o código novo do clone sem revisão. Proteja a branch (PR + review obrigatório)."
+  echo "  Alternativa só-leitura: npm run boot-sync -- check"
+  echo "Log: $(boot_sync_log_file)"
+}
+
+boot_sync_enable_check() {
+  boot_sync_write_state "check" "1"
+  boot_sync_install_hook
+  echo "Boot sync: CHECK — só git fetch ao iniciar sessão; commits pendentes vão para o log"
   echo "Log: $(boot_sync_log_file)"
 }
 
@@ -208,7 +217,8 @@ boot_sync_status() {
   kind="$(boot_sync_hook_kind)"
 
   case "$mode" in
-    on) echo "Boot sync: ON" ;;
+    on) echo "Boot sync: ON (git pull + sync)" ;;
+    check) echo "Boot sync: CHECK (só fetch + log de pendências)" ;;
     off) echo "Boot sync: OFF" ;;
     unset) echo "Boot sync: não configurado (pergunta na próxima sync interativa)" ;;
   esac
@@ -243,12 +253,17 @@ boot_sync_prompt_if_needed() {
 
   echo ""
   echo "Sincronizar Shared AI automaticamente ao iniciar o computador?"
-  echo "  (git pull + npm run sync no clone — pode ser desligado com: npm run boot-sync -- off)"
+  echo "  s = git pull + npm run sync (executa o código novo do clone sem revisão)"
+  echo "  c = só verificar: git fetch + lista commits pendentes no log"
+  echo "  N = não (mude depois com: npm run boot-sync -- on|check|off)"
   local ans
-  read -r -p "[s/N] " ans
+  read -r -p "[s/c/N] " ans
   case "${ans,,}" in
     s | sim | y | yes)
       boot_sync_enable
+      ;;
+    c | check)
+      boot_sync_enable_check
       ;;
     *)
       boot_sync_disable
