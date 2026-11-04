@@ -26,12 +26,9 @@ description: >-
 | Config 12-factor | [references/twelve-factor-config.md](references/twelve-factor-config.md) |
 | Gestão de segredos | [references/secrets-management.md](references/secrets-management.md) |
 
-## Como aplicar
+## Validar
 
-1. Ler o contexto do pedido e identificar qual referência cobre o caso
-2. Aplicar o padrão mínimo que resolve o problema sem over-engineering
-3. Validar que `.env` está no `.gitignore` e que não há segredo em log/histórico
-4. Documentar exceções apenas quando o trade-off não for óbvio
+- Validar que `.env` está no `.gitignore` e que não há segredo em log/histórico
 
 ## Anti-padrões comuns
 

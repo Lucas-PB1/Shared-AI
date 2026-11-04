@@ -30,10 +30,8 @@ description: >-
 
 ## Como aplicar
 
-1. Ler o contexto do pedido e identificar a plataforma (GitHub Actions / GitLab CI) e a referência
-2. Aplicar o padrão mínimo que resolve o problema sem over-engineering
-3. Validar o pipeline em um branch/PR antes de mexer no fluxo principal
-4. Documentar exceções apenas quando o trade-off não for óbvio no arquivo
+1. Identificar a plataforma (GitHub Actions / GitLab CI) e abrir a referência correspondente
+2. Validar o pipeline em um branch/PR antes de mexer no fluxo principal
 
 ## Anti-padrões comuns
 

@@ -14,6 +14,7 @@ npm run lint:shell    # ShellCheck (skip suave se não instalado)
 | `routing-log.test.ts` | Append / filtro por projeto / resumo do routing log |
 | `routing-log-wrapper.test.mjs` | Wrapper `~/.cursor/shared-ai-routing-log.mjs` rodando de fora do clone |
 | `history-watch-match.test.ts` | Matcher de escopos do `/historico` (file / dir / glob) e validação de `watches.json` |
+| `skills-package.test.mjs` | Skills: frontmatter, links de `references/`, "Relacionado" só com skills existentes, sem boilerplate genérico |
 | `ps1-encoding.test.mjs` | `.ps1` com não-ASCII precisa de BOM (Windows PowerShell 5.1) |
 | `linked-project-slug.test.ts` | Slug dos repositórios ligados no dashboard |
 

@@ -42,4 +42,4 @@ description: >-
 
 ## Relacionado
 
-- `ui-shadcn`, `tanstack-query`, `typescript`, `zod` via tipos, `accessibility`
+- `ui-shadcn`, `tanstack-query`, `typescript` (tipos inferidos do schema zod), `accessibility`

@@ -27,12 +27,9 @@ description: >-
 | Erros e traps | [references/error-handling-and-traps.md](references/error-handling-and-traps.md) |
 | Portabilidade | [references/portability.md](references/portability.md) |
 
-## Como aplicar
+## Validar
 
-1. Ler o contexto do pedido e identificar qual referência cobre o caso
-2. Aplicar o padrão mínimo que resolve o problema sem over-engineering
-3. Validar com `bash -n`, `shellcheck` e um dry-run seguro
-4. Documentar exceções apenas quando o trade-off não for óbvio no script
+- Validar com `bash -n`, `shellcheck` e um dry-run seguro
 
 ## Anti-padrões comuns
 

@@ -27,12 +27,9 @@ description: >-
 | Imagem enxuta e cache | [references/image-optimization.md](references/image-optimization.md) |
 | Hardening de segurança | [references/security-hardening.md](references/security-hardening.md) |
 
-## Como aplicar
+## Validar
 
-1. Ler o contexto do pedido e identificar qual referência cobre o caso
-2. Aplicar o padrão mínimo que resolve o problema sem over-engineering
-3. Validar com `docker build` + `docker run` (e um scan de imagem quando houver)
-4. Documentar exceções apenas quando o trade-off não for óbvio no arquivo
+- Validar com `docker build` + `docker run` (e um scan de imagem quando houver)
 
 ## Anti-padrões comuns
 

@@ -38,5 +38,19 @@ Templates: `$SHARED_AI_ROOT/packages/cursor/templates/skill-SKILL.md` e `skill-r
 
 - [ ] `name` no frontmatter = nome da pasta
 - [ ] description com gatilhos concretos
-- [ ] seções: Quando usar, Princípios, Como aplicar, Anti-padrões
+- [ ] seções: Quando usar, Princípios, Referências; "Como aplicar" e "Anti-padrões" só se tiverem conteúdo próprio
 - [ ] sem secrets nem paths absolutos de máquina
+- [ ] sem texto genérico que valeria para qualquer skill — o modelo já sabe "manter simples" e "testar"
+
+## O que vale a pena escrever
+
+A skill rende quando registra **decisões do time** que o modelo não adivinha:
+
+- Escolhas de lib/versão ("forms: RHF + zod, nunca Formik")
+- Padrões proibidos no código de vocês e o motivo
+- Estrutura de pastas e nomes reais do projeto
+- Exemplos curtos tirados do código de vocês
+
+Se uma seção ficaria genérica, omita-a — cada linha custa contexto em toda tarefa que carrega a skill.
+
+`npm test` valida o pacote (`tests/skills-package.test.mjs`): frontmatter, links de `references/`, skills citadas em "Relacionado" e ausência do boilerplate antigo.
